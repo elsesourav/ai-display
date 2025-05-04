@@ -1,0 +1,57 @@
+{
+   "name": "Ai Display",
+   "version": "1.5.1",
+   "description": "AI Display helps you quickly find accurate answers and display relevant questions, making information discovery faster and smarter. (© elsesourav 2025)",
+   "manifest_version": 3,
+   "permissions": [
+      "scripting",
+      "storage",
+      "tabs",
+      "activeTab",
+      "management",
+      "declarativeNetRequest",
+      "declarativeNetRequestFeedback",
+      "webRequest",
+      "declarativeNetRequestWithHostAccess",
+      "unlimitedStorage",
+      "offscreen"
+   ],
+   "host_permissions": ["<all_urls>"],
+   "background": {
+      "service_worker": "./background/background.js"
+   },
+   "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'",
+      "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'unsafe-inline' 'unsafe-eval'; child-src 'self';"
+   },
+   "content_scripts": [
+      {
+         "matches": ["<all_urls>"],
+         "js": [
+            "./utils.js",
+            "./content/content.js"
+         ]
+      }
+   ],
+   "web_accessible_resources": [
+      {
+         "resources": ["assets/*", "css/*"],
+         "matches": ["<all_urls>"]
+      }
+   ],
+   "action": {
+      "default_icon": {
+         "16": "assets/icons/icon16.png",
+         "24": "assets/icons/icon24.png",
+         "32": "assets/icons/icon32.png",
+         "128": "assets/icons/icon128.png"
+      },
+      "default_title": "Seller Automation",
+      "default_popup": "./popup.html"
+   },
+   "icons": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+   }
+}

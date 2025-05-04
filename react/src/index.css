@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+   line-height: 1.5;
+   font-weight: 400;
+   color-scheme: light dark;
+
+   --text-color-light: #213547;
+   --text-color-dark: #ffffffde;
+   --bg-color-light: #ffffff;
+   --bg-color-dark: #242424;
+
+   --primary-blue: rgb(0, 0, 255);
+   --secondary-blue: rgb(96, 96, 182);
+
+   --text-primary-light: black;
+   --text-primary-dark: white;
+
+   --text-secondary-light: rgb(70, 70, 70);
+   --text-secondary-dark: rgb(160, 160, 160);
+
+   --bg-primary-light: #ffffff;
+   --bg-primary-dark: #242424;
+
+   --bg-secondary-light: rgb(212, 212, 212);
+   --bg-secondary-dark: rgb(34, 34, 34);
+
+   --bg-navbar-light: rgb(104, 104, 255);
+   --bg-navbar-dark: rgb(29, 29, 58);
+
+   color: var(--text-color-dark);
+   background-color: var(--bg-color-dark);
+
+   font-synthesis: none;
+   text-rendering: optimizeLegibility;
+   -webkit-font-smoothing: antialiased;
+   -moz-osx-font-smoothing: grayscale;
+}
+
+.light-theme {
+   color: var(--text-color-light);
+   background-color: var(--bg-color-light);
+   --text-primary: var(--text-primary-light);
+   --text-secondary: var(--text-secondary-light);
+   --bg-primary: var(--bg-primary-light);
+   --bg-secondary: var(--bg-secondary-light);
+   --bg-navbar: var(--bg-navbar-light);
+}
+
+.dark-theme {
+   color: var(--text-color-dark);
+   background-color: var(--bg-color-dark);
+   --text-primary: var(--text-primary-dark);
+   --text-secondary: var(--text-secondary-dark);
+   --bg-primary: var(--bg-primary-dark);
+   --bg-secondary: var(--bg-secondary-dark);
+   --bg-navbar: var(--bg-navbar-dark);
+}
