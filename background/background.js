@@ -1,57 +1,40 @@
 importScripts("./../utils.js", "./bgUtils.js", "./apiCall.js");
-
 console.log("background script loaded");
 
-runtimeOnMessage("c_b", async (_, __, sendResponse) => {
-   async function askOpenRouter(question) {
-      const apiKey =
-         "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";
-      const model = "microsoft/phi-4-reasoning-plus:free";
-      const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+function sendAnswer(tabId, answer) {
+   tabSendMessage(tabId, "b_c_answer", { answer });
+}
 
-      try {
-         const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-               Authorization: `Bearer ${apiKey}`,
-               "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-               model: model,
-               messages: [
-                  {
-                     role: "user",
-                     content: question,
-                  },
-               ],
-            }),
-         });
+runtimeOnMessage("c_b", async ({ imgData, text }, { tab }, sendResponse) => {
+   const { id } = tab;
 
-         if (!response.ok) {
-            throw new Error(
-               `API error: ${response.status} ${response.statusText}`
-            );
+   try {
+      const tracks = [];
+
+      const allTasks = [
+         microsoftPhi4ReasoningPlus(text),
+         metaLlamaLlama4Maverick(text, imgData),
+      ];
+
+      allTasks.forEach(async (task, index) => {
+         tracks.push(task);
+         try {
+            const result = await task;
+            console.log(`Call ${index + 1} completed. Result:`, result);
+            sendAnswer(id, result);
+         } catch (error) {
+            console.error(`Call ${index + 1} failed:`, error);
          }
+      });
 
-         const data = await response.json();
-
-         // Safely access the result
-         const reply =
-            data.choices?.[0]?.message?.content || "No reply received.";
-         console.log("AI reply:", reply);
-
-         return reply;
-      } catch (error) {
-         console.error("Fetch error:", error);
-         return "An error occurred.";
-      }
+      await Promise.all(tracks);
+      console.log("All calls completed.");
+   } catch (error) {
+      console.error("Overall error during API calls:", error);
    }
 
-   askOpenRouter("What is the meaning of life?").then((answer) => {
-      console.log("Final Answer:", answer);
-   });
-
-   sendResponse("done");
+   sendResponse("Get It");
 });
 
-runtimeOnMessage("p_b", async (_, __, sendResponse) => {});
+
+// runtimeOnMessage("p_b", async (_, __, sendResponse) => {});

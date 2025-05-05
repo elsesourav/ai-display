@@ -95,6 +95,30 @@ function runtimeOnMessage(type, callback) {
    });
 }
 
+function pagePostMessage(type, data) {
+   window.postMessage({ type, data }, "*");
+}
+
+/* ######## send inject script to => content script ########
+   pagePostMessage("i_c", { some: "data" });
+*/
+
+function pageOnMessage(type, callback) {
+   window.addEventListener("message", (event) => {
+      if (event.source !== window) return;
+      if (event.data.type === type) {
+         callback(event.data.data, event);
+      }
+   });
+}
+
+/* ######## accept inject script to => content script ########
+pageOnMessage("i_c", (data, event) => {
+   console.log(data);
+   console.log(event);
+});
+*/
+
 const debounce = (func, delayFn) => {
    let debounceTimer;
    return function (...args) {
@@ -197,10 +221,13 @@ function copyTextToClipboard(text) {
       const successful = document.execCommand("copy");
       const msg = successful ? "successful" : "unsuccessful";
       console.log("Copying text " + msg);
-      
+
       // Show toast notification if document.body exists
       if (document.body) {
-         showToast(successful ? "Copied to clipboard!" : "Copy failed", successful ? "success" : "error");
+         showToast(
+            successful ? "Copied to clipboard!" : "Copy failed",
+            successful ? "success" : "error"
+         );
       }
    } catch (err) {
       console.error("Unable to copy", err);
@@ -212,3 +239,121 @@ function copyTextToClipboard(text) {
 
    document.body.removeChild(textarea);
 }
+
+async function getSecretKey() {
+   const secret = "af3f-34bj5-245hh-g341g";
+   const encoder = new TextEncoder();
+   const keyMaterial = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode(secret)
+   );
+   return crypto.subtle.importKey(
+      "raw",
+      keyMaterial,
+      { name: "AES-GCM" },
+      false,
+      ["encrypt", "decrypt"]
+   );
+}
+
+function injectScript(src) {
+   const script = document.createElement("script");
+   script.src = chrome.runtime.getURL(src);
+   script.onload = () => script.remove();
+   (document.head || document.documentElement).appendChild(script);
+}
+
+function injectJSCode(code) {
+   const scriptElement = document.createElement("script");
+   scriptElement.setAttribute("type", "text/javascript");
+   scriptElement.textContent = code;
+   document.documentElement.appendChild(scriptElement);
+}
+
+// Function to inject external JavaScript file
+function injectJSLink(src) {
+   const scriptElement = document.createElement("script");
+   scriptElement.setAttribute("type", "text/javascript");
+   scriptElement.setAttribute("src", src);
+   document.documentElement.appendChild(scriptElement);
+}
+
+async function encryptData(data) {
+   const key = await getSecretKey();
+   const encoder = new TextEncoder();
+   const iv = crypto.getRandomValues(new Uint8Array(12));
+   const encryptedData = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      encoder.encode(data)
+   );
+
+   return {
+      iv: btoa(String.fromCharCode(...iv)),
+      data: btoa(String.fromCharCode(...new Uint8Array(encryptedData))),
+   };
+}
+
+async function decryptData(encrypted) {
+   const key = await getSecretKey();
+   const iv = new Uint8Array(
+      atob(encrypted.iv)
+         .split("")
+         .map((c) => c.charCodeAt(0))
+   );
+   const data = new Uint8Array(
+      atob(encrypted.data)
+         .split("")
+         .map((c) => c.charCodeAt(0))
+   );
+
+   const decryptedData = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      data
+   );
+
+   const decoder = new TextDecoder();
+   return decoder.decode(decryptedData);
+}
+
+async function GET__(name) {
+   try {
+      const res = await fetch(chrome.runtime.getURL("config.json"));
+      const config = await res.json();
+      const key = config.keys[name];
+
+      if (key) return key;
+      return null;
+   } catch (error) {
+      console.log(error);
+      return null;
+   }
+}
+
+async function uploadImageToCloudinary(file) {
+   const cloudName = "diysvbtwq";
+   const uploadPreset = "AiDisplay";
+
+   const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+
+   const formData = new FormData();
+   formData.append("file", file);
+   formData.append("upload_preset", uploadPreset);
+
+   const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+   });
+
+   const data = await response.json();
+   
+   if (response.ok) {
+      return data.secure_url;
+   } else {
+      console.error("Upload error:", data);
+      throw new Error(data.error.message);
+   }
+}
+
+

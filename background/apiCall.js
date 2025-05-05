@@ -1,41 +1,5 @@
-function fetchOpenRouter(apiKey, model, messages) {
-   const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
 
-   return new Promise(async (resolve) => {
-      try {
-         const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-               Authorization: `Bearer ${apiKey}`,
-               "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-               model: model,
-               messages,
-            }),
-         });
 
-         if (!response.ok) {
-            return resolve(
-               `API error: ${response.status} ${response.statusText}`
-            );
-         }
-
-         const data = await response.json();
-         const reply =
-            data.choices?.[0]?.message?.content || "No reply received.";
-
-         return reply;
-      } catch (error) {
-         console.log(error);
-         return resolve(`Fetch error`);
-      }
-   });
-}
-
-function microsoftPhi4ReasoningPlus() {
-
-}
 
 
 /* 
