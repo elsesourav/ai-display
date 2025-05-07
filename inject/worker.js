@@ -22,8 +22,6 @@ function cropImage(href, { width, height, left, top }, mode = "normal") {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
          }
 
-         console.log(canvas.toDataURL());
-
          resolve(canvas.toDataURL());
       };
       img.src = href;
@@ -36,9 +34,9 @@ function readyWorker() {
          try {
             worker = await Tesseract.createWorker("eng", 1, {
                workerBlobURL: false,
-               workerPath: chrome.runtime.getURL("inject/worker.min.js"),
-               corePath: chrome.runtime.getURL("inject/Tesseract"),
-               langPath: chrome.runtime.getURL("inject/Lang/"),
+               workerPath: "OCR/worker.min.js",
+               corePath: "OCR/Tesseract",
+               langPath: "OCR/Lang/",
                logger: updateProgress,
             });
 
@@ -48,6 +46,8 @@ function readyWorker() {
          } finally {
             resolve();
          }
+      } else {
+         resolve();
       }
    });
 }
@@ -83,11 +83,8 @@ function processOCR(imageData, rectInfo) {
    return new Promise(async (resolve) => {
       try {
          const promises = [cropImage(imageData, box), readyWorker()];
-
          Promise.all(promises).then(async ([croppedImage]) => {
-            console.log(croppedImage);
             const result = await worker.recognize(croppedImage);
-            console.log(result);
             resolve(result.data.text);
          });
       } catch (error) {
@@ -103,8 +100,8 @@ window.addEventListener("beforeunload", async () => {
    }
 });
 
-pageOnMessage("I_C_OCR", async ({ imageData, rectInfo }) => {
-   console.log(imageData, rectInfo);
+pageOnMessage("C_I_OCR", async ({ imageData, rectInfo }) => {
+   console.log(imageData, rectInfo);   
    const text = await processOCR(imageData, rectInfo);
    console.log(text);
    pagePostMessage("I_C_OCR_RESULT", { text });

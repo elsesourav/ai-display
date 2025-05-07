@@ -27,4 +27,10 @@ runtimeOnMessage("b_c_answer", async ({ answer }, _, sendResponse) => {
 
 pageOnMessage("I_C_OCR_RESULT", async ({ text }) => {
    console.log(text);
+   const iframe = document.querySelector("iframe.ai-display");
+   console.log(iframe);
+   
+   if (iframe) {
+      iframe.remove();
+   }
 });

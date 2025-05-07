@@ -76,7 +76,7 @@ function __OCR__(tabId, imageData, rectInfo) {
                pagePostMessage("C_I_OCR", { imageData, rectInfo }, frame.contentWindow);
             };
 
-            frame.src = chrome.runtime.getURL("./../ocr.html");
+            frame.src = chrome.runtime.getURL("./../inject/inject.html");
             document.documentElement.append(frame);
          } else {
             pagePostMessage("C_I_OCR", { imageData, rectInfo }, existingFrame.contentWindow);

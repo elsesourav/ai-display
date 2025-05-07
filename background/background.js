@@ -74,25 +74,31 @@ runtimeOnMessage(
 // Get OCR configuration options
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-      const { id, windowId } = await getActiveTab();
-      console.log(settings);
-      
-      chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
-         __OCR__(id, img, {
-            top: 0,
-            left: 0,
-            width: 1000,
-            height: 800,
-            devicePixelRatio: 1,
-         });
-      });
-
       if (settings.enable) {
+
       } else {
+         
       }
    });
    return sendResponse("ok");
 });
+
+
+/* 
+
+const { id, windowId } = await getActiveTab();
+
+chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
+   __OCR__(id, img, {
+      top: 0,
+      left: 0,
+      width: 1000,
+      height: 800,
+      devicePixelRatio: 1,
+   });
+});
+
+*/
 
 runtimeOnMessage("C_B_SETUP_IFRAME", (_, { tab }, sendResponse) => {
    addIFrame(tab.id).then((res) => {
