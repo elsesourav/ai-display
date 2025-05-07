@@ -1,21 +1,50 @@
+function fetchOpenRouter(apiKey, model, messages) {
+   return new Promise(async (resolve) => {
+      const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+      try {
+         const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+               Authorization: `Bearer ${apiKey}`,
+               "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+               model: model,
+               messages,
+               max_tokens: 100,
+               temperature: 0.2,
+            }),
+         });
+
+         if (!response.ok) {
+            return resolve(
+               `API error: ${response.status} ${response.statusText}`
+            );
+         }
+
+         const data = await response.json();
+         const reply =
+            data.choices?.[0]?.message?.content || "No reply received.";
+
+         return resolve(reply);
+      } catch (error) {
+         console.log(error);
+         return resolve(`Fetch error`);
+      }
+   });
+}
+
+
 
 
 
 
 /* 
-messages: [
-      {
-         role: "user",
-         content: question,
-      },
-   ]
-
-
-
-
-   ✅ Microsoft: Phi-4 Reasoning Plus (free) — Excellent small reasoning model; fast, sharp, lightweight.
+✅ Microsoft: Phi-4 Reasoning Plus (free) — Excellent small reasoning model; fast, sharp, lightweight.
 
 ✅ Meta: Llama 4 Maverick (free) — One of Meta’s top models; great general-purpose, strong on creativity and reasoning.
+
+
 
 ✅ Google: Gemini 2.5 Flash Preview (free) — Fast, cutting-edge, good balance of speed and intelligence.
 

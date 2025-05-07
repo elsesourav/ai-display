@@ -1,39 +1,3 @@
-function fetchOpenRouter(apiKey, model, messages) {
-   return new Promise(async (resolve) => {
-      const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-      try {
-         const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-               Authorization: `Bearer ${apiKey}`,
-               "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-               model: model,
-               messages,
-               max_tokens: 100,
-               temperature: 0.2,
-            }),
-         });
-
-         if (!response.ok) {
-            return resolve(
-               `API error: ${response.status} ${response.statusText}`
-            );
-         }
-
-         const data = await response.json();
-         const reply =
-            data.choices?.[0]?.message?.content || "No reply received.";
-
-         return resolve(reply);
-      } catch (error) {
-         console.log(error);
-         return resolve(`Fetch error`);
-      }
-   });
-}
-
 /* ------------ all of the models ----------- */
 function microsoftPhi4ReasoningPlus(text) {
    return new Promise(async (resolve) => {
@@ -53,12 +17,11 @@ function microsoftPhi4ReasoningPlus(text) {
    });
 }
 
-
 function metaLlamaLlama4Maverick(text, imgData) {
    return new Promise(async (resolve) => {
       const model = "meta-llama/llama-4-maverick:free";
       const key = await GET__("MLL4M");
-      
+
       try {
          const imageUrl = await uploadImageToCloudinary(imgData);
          if (key) {
@@ -88,3 +51,51 @@ function metaLlamaLlama4Maverick(text, imgData) {
       }
    });
 }
+
+/* ---------------- inject ---------------- */
+function __OCR__(tabId, imageData, rectInfo) {
+   executeScript(
+      tabId,
+      (imageData, rectInfo) => {
+         const existingFrame = document.querySelector("iframe.ai-display");
+
+         if (!existingFrame) {
+            const frame = document.createElement("iframe");
+            frame.classList.add("ai-display");
+            frame.style = `
+               position: fixed;
+               height: 0;
+               width: 0;
+               top: 20px;
+               right: 20px;
+               border: none;
+               z-index: 8250032643;
+            `;
+
+            frame.onload = () => {
+               pagePostMessage("C_I_OCR", { imageData, rectInfo }, frame.contentWindow);
+            };
+
+            frame.src = chrome.runtime.getURL("./../ocr.html");
+            document.documentElement.append(frame);
+         } else {
+            pagePostMessage("C_I_OCR", { imageData, rectInfo }, existingFrame.contentWindow);
+         }
+      },
+      imageData,
+      rectInfo
+   );
+}
+
+
+function removeIFrame(tabId) {
+   chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+         const existingFrame = document.querySelector("iframe.ai-display");
+         if (existingFrame)
+            document.querySelector("iframe.ai-display").remove();
+      },
+   });
+}
+

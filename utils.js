@@ -1,46 +1,50 @@
 "use strict";
 
-function setDataFromLocalStorage(key, object) {
+window.setDataFromLocalStorage = (key, object)  => {
    let data = JSON.stringify(object);
    localStorage.setItem(key, data);
 }
 
-function getDataFromLocalStorage(key) {
+window.KEYS = {
+   SETTINGS: "Ai-Display-Settings",
+};
+
+window.getDataFromLocalStorage = (key)  => {
    console.log(localStorage);
 
    return JSON.parse(localStorage.getItem(key));
 }
 
-function reloadLocation() {
+window.reloadLocation = ()  => {
    window.location.reload();
 }
 
-function map(os, oe, ns, ne, t, isRound = true) {
+window.map = (os, oe, ns, ne, t, isRound = true)  => {
    const r = (ne - ns) / (oe - os);
    let v = r * (t - os) + ns;
    v = Math.min(ne, Math.max(ns, v));
    return isRound ? Math.round(v) : v;
 }
 
-function setDataToLocalStorage(key, object) {
+window.setDataToLocalStorage = (key, object)  => {
    let data = JSON.stringify(object);
    localStorage.setItem(key, data);
 }
 
-function getDataToLocalStorage(key) {
+window.getDataToLocalStorage = (key)  => {
    return JSON.parse(localStorage.getItem(key));
 }
 
-function OBJECTtoJSON(data) {
+window.OBJECTtoJSON = (data)  => {
    return JSON.stringify(data);
 }
 
-function JSONtoOBJECT(data) {
+window.JSONtoOBJECT = (data)  => {
    return JSON.parse(data);
 }
 
 /* ----------- extension utils ----------- */
-function getActiveTab() {
+window.getActiveTab = ()  => {
    return new Promise((resolve) => {
       chrome.tabs.query(
          {
@@ -55,15 +59,15 @@ function getActiveTab() {
    });
 }
 
-function getFormatTime(t) {
+window.getFormatTime = (t)  => {
    const date = new Date(0);
    date.setSeconds(t);
    return date.toISOString().substr(11, 8);
 }
 
-function runtimeSendMessage(type, message, callback) {
+window.runtimeSendMessage = (type, message, callback)  => {
    if (typeof message === "function") {
-      chrome.runtime.sendMessage({ type }, (response) => {
+      chrome.runtime?.sendMessage({ type }, (response) => {
          message && message(response);
       });
    } else {
@@ -73,7 +77,7 @@ function runtimeSendMessage(type, message, callback) {
    }
 }
 
-function tabSendMessage(tabId, type, message, callback) {
+window.tabSendMessage = (tabId, type, message, callback)  => {
    // if third parameter is not pass. in message parameter pass callback function
    if (typeof message === "function") {
       chrome.tabs.sendMessage(tabId, { type }, (response) => {
@@ -86,7 +90,7 @@ function tabSendMessage(tabId, type, message, callback) {
    }
 }
 
-function runtimeOnMessage(type, callback) {
+window.runtimeOnMessage = (type, callback)  => {
    chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (type === message.type) {
          callback(message, sender, response);
@@ -95,17 +99,16 @@ function runtimeOnMessage(type, callback) {
    });
 }
 
-function pagePostMessage(type, data) {
-   window.postMessage({ type, data }, "*");
+window.pagePostMessage = (type, data, contentWindow = window)  => {
+   contentWindow.postMessage({ type, data }, "*");
 }
 
 /* ######## send inject script to => content script ########
    pagePostMessage("i_c", { some: "data" });
 */
 
-function pageOnMessage(type, callback) {
+window.pageOnMessage = (type, callback)  => {
    window.addEventListener("message", (event) => {
-      if (event.source !== window) return;
       if (event.data.type === type) {
          callback(event.data.data, event);
       }
@@ -119,7 +122,7 @@ pageOnMessage("i_c", (data, event) => {
 });
 */
 
-const debounce = (func, delayFn) => {
+window.debounce = (func, delayFn) => {
    let debounceTimer;
    return function (...args) {
       const context = this;
@@ -132,16 +135,16 @@ const debounce = (func, delayFn) => {
 /**
  * @param {number} ms
  **/
-function wait(ms) {
+window.wait = (ms)  => {
    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function chromeStorageSet(key, value, callback) {
+window.chromeStorageSet = (key, value, callback)  => {
    return new Promise((resolve) => {
       let items = {};
       items[key] = value;
-      chrome.storage.sync.set(items, function () {
-         if (chrome.runtime.lastError) {
+      chrome.storage?.sync?.set(items, function() {
+         if (chrome.runtime?.lastError) {
             console.error("Error setting item:", chrome.runtime.lastError);
          } else if (callback) {
             callback();
@@ -151,15 +154,15 @@ function chromeStorageSet(key, value, callback) {
    });
 }
 // Example usage:
-// chromeStorageSet("myKey", "myValue", function () {
+// chromeStorageSet("myKey", "myValue", window.() =   => {
 //    console.log("Item set");
 // });
 
-function chromeStorageGet(key, callback = () => {}) {
+window.chromeStorageGet = (key, callback = () => {})  => {
    return new Promise((resolve) => {
-      chrome.storage.sync.get([key], function (result) {
-         if (chrome.runtime.lastError) {
-            console.error("Error getting item:", chrome.runtime.lastError);
+      chrome.storage?.sync?.get([key], function(result) {
+         if (chrome.runtime?.lastError) {
+            console.error("Error getting item:", chrome.runtime?.lastError);
          } else if (callback) {
             callback(result[key]);
             resolve(result[key]);
@@ -168,12 +171,12 @@ function chromeStorageGet(key, callback = () => {}) {
    });
 }
 
-function setInputLikeHuman(element) {
+window.setInputLikeHuman = (element)  => {
    const event = new Event("change", { bubbles: true });
    element.dispatchEvent(event);
 }
 
-function chromeStorageSetLocal(key, value, callback) {
+window.chromeStorageSetLocal = (key, value, callback)  => {
    const obj = JSON.stringify(value);
 
    chrome.storage.local.set({ [key]: obj }).then(() => {
@@ -187,9 +190,9 @@ function chromeStorageSetLocal(key, value, callback) {
    });
 }
 
-function chromeStorageGetLocal(key, callback) {
+window.chromeStorageGetLocal = (key, callback)  => {
    return new Promise((resolve) => {
-      chrome.storage.local.get([key]).then((result) => {
+      chrome.storage?.local?.get([key]).then((result) => {
          if (chrome.runtime.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
          } else {
@@ -202,7 +205,7 @@ function chromeStorageGetLocal(key, callback) {
    });
 }
 
-function chromeStorageRemoveLocal(key) {
+window.chromeStorageRemoveLocal = (key)  => {
    chrome.storage.local.remove(key).then(() => {
       if (chrome.runtime.lastError) {
          console.log("Error removing item:", chrome.runtime.lastError);
@@ -210,7 +213,7 @@ function chromeStorageRemoveLocal(key) {
    });
 }
 
-function copyTextToClipboard(text) {
+window.copyTextToClipboard = (text)  => {
    const textarea = document.createElement("textarea");
    textarea.value = text;
    textarea.style.position = "fixed"; // Prevent scrolling to bottom
@@ -240,7 +243,7 @@ function copyTextToClipboard(text) {
    document.body.removeChild(textarea);
 }
 
-async function getSecretKey() {
+window.getSecretKey = async ()  => {
    const secret = "af3f-34bj5-245hh-g341g";
    const encoder = new TextEncoder();
    const keyMaterial = await crypto.subtle.digest(
@@ -256,29 +259,39 @@ async function getSecretKey() {
    );
 }
 
-function injectScript(src) {
+window.injectScript = (src)  => {
    const script = document.createElement("script");
    script.src = chrome.runtime.getURL(src);
    script.onload = () => script.remove();
    (document.head || document.documentElement).appendChild(script);
 }
 
-function injectJSCode(code) {
+window.injectJSCode = (code)  => {
    const scriptElement = document.createElement("script");
    scriptElement.setAttribute("type", "text/javascript");
    scriptElement.textContent = code;
    document.documentElement.appendChild(scriptElement);
 }
 
-// Function to inject external JavaScript file
-function injectJSLink(src) {
+// window.to =  inject external JavaScript fil => e
+window.injectJSLink = (src)  => {
    const scriptElement = document.createElement("script");
    scriptElement.setAttribute("type", "text/javascript");
    scriptElement.setAttribute("src", src);
    document.documentElement.appendChild(scriptElement);
 }
 
-async function encryptData(data) {
+window.executeScript = (tabId, func, ...args)  => {
+   chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] });
+}
+
+/* ################# EXAMPLE ##################
+   executeScript(tabId, (text, obj, etc) => {
+      console.log("Hello from the injected script!");
+   }, text, obj, etc);
+*/
+
+window.encryptData = async (data)  => {
    const key = await getSecretKey();
    const encoder = new TextEncoder();
    const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -294,7 +307,7 @@ async function encryptData(data) {
    };
 }
 
-async function decryptData(encrypted) {
+window.decryptData = async (encrypted)  => {
    const key = await getSecretKey();
    const iv = new Uint8Array(
       atob(encrypted.iv)
@@ -317,7 +330,7 @@ async function decryptData(encrypted) {
    return decoder.decode(decryptedData);
 }
 
-async function GET__(name) {
+window.GET__ = async (name)  => {
    try {
       const res = await fetch(chrome.runtime.getURL("config.json"));
       const config = await res.json();
@@ -331,7 +344,7 @@ async function GET__(name) {
    }
 }
 
-async function uploadImageToCloudinary(file) {
+window.uploadImageToCloudinary = async (file) => {
    const cloudName = "diysvbtwq";
    const uploadPreset = "AiDisplay";
 
@@ -347,13 +360,11 @@ async function uploadImageToCloudinary(file) {
    });
 
    const data = await response.json();
-   
+
    if (response.ok) {
       return data.secure_url;
    } else {
       console.error("Upload error:", data);
       throw new Error(data.error.message);
    }
-}
-
-
+};

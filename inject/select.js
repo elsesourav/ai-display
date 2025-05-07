@@ -21,7 +21,7 @@ const htmlContent = /* html */ `
 
    <div
       id="moveElement"
-      class="fixed top-5 left-5 z-[1000] p-1 pl-3 w-24 bg-gray-800 text-white rounded-md shadow-md flex justify-between gap-2 cursor-grab opacity-70 hover:opacity-100 transition-opacity duration-300"
+      class="fixed top-5 left-5 z-[10000] p-1 pl-3 w-24 bg-gray-800 text-white rounded-md shadow-md flex justify-between gap-2 cursor-grab opacity-70 hover:opacity-100 transition-opacity duration-300"
    >
 
       <div class="size-2"></div>
@@ -44,7 +44,6 @@ const htmlContent = /* html */ `
 
 
    <video id="screenVideo" autoplay class="hidden"></video>
-   <img id="snapshot" class="max-w-[300px] fixed left-50 top-50 z-[100]" />
 `;
 
 document.body.insertAdjacentHTML("beforeend", htmlContent);
@@ -66,7 +65,6 @@ const display = document.getElementById("display");
 const ctx = display.getContext("2d");
 display.width = window.innerWidth;
 display.height = window.innerHeight;
-
 
 let isStreaming = false;
 let isSelecting = false,
@@ -104,7 +102,6 @@ document.addEventListener("mouseup", () => {
    isDragging = false;
 });
 
-
 startCapture.addEventListener("click", async () => {
    try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -135,11 +132,6 @@ takeSnapshot.addEventListener("click", () => {
    display.style.display = "block";
    overlay.style.display = "block";
    desButtons.style.display = "none";
-
-   const imageDataUrl = display.toDataURL("image/png");
-   document.getElementById("snapshot").src = imageDataUrl;
-
-   console.log("Snapshot taken.");
 });
 
 overlay.addEventListener("mousedown", (e) => {
@@ -188,48 +180,35 @@ async function captureSelection() {
    overlay.style.display = "none";
    display.style.display = "none";
 
-   html2canvas(document.body, {
-      x: rect.left,
-      y: rect.top,
-      width: rect.width,
-      height: rect.height,
-   }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      resetCapture();
-      pagePostMessage("i_c_selected_image", { imgData });
-   });
-   moveElement.style.display = "block";
+   // Create a temporary canvas to hold the cropped image
+   const tempCanvas = document.createElement("canvas");
+   tempCanvas.width = rect.width;
+   tempCanvas.height = rect.height;
+   const tempCtx = tempCanvas.getContext("2d");
+
+   // Draw the selected portion onto the temporary canvas
+   tempCtx.drawImage(
+      display,
+      rect.left,
+      rect.top,
+      rect.width,
+      rect.height,
+      0,
+      0,
+      rect.width,
+      rect.height
+   );
+
+   const imgData = tempCanvas.toDataURL("image/png");
+   console.log(imgData);
+
+   pagePostMessage("i_c_selected_image", { imgData });
+   resetCapture();
+
+   display.width = window.innerWidth;
+   display.height = window.innerHeight;
+   moveElement.style.display = "flex";
    overlay.style.display = "block";
-
-   // try {
-   //    // Ask the user to share a screen or window
-   //    const stream = await navigator.mediaDevices.getDisplayMedia({
-   //       video: true,
-   //    });
-   //    const track = stream.getVideoTracks()[0];
-   //    const imageCapture = new ImageCapture(track);
-
-   //    // Take a frame (screenshot)
-   //    const bitmap = await imageCapture.grabFrame();
-
-   //    // Draw to a canvas
-   //    const canvas = document.createElement("canvas");
-   //    canvas.width = bitmap.width;
-   //    canvas.height = bitmap.height;
-   //    const ctx = canvas.getContext("2d");
-   //    ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
-
-   //    // Convert to image data (base64)
-   //    const imgData = canvas.toDataURL("image/png");
-   //    console.log("Screenshot captured:", imgData);
-
-   //    // Clean up
-   //    stream.getTracks().forEach((t) => t.stop());
-
-   //    return imgData;
-   // } catch (err) {
-   //    console.error("Error capturing screenshot:", err);
-   // }
 }
 
 function resetCapture() {

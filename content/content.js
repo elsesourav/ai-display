@@ -1,33 +1,30 @@
+// injectJSLink(chrome.runtime.getURL("./../inject/select.js"));
+// injectJSLink(chrome.runtime.getURL("./../utils.js"));
+
 console.log("content script loaded");
-injectJSLink(chrome.runtime.getURL("./../inject/html2canvas.js"));
-injectJSLink(chrome.runtime.getURL("./../inject/dom2image.js"));
-injectJSLink(chrome.runtime.getURL("./../inject/tailwind.js"));
-injectJSLink(chrome.runtime.getURL("./../inject/select.js"));
-injectJSLink(chrome.runtime.getURL("./../utils.js"));
 
-pageOnMessage("i_c_selected_image", async (data) => {
-   if (!data.imgData) return;
-   const { imgData } = data;
+// pageOnMessage("i_c_selected_image", async (data) => {
+//    if (!data.imgData) return;
+//    const { imgData } = data;
 
-   try {
-      const data = await Tesseract.recognize(imgData, "eng", {
-         // logger: (m) => console.log(m),
-      });
+//    runtimeSendMessage("c_b", { imgData }, (r) => {
+//       console.log(r);
+//    });
+// });
 
-      if (data?.data?.text) {
-         const { text } = data?.data;
-         console.log(text);
-         
-         runtimeSendMessage("c_b", { imgData, text }, (r) => {
-            console.log(r);
-         });
-      }
-   } catch (error) {
-      console.log("Error during OCR processing:", error);
-   }
-});
+// runtimeSendMessage("c_b", { imgData }, (r) => {
+//    console.log(r);
+// });
+
+// pageOnMessage("I_C_IFRAME_LOAD_STATUS", async ({ message }) => {
+//    runtimeSendMessage("C_B_IFRAME_LOAD_STATUS", { message });
+// });
 
 runtimeOnMessage("b_c_answer", async ({ answer }, _, sendResponse) => {
    console.log(answer);
    sendResponse("Get It");
+});
+
+pageOnMessage("I_C_OCR_RESULT", async ({ text }) => {
+   console.log(text);
 });
