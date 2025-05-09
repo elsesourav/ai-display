@@ -14,6 +14,8 @@ export default defineConfig({
       rollupOptions: {
          input: {
             main: resolve(__dirname, "popup.html"),
+            selection: resolve(__dirname, "./inject/selection.html"),
+            window: resolve(__dirname, "./inject/window.html"),
          },
       },
    },

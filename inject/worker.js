@@ -1,6 +1,6 @@
 let worker;
 
-function cropImage(href, { width, height, left, top }, mode = "normal") {
+function cropImage(imageData, { width, height, left, top }, mode = "normal") {
    return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -24,7 +24,7 @@ function cropImage(href, { width, height, left, top }, mode = "normal") {
 
          resolve(canvas.toDataURL());
       };
-      img.src = href;
+      img.src = imageData;
    });
 }
 
@@ -53,6 +53,7 @@ function readyWorker() {
 }
 
 function updateProgress(packet) {
+   return;
    const percent = Math.round(packet.progress * 100);
    const barLength = 20; // total segments in the bar
    const filledLength = Math.round((barLength * percent) / 100);
@@ -84,6 +85,8 @@ function processOCR(imageData, rectInfo) {
       try {
          const promises = [cropImage(imageData, box), readyWorker()];
          Promise.all(promises).then(async ([croppedImage]) => {
+            // console.log(croppedImage);
+            
             const result = await worker.recognize(croppedImage);
             resolve(result.data.text);
          });
@@ -101,7 +104,7 @@ window.addEventListener("beforeunload", async () => {
 });
 
 pageOnMessage("C_I_OCR", async ({ imageData, rectInfo }) => {
-   console.log(imageData, rectInfo);   
+   // console.log(imageData, rectInfo);   
    const text = await processOCR(imageData, rectInfo);
    console.log(text);
    pagePostMessage("I_C_OCR_RESULT", { text });

@@ -66,27 +66,23 @@ runtimeOnMessage(
    }
 );
 
-// if script inject and loaded then resolve
-// runtimeOnMessage("C_B_IFRAME_LOAD_STATUS", ({ message }) => {
-//    resolve(message);
-// });
-
 // Get OCR configuration options
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-      if (settings.enable) {
+      const { id, windowId } = await getActiveTab();
 
+      if (settings.enable) {
+         __SELECT__(id);
       } else {
-         
       }
    });
    return sendResponse("ok");
 });
 
-
 /* 
-
 const { id, windowId } = await getActiveTab();
+
+if (isInternalPage(tab)) return;
 
 chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
    __OCR__(id, img, {
@@ -97,8 +93,27 @@ chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
       devicePixelRatio: 1,
    });
 });
-
 */
+
+runtimeOnMessage(
+   "C_B_CAPTURE_DOM",
+   ({ coordinates, devicePixelRatio }, { tab }, sendResponse) => {
+      const { id, windowId } = tab;
+      const rect = {
+         top: coordinates.y,
+         left: coordinates.x,
+         width: coordinates.width,
+         height: coordinates.height,
+         devicePixelRatio,
+      };
+
+      chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
+         __OCR__(id, img, rect);
+      });
+
+      sendResponse("ok");
+   }
+);
 
 runtimeOnMessage("C_B_SETUP_IFRAME", (_, { tab }, sendResponse) => {
    addIFrame(tab.id).then((res) => {
@@ -110,4 +125,3 @@ runtimeOnMessage("C_B_REMOVE_IFRAME", (_, { tab }, sendResponse) => {
    sendResponse("ok");
    removeIFrame(tab.id);
 });
-

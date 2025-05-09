@@ -368,3 +368,7 @@ async function uploadImageToCloudinary(file) {
       throw new Error(data.error.message);
    }
 }
+
+function isInternalPage(tab) {
+   return /^(chrome|edge|about):\/\//.test(tab.url);
+}

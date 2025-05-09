@@ -25,12 +25,28 @@ runtimeOnMessage("b_c_answer", async ({ answer }, _, sendResponse) => {
    sendResponse("Get It");
 });
 
+const removeIframe = (selector) => {
+   const iFrame = document.querySelector(selector);
+   if (iFrame) {
+      iFrame.remove();
+   }
+};
+
 pageOnMessage("I_C_OCR_RESULT", async ({ text }) => {
    console.log(text);
-   const iframe = document.querySelector("iframe.ai-display");
-   console.log(iframe);
-   
-   if (iframe) {
-      iframe.remove();
-   }
+   removeIframe("iframe.ai-display");
+});
+
+pageOnMessage("I_C_SELECT_COORDS", async ({ coordinates }) => {
+   console.log(coordinates);
+   removeIframe("iframe.aid-selection");
+   runtimeSendMessage("C_B_CAPTURE_DOM", {
+      coordinates,
+      devicePixelRatio: window.devicePixelRatio,
+   });
+});
+
+pageOnMessage("I_C_SELECT_CANCEL", async () => {
+   console.log("Selection cancelled");
+   removeIframe("iframe.aid-selection");
 });

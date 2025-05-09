@@ -73,13 +73,21 @@ function __OCR__(tabId, imageData, rectInfo) {
             `;
 
             frame.onload = () => {
-               pagePostMessage("C_I_OCR", { imageData, rectInfo }, frame.contentWindow);
+               pagePostMessage(
+                  "C_I_OCR",
+                  { imageData, rectInfo },
+                  frame.contentWindow
+               );
             };
 
             frame.src = chrome.runtime.getURL("./../inject/inject.html");
             document.documentElement.append(frame);
          } else {
-            pagePostMessage("C_I_OCR", { imageData, rectInfo }, existingFrame.contentWindow);
+            pagePostMessage(
+               "C_I_OCR",
+               { imageData, rectInfo },
+               existingFrame.contentWindow
+            );
          }
       },
       imageData,
@@ -87,6 +95,46 @@ function __OCR__(tabId, imageData, rectInfo) {
    );
 }
 
+function __SELECT__(tabId) {
+   executeScript(
+      tabId,
+      () => {
+         const existingFrame = document.querySelector("iframe.aid-selection");
+
+         if (!existingFrame) {
+            const frame = document.createElement("iframe");
+            frame.classList.add("aid-selection");
+            frame.setAttribute("allowtransparency", "true");
+
+            // Set inline styles for transparency
+            frame.style = `
+               position: fixed;
+               width: 100svw;
+               height: 100svh;
+               inset: 0;
+               border: none;
+               background: transparent !important;
+               z-index: 8250032643;
+               pointer-events: auto;
+               isolation: isolate;
+            `;
+
+            // Add additional style attributes to ensure transparency
+            const currentStyle = frame.getAttribute("style") || "";
+            frame.setAttribute(
+               "style",
+               currentStyle +
+                  "; background: transparent !important;" +
+                  "; color-scheme: only light !important;"
+            );
+
+            frame.src = chrome.runtime.getURL("./inject/selection.html");
+            document.documentElement.append(frame);
+         }
+      },
+      tabId
+   );
+}
 
 function removeIFrame(tabId) {
    chrome.scripting.executeScript({
@@ -98,4 +146,3 @@ function removeIFrame(tabId) {
       },
    });
 }
-

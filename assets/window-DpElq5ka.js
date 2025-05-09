@@ -1,0 +1,1 @@
+import{c as r,j as t,r as e}from"./client-Dsk2-liH.js";/* empty css             *//* empty css                  */function o(){return t.jsx(e.StrictMode,{children:t.jsx("div",{className:"w-full h-full bg-transparent",children:t.jsx(Select,{})})})}r.createRoot(document.getElementById("root")).render(t.jsx(o,{}));
