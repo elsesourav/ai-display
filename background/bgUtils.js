@@ -136,6 +136,48 @@ function __SELECT__(tabId) {
    );
 }
 
+function __PUSH_MENU__(tabId) {
+   executeScript(
+      tabId,
+      () => {
+         const existingFrame = document.querySelector("iframe.aid-menu");
+
+         if (!existingFrame) {
+            const frame = document.createElement("iframe");
+            frame.classList.add("aid-menu");
+            frame.setAttribute("allowtransparency", "true");
+
+            // Set inline styles for transparency
+            frame.style = `
+               position: fixed;
+               width: auto;
+               height: auto;
+               border: none;
+               background: transparent !important;
+               z-index: 8250032643;
+               pointer-events: auto;
+               isolation: isolate;
+               top: 10px;
+               left: 10px;
+            `;
+
+            // Add additional style attributes to ensure transparency
+            const currentStyle = frame.getAttribute("style") || "";
+            frame.setAttribute(
+               "style",
+               currentStyle +
+                  "; background: transparent !important;" +
+                  "; color-scheme: only light !important;"
+            );
+
+            frame.src = chrome.runtime.getURL("./inject/window.html");
+            document.documentElement.append(frame);
+         }
+      },
+      tabId
+   );
+}
+
 function removeIFrame(tabId) {
    chrome.scripting.executeScript({
       target: { tabId },

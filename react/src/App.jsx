@@ -1,5 +1,5 @@
-import Header from "../components/Header";
-import ToggleButton from "../components/ToggleButton";
+import Header from "./components/Header";
+import ToggleButton from "./components/ToggleButton";
 
 function App() {
    return (

@@ -25,6 +25,10 @@ runtimeOnMessage("b_c_answer", async ({ answer }, _, sendResponse) => {
    sendResponse("Get It");
 });
 
+runtimeSendMessage("C_B_ON_LOAD", async (r) => {
+   console.log(r);
+});
+
 const removeIframe = (selector) => {
    const iFrame = document.querySelector(selector);
    if (iFrame) {
@@ -50,3 +54,27 @@ pageOnMessage("I_C_SELECT_CANCEL", async () => {
    console.log("Selection cancelled");
    removeIframe("iframe.aid-selection");
 });
+
+pageOnMessage("I_C_MENU_INFO_UPDATE", ({ menuInfo }) => {
+   updateIframePosition(menuInfo);
+});
+
+function updateIframePosition(menuInfo) {
+   const iframe = document.querySelector("iframe.aid-menu");
+   if (!iframe) return;
+
+   iframe.style.left = `${menuInfo.x}px`;
+   iframe.style.top = `${menuInfo.y}px`;
+
+   const width =
+      typeof menuInfo.width === "string"
+         ? menuInfo.width
+         : `${menuInfo.width}px`;
+   const height =
+      typeof menuInfo.height === "string"
+         ? menuInfo.height
+         : `${menuInfo.height}px`;
+
+   iframe.style.width = width;
+   iframe.style.height = height;
+}

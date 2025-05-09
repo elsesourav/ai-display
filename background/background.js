@@ -82,7 +82,7 @@ runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
 /* 
 const { id, windowId } = await getActiveTab();
 
-if (isInternalPage(tab)) return;
+
 
 chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
    __OCR__(id, img, {
@@ -95,21 +95,32 @@ chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
 });
 */
 
+
+runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
+   sendResponse("ok");
+   if (isInternalPage(tab)) return;
+   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
+      if (settings.enable) {
+         __PUSH_MENU__(tab.id);
+      }
+   });
+});
+
 runtimeOnMessage(
    "C_B_CAPTURE_DOM",
    ({ coordinates, devicePixelRatio }, { tab }, sendResponse) => {
-      const { id, windowId } = tab;
-      const rect = {
-         top: coordinates.y,
-         left: coordinates.x,
-         width: coordinates.width,
-         height: coordinates.height,
-         devicePixelRatio,
-      };
+      // const { id, windowId } = tab;
+      // const rect = {
+      //    top: coordinates.y,
+      //    left: coordinates.x,
+      //    width: coordinates.width,
+      //    height: coordinates.height,
+      //    devicePixelRatio,
+      // };
 
-      chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
-         __OCR__(id, img, rect);
-      });
+      // chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
+      //    __OCR__(id, img, rect);
+      // });
 
       sendResponse("ok");
    }

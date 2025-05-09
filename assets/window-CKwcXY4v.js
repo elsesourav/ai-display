@@ -1,0 +1,1 @@
+import{j as e,c as t,r}from"./client-Dsk2-liH.js";/* empty css             */function n(){return e.jsx("div",{className:"relative w-20 h-10 flex flex-col items-center justify-center bg-amber-50",children:"Menu"})}function o(){return e.jsx(r.StrictMode,{children:e.jsx(n,{})})}t.createRoot(document.getElementById("root")).render(e.jsx(o,{}));
