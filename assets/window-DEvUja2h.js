@@ -1,1 +1,0 @@
-import{j as e,c as t,r}from"./index-DzPHA2kC.js";function o(){return e.jsx("div",{className:"w-full h-full flex flex-col items-center justify-center bg-amber-50",children:"Hello Sourav"})}t.createRoot(document.getElementById("root")).render(e.jsx(r.StrictMode,{children:e.jsx(o,{})}));
