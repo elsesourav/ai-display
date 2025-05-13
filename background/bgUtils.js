@@ -140,47 +140,42 @@ function __PUSH_MENU__(tabId) {
    executeScript(
       tabId,
       () => {
-         const existingFrame = document.querySelector("div.aid-menu");
+         const existingFrame = document.querySelector("iframe.aid-window");
 
          if (!existingFrame) {
-            const frame = document.createElement("div");
-            frame.classList.add("aid-menu");
-            // frame.setAttribute("allowtransparency", "true");
+            const frame = document.createElement("iframe");
+            frame.classList.add("aid-window");
+            frame.setAttribute("allowtransparency", "true");
 
             // Set inline styles for transparency
             frame.style = `
                position: fixed;
-               width: auto;
-               height: auto;
+               width: 160px;
+               height: 50px;
+               top: 0;
+               left: 0;
                border: none;
                background: transparent !important;
                z-index: 8250032643;
-               pointer-events: auto;
-               isolation: isolate;
-               top: 10px;
-               left: 10px;
             `;
 
             // Add additional style attributes to ensure transparency
-            // const currentStyle = frame.getAttribute("style") || "";
-            // frame.setAttribute(
-            //    "style",
-            //    currentStyle +
-            //       "; background: transparent !important;" +
-            //       "; color-scheme: only light !important;"
-            // );
+            const currentStyle = frame.getAttribute("style") || "";
+            frame.setAttribute(
+               "style",
+               `${currentStyle}; color-scheme: light dark !important;`
+            );
 
+            frame.onload = () => {
+               pagePostMessage(
+                  "C_I_RESIZE",
+                  { data: { w: window.innerWidth, h: window.innerHeight } },
+                  frame.contentWindow
+               );
+            };
+
+            frame.src = chrome.runtime.getURL("./inject/window.html");
             document.documentElement.append(frame);
-
-            // frame.innerHTML = chrome.runtime.getURL("./inject/window.html");
-            // document.documentElement.append(frame);
-
-            fetch(chrome.runtime.getURL("./inject/window.html"))
-               .then((response) => response.text())
-               .then((html) => {
-                  frame.innerHTML = html;
-               })
-               .catch((err) => console.error("Failed to load HTML:", err));
          }
       },
       tabId

@@ -4,7 +4,6 @@ const KEYS = {
    SETTINGS: "Ai-Display-Settings",
 };
 
-
 function setDataFromLocalStorage(key, object) {
    let data = JSON.stringify(object);
    localStorage.setItem(key, data);
@@ -259,11 +258,12 @@ async function getSecretKey() {
    );
 }
 
-function injectScript(src) {
+function injectScript(src, type, doc = document || document.documentElement) {
    const script = document.createElement("script");
    script.src = chrome.runtime.getURL(src);
+   if (type) script.type = type;
    script.onload = () => script.remove();
-   (document.head || document.documentElement).appendChild(script);
+   doc.appendChild(script);
 }
 
 function injectJSCode(code) {
@@ -279,6 +279,37 @@ function injectJSLink(src) {
    scriptElement.setAttribute("type", "text/javascript");
    scriptElement.setAttribute("src", src);
    document.documentElement.appendChild(scriptElement);
+}
+
+function injectCSSFile(
+   src,
+   ref = "stylesheet",
+   type = "text/css",
+   crossorigin,
+   doc = document || document.documentElement
+) {
+   const link = document.createElement("link");
+   if (ref) link.rel = ref;
+   if (type) link.type = "text/css";
+   if (crossorigin) link.setAttribute("crossorigin", "anonymous");
+   link.href = chrome.runtime.getURL(src);
+   doc.appendChild(link);
+}
+
+
+function injectCSSCode(cssCode) {
+   const style = document.createElement("style");
+   style.type = "text/css";
+   style.textContent = cssCode;
+   (document.head || document.documentElement).appendChild(style);
+}
+
+function injectCSSLink(href) {
+   const link = document.createElement("link");
+   link.rel = "stylesheet";
+   link.type = "text/css";
+   link.href = href;
+   (document.head || document.documentElement).appendChild(link);
 }
 
 function executeScript(tabId, func, ...args) {

@@ -69,11 +69,12 @@ runtimeOnMessage(
 // Get OCR configuration options
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-      const { id, windowId } = await getActiveTab();
+      const { id } = await getActiveTab();
 
       if (settings.enable) {
-         __SELECT__(id);
+         tabSendMessage(id, "B_C_SETUP_MENU");
       } else {
+         tabSendMessage(id, "B_C_CLOSE_MENU");
       }
    });
    return sendResponse("ok");
@@ -95,10 +96,10 @@ chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
 });
 */
 
-
 runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
    sendResponse("ok");
    if (isInternalPage(tab)) return;
+
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
       if (settings.enable) {
          __PUSH_MENU__(tab.id);

@@ -259,11 +259,13 @@ window.getSecretKey = async ()  => {
    );
 }
 
-window.injectScript = (src)  => {
+function injectScript(src, type, crossorigin, doc = document.head || document.documentElement) {
    const script = document.createElement("script");
    script.src = chrome.runtime.getURL(src);
-   script.onload = () => script.remove();
-   (document.head || document.documentElement).appendChild(script);
+   if (type) script.type = type;
+   if (crossorigin) script.setAttribute("crossorigin", "anonymous");
+   // script.onload = () => script.remove();
+   doc.appendChild(script);
 }
 
 window.injectJSCode = (code)  => {
@@ -280,6 +282,37 @@ window.injectJSLink = (src)  => {
    scriptElement.setAttribute("src", src);
    document.documentElement.appendChild(scriptElement);
 }
+
+function injectCSSFile(
+   src,
+   ref = "stylesheet",
+   type = "text/css",
+   crossorigin,
+   doc = document.head || document.documentElement
+) {
+   const link = document.createElement("link");
+   if (ref) link.rel = ref;
+   if (type) link.type = "text/css";
+   if (crossorigin) link.setAttribute("crossorigin", "anonymous");
+   link.href = chrome.runtime.getURL(src);
+   doc.appendChild(link);
+}
+
+function injectCSSCode(cssCode) {
+   const style = document.createElement("style");
+   style.type = "text/css";
+   style.textContent = cssCode;
+   (document.head || document.documentElement).appendChild(style);
+}
+
+function injectCSSLink(href) {
+   const link = document.createElement("link");
+   link.rel = "stylesheet";
+   link.type = "text/css";
+   link.href = href;
+   (document.head || document.documentElement).appendChild(link);
+}
+
 
 window.executeScript = (tabId, func, ...args)  => {
    chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] });
