@@ -3,34 +3,20 @@ importScripts("./utils.js", "./bgUtils.js", "./apiCall.js");
 console.log("background script loaded");
 
 function sendAnswer(tabId, answer) {
-   tabSendMessage(tabId, "b_c_answer", { answer });
+   tabSendMessage(tabId, "B_C_SET_ANS", { answer });
 }
 
-async function extractTextFromImage(imgData, options = {}) {}
-
 runtimeOnMessage(
-   "c_b",
-   async ({ imgData, ocrOptions }, { tab }, sendResponse) => {
+   "C_B_GET_ANSWER",
+   async ({ question, image }, { tab }, sendResponse) => {
       const { id } = tab;
 
       try {
-         // Convert imgData to text using OCR
-         console.log("Starting OCR process with options:", ocrOptions);
-         const text = await extractTextFromImage(imgData, ocrOptions);
-         console.log("Extracted text:", text);
-
-         // Send initial response to let the client know OCR is complete
-         sendResponse({
-            success: true,
-            message: "OCR processing complete, running AI models",
-            text: text,
-         });
-
-         // Process the recognized text with AI models
+         
          const tracks = [];
          const allTasks = [
-            microsoftPhi4ReasoningPlus(text),
-            metaLlamaLlama4Maverick(text, imgData),
+            microsoftPhi4ReasoningPlus(question),
+            metaLlamaLlama4Maverick(question, image),
          ];
 
          allTasks.forEach(async (task, index) => {
@@ -70,31 +56,14 @@ runtimeOnMessage(
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
       const { id } = await getActiveTab();
-
       if (settings.enable) {
-         tabSendMessage(id, "B_C_SETUP_MENU");
+         __PUSH_MENU__(id);
       } else {
          tabSendMessage(id, "B_C_CLOSE_MENU");
       }
    });
    return sendResponse("ok");
 });
-
-/* 
-const { id, windowId } = await getActiveTab();
-
-
-
-chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
-   __OCR__(id, img, {
-      top: 0,
-      left: 0,
-      width: 1000,
-      height: 800,
-      devicePixelRatio: 1,
-   });
-});
-*/
 
 runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
    sendResponse("ok");
@@ -107,21 +76,26 @@ runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
    });
 });
 
+runtimeOnMessage("C_B_SELECT_TEXT", (_, { tab }, sendResponse) => {
+   sendResponse("ok");
+   __SELECT__(tab.id);
+});
+
 runtimeOnMessage(
    "C_B_CAPTURE_DOM",
    ({ coordinates, devicePixelRatio }, { tab }, sendResponse) => {
-      // const { id, windowId } = tab;
-      // const rect = {
-      //    top: coordinates.y,
-      //    left: coordinates.x,
-      //    width: coordinates.width,
-      //    height: coordinates.height,
-      //    devicePixelRatio,
-      // };
+      const { id, windowId } = tab;
+      const rect = {
+         top: coordinates.y,
+         left: coordinates.x,
+         width: coordinates.width,
+         height: coordinates.height,
+         devicePixelRatio,
+      };
 
-      // chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
-      //    __OCR__(id, img, rect);
-      // });
+      chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
+         __OCR__(id, img, rect);
+      });
 
       sendResponse("ok");
    }

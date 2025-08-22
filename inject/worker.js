@@ -88,7 +88,10 @@ function processOCR(imageData, rectInfo) {
             // console.log(croppedImage);
             
             const result = await worker.recognize(croppedImage);
-            resolve(result.data.text);
+            resolve({
+               text: result.data.text,
+               image: croppedImage,
+            });
          });
       } catch (error) {
          console.error("Error processing OCR:", error);
@@ -105,7 +108,7 @@ window.addEventListener("beforeunload", async () => {
 
 pageOnMessage("C_I_OCR", async ({ imageData, rectInfo }) => {
    // console.log(imageData, rectInfo);   
-   const text = await processOCR(imageData, rectInfo);
-   console.log(text);
-   pagePostMessage("I_C_OCR_RESULT", { text });
+   const result = await processOCR(imageData, rectInfo);
+   // console.log(result);
+   pagePostMessage("I_C_OCR_RESULT", result, window.parent);
 });

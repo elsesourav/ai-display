@@ -296,7 +296,6 @@ function injectCSSFile(
    doc.appendChild(link);
 }
 
-
 function injectCSSCode(cssCode) {
    const style = document.createElement("style");
    style.type = "text/css";

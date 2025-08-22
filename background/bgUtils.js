@@ -123,9 +123,7 @@ function __SELECT__(tabId) {
             const currentStyle = frame.getAttribute("style") || "";
             frame.setAttribute(
                "style",
-               currentStyle +
-                  "; background: transparent !important;" +
-                  "; color-scheme: only light !important;"
+               `${currentStyle}; color-scheme: only light !important;`
             );
 
             frame.src = chrome.runtime.getURL("./inject/selection.html");
@@ -176,6 +174,8 @@ function __PUSH_MENU__(tabId) {
 
             frame.src = chrome.runtime.getURL("./inject/window.html");
             document.documentElement.append(frame);
+         } else {
+            existingFrame.style.display = "block";
          }
       },
       tabId
