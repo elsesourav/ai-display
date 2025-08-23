@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+   line-height: 1.5;
+   font-weight: 400;
+}
+
+/* Selection page specific styles */
+html,
+body,
+#root,
+#root > div,
+.element-selector,
+.element-selector > * {
+   background-color: transparent !important;
+   background: none !important;
+   margin: 0;
+   padding: 0;
+}
+
+/* Ensure the iframe is transparent */
+iframe {
+   background-color: transparent !important;
+   background: none !important;
+}
+
+/* Ensure the selection area is transparent */
+.element-selector {
+   background-color: transparent !important;
+   background: none !important;
+}
+
+/* Force transparency on all elements except specific UI components */
+*:not(.group, button, svg, path, .resize-handle) {
+   background-color: transparent !important;
+   background: none !important;
+}
+
+/* Ensure the selection overlay has a dark background */
+.selection-overlay {
+   background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure the selection rectangle is transparent */
+.selection-rect {
+   background-color: transparent !important;
+}
