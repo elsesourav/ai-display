@@ -10,7 +10,7 @@ export default function Header() {
             <div className="bg-gradient-to-r from-blue-800 to-indigo-900 rounded-md shadow w-full px-4">
                <div className="flex h-16 items-center justify-between">
                   <div className="size-10">
-                     <img src="./assets/icons/icon.png" alt="icon" />
+                     <img src="./../assets/icons/icon.png" alt="icon" />
                   </div>
                   <h1 className="bg-gradient-to-l from-purple-500 via-orange-400 to-pink-500 inline-block text-transparent bg-clip-text font-black text-2xl text-shadow-lg/10 text-shadow-black">
                      AI Display

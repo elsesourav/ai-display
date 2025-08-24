@@ -28,6 +28,7 @@
    "content_scripts": [
       {
          "matches": ["http://*/*", "https://*/*"],
+         "exclude_globs": ["chrome://*"],
          "js": ["./utils.js", "./content/content.js"]
       }
    ],
@@ -55,7 +56,7 @@
          "128": "assets/icons/128.png"
       },
       "default_title": "Ai Display",
-      "default_popup": "./popup.html"
+      "default_popup": "./popup/popup.html"
    },
    "icons": {
       "16": "assets/icons/16.png",

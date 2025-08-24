@@ -1,4 +1,4 @@
-importScripts("./utils.js", "./bgUtils.js", "./apiCall.js");
+importScripts("./../utils.js", "./bgUtils.js", "./apiCall.js");
 
 console.log("background script loaded");
 
@@ -55,11 +55,13 @@ runtimeOnMessage(
 // Get OCR configuration options
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-      const { id } = await getActiveTab();
+      const tab = await getActiveTab();
+      if (!isInternalPage(tab)) return;
+      
       if (settings.enable) {
-         __PUSH_MENU__(id);
+         __PUSH_MENU__(tab.id);
       } else {
-         tabSendMessage(id, "B_C_CLOSE_MENU");
+         tabSendMessage(tab.id, "B_C_CLOSE_MENU");
       }
    });
    return sendResponse("ok");

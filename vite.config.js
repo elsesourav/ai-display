@@ -9,22 +9,23 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
    plugins: [react(), tailwindcss()],
+   root: resolve(__dirname, "./src"),
    resolve: {
       alias: {
          "@": resolve(__dirname, "./src"),
       },
    },
    build: {
-      outDir: "extension/",
+      outDir: resolve(__dirname, "./extension"),
       rollupOptions: {
          input: {
-            popup: resolve(__dirname, "./src/popup.html"),
-            selection: resolve(__dirname, "./src/pages/selection.html"),
-            window: resolve(__dirname, "./src/pages/window.html"),
+            popup: resolve(__dirname, "./src/popup/popup.html"),
+            selection: resolve(__dirname, "./src/inject/selection.html"),
+            window: resolve(__dirname, "./src/inject/window.html"),
          },
       },
       emptyOutDir: true,
    },
-   publicDir: "scripts",
+   publicDir: resolve(__dirname, "./scripts"),
    base: "./",
 });

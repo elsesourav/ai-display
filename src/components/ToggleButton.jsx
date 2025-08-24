@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 import { useEffect, useState } from "react";
+import extensionUtils from "./../utils/utilsModule.js";
 
 export default function ToggleButton() {
    const [checked, setChecked] = useState(false);
@@ -8,7 +9,7 @@ export default function ToggleButton() {
    });
 
    useEffect(() => {
-      chromeStorageGetLocal(KEYS.SETTINGS, (settings) => {
+      extensionUtils.chromeStorageGetLocal(extensionUtils.KEYS.SETTINGS, (settings) => {
          if (settings) {
             setSettings(settings);
             setChecked(settings.enable);
@@ -18,9 +19,13 @@ export default function ToggleButton() {
 
    useEffect(() => {
       settings.enable = checked;
-      chromeStorageSetLocal(KEYS.SETTINGS, settings, () => {
-         runtimeSendMessage("P_B_TOGGLE");
-      });
+      extensionUtils.chromeStorageSetLocal(
+         extensionUtils.KEYS.SETTINGS,
+         settings,
+         () => {
+            extensionUtils.runtimeSendMessage("P_B_TOGGLE");
+         }
+      );
    }, [checked]);
 
    const handleClick = (element) => {
