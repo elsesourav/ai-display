@@ -4,6 +4,7 @@ import { LuTextSelect } from "react-icons/lu";
 import { RiChatVoiceAiLine } from "react-icons/ri";
 import { TiArrowMoveOutline } from "react-icons/ti";
 import ChatBot from "../components/ChatBot";
+import extensionUtils from "./../utils/utilsModule.js";
 
 export default function Menu() {
    // Constants
@@ -37,34 +38,28 @@ export default function Menu() {
    const inactivityTimerRef = useRef(null);
 
    useEffect(() => {
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_OPEN_CHAT", () => {
+      extensionUtils.pageOnMessage("C_I_OPEN_CHAT", () => {
          setIsChatOpen(true);
       });
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_CLOSE_CHAT", () => {
+      extensionUtils.pageOnMessage("C_I_CLOSE_CHAT", () => {
          setIsChatOpen(false);
       });
 
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_HIDDEN", () => {
+      extensionUtils.pageOnMessage("C_I_HIDDEN", () => {
          setIsHidden(true);
       });
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_VISIBLE", () => {
+      extensionUtils.pageOnMessage("C_I_VISIBLE", () => {
          setIsHidden(false);
       });
 
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_POSITION_RESTORE", (pos) => {
+      extensionUtils.pageOnMessage("C_I_POSITION_RESTORE", (pos) => {
          setPosition(pos);
       });
    }, []);
 
 
    useEffect(() => {
-      // eslint-disable-next-line no-undef
-      pagePostMessage("I_C_CHAT_TOGGLE", isChatOpen, window.parent);
+      extensionUtils.pagePostMessage("I_C_CHAT_TOGGLE", isChatOpen, window.parent);
    }, [isChatOpen]);
 
    // Position Management
@@ -182,8 +177,7 @@ export default function Menu() {
       if (!moveElement) return;
 
       const handleMouseDown = (e) => {
-         // eslint-disable-next-line no-undef
-         pagePostMessage("I_C_POSITION_SET", {}, window.parent);
+         extensionUtils.pagePostMessage("I_C_POSITION_SET", {}, window.parent);
 
          isDraggingRef.current = true;
          setIsDragging(true);
@@ -199,14 +193,12 @@ export default function Menu() {
          if (!isDraggingRef.current) return;
          resetInactivityTimer();
          const newPosition = calculateDragPosition(e);
-         // eslint-disable-next-line no-undef
-         pagePostMessage("I_C_POSITION_LIVE", newPosition, window.parent);
+         extensionUtils.pagePostMessage("I_C_POSITION_LIVE", newPosition, window.parent);
          setPosition(newPosition);
       };
 
       const handleMouseUp = () => {
-         // eslint-disable-next-line no-undef
-         pagePostMessage("I_C_POSITION_RESTORE", {}, window.parent);
+         extensionUtils.pagePostMessage("I_C_POSITION_RESTORE", {}, window.parent);
          setTimeout(() => {
             setPosition({ x: 0, y: 0 });
          }, 30);
@@ -288,8 +280,7 @@ export default function Menu() {
    }, [isChatOpen, ensureVisibleOnScreen, handleCloseChat]);
 
    const handleSelectText = useCallback(() => {
-      // eslint-disable-next-line no-undef
-      pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
+      extensionUtils.pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
    }, []);
 
    // Render UI

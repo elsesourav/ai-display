@@ -54,10 +54,9 @@ runtimeOnMessage(
 
 // Get OCR configuration options
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
-   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
+   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {   
       const tab = await getActiveTab();
-      if (!isInternalPage(tab)) return;
-      
+      if (isInternalPage(tab)) return;
       if (settings.enable) {
          __PUSH_MENU__(tab.id);
       } else {

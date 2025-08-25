@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { IoArrowDown, IoImage, IoSend } from "react-icons/io5";
+import extensionUtils from "./../utils/utilsModule.js";
 import "./scrollbar-hide.css";
 
 // Demo answers from different API providers
@@ -153,23 +154,24 @@ export default function ChatBot({ isOpen }) {
       setIsLoading(true);
       setAnswers([]);
 
-      // eslint-disable-next-line no-undef
-      pagePostMessage("C_I_SET_QUESTION", {
-         question: input,
-         image: selectedImage,
-      }, window.parent);
+      extensionUtils.pagePostMessage(
+         "C_I_SET_QUESTION",
+         {
+            question: input,
+            image: selectedImage,
+         },
+         window.parent
+      );
    };
 
    useEffect(() => {
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_SET_INPUTS", (data) => {
+      extensionUtils.pageOnMessage("C_I_SET_INPUTS", (data) => {
          setInput(data.input);
          setSelectedImage(data.image);
          handleSendMessage();
       });
 
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_CLEAR_CHAT", () => {
+      extensionUtils.pageOnMessage("C_I_CLEAR_CHAT", () => {
          setAnswers([]);
          setInput("");
          setLastQuestion("");
@@ -177,14 +179,12 @@ export default function ChatBot({ isOpen }) {
          clearSelectedImage();
       });
 
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_SET_QUESTION", (data) => {
+      extensionUtils.pageOnMessage("C_I_SET_QUESTION", (data) => {
          setIsLoading(true);
          setLastQuestion(data.question);
       });
 
-      // eslint-disable-next-line no-undef
-      pageOnMessage("C_I_SET_ANSWER", (data) => {
+      extensionUtils.pageOnMessage("C_I_SET_ANSWER", (data) => {
          const { answer, provider } = data;
 
          setIsLoading(false);

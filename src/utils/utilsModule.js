@@ -349,67 +349,30 @@ function executeScript(tabId, func, ...args) {
  * This provides a cleaner interface for React components
  */
 const extensionUtils = {
-   // Storage utilities
-   storage: {
-      // Sync storage
-      set: chromeStorageSet,
-      get: chromeStorageGet,
-      // Local storage
-      setLocal: chromeStorageSetLocal,
-      getLocal: chromeStorageGetLocal,
-      removeLocal: chromeStorageRemoveLocal,
-      // Browser localStorage
-      setLocalStorage: setDataToLocalStorage,
-      getLocalStorage: getDataToLocalStorage,
-   },
+   // Browser localStorage
+   setDataToLocalStorage,
+   getDataToLocalStorage,
 
    // Messaging utilities
-   messaging: {
-      sendToBackground: runtimeSendMessage,
-      onMessage: runtimeOnMessage,
-      sendToTab: tabSendMessage,
-      postMessage: pagePostMessage,
-      onPageMessage: pageOnMessage,
-   },
+   runtimeSendMessage,
+   runtimeOnMessage,
+   tabSendMessage,
+   pagePostMessage,
+   pageOnMessage,
 
    // Tab utilities
-   tabs: {
-      getActive: getActiveTab,
-      sendMessage: tabSendMessage,
-      executeScript: executeScript,
-   },
+   getActiveTab,
+   executeScript,
 
    // Injection utilities
-   inject: {
-      script: injectScript,
-      jsCode: injectJSCode,
-      jsLink: injectJSLink,
-      cssFile: injectCSSFile,
-      cssCode: injectCSSCode,
-      cssLink: injectCSSLink,
-   },
+   injectScript,
+   injectJSCode,
+   injectJSLink,
+   injectCSSFile,
+   injectCSSCode,
+   injectCSSLink,
 
    // Utility functions
-   utils: {
-      wait: wait,
-      debounce: debounce,
-      map: map,
-      formatTime: getFormatTime,
-      reload: reloadLocation,
-      setInputLikeHuman: setInputLikeHuman,
-      toJSON: OBJECTtoJSON,
-      fromJSON: JSONtoOBJECT,
-   },
-
-   // Direct function access for backward compatibility
-   chromeStorageSet,
-   chromeStorageGet,
-   chromeStorageSetLocal,
-   chromeStorageGetLocal,
-   chromeStorageRemoveLocal,
-   getActiveTab,
-   runtimeSendMessage,
-   tabSendMessage,
    wait,
    debounce,
    map,
@@ -418,6 +381,13 @@ const extensionUtils = {
    setInputLikeHuman,
    OBJECTtoJSON,
    JSONtoOBJECT,
+
+   // Direct function access for backward compatibility
+   chromeStorageSet,
+   chromeStorageGet,
+   chromeStorageSetLocal,
+   chromeStorageGetLocal,
+   chromeStorageRemoveLocal,
    KEYS,
 };
 
