@@ -4,7 +4,8 @@
 @layer utilities {
    .path {
       clip-path: path(
-         "M 0,5 A 5,5 0,0,1 5,0 L 339,0 A 5,5 0,0,1 344,5 L 344,35 A 5,5 0,0,1 339,40 L 304,40 A 5,5 0,0,0 299,45 L 299,92 A 5,5 0,0,1 294,97 L 5,97 A 5,5 0,0,1 0,92 Z");
+         "M 0,5 A 5,5 0,0,1 5,0 L 339,0 A 5,5 0,0,1 344,5 L 344,35 A 5,5 0,0,1 339,40 L 304,40 A 5,5 0,0,0 299,45 L 299,92 A 5,5 0,0,1 294,97 L 5,97 A 5,5 0,0,1 0,92 Z"
+      );
    }
 }
 
@@ -46,13 +47,6 @@
    -moz-osx-font-smoothing: grayscale;
 }
 
-body,
-html,
-#root,
-#root > div {
-   background-color: transparent !important;
-}
-
 .light-theme {
    color: var(--text-color-light);
    background-color: var(--bg-color-light);
@@ -71,4 +65,19 @@ html,
    --bg-primary: var(--bg-primary-dark);
    --bg-secondary: var(--bg-secondary-dark);
    --bg-navbar: var(--bg-navbar-dark);
+}
+
+
+#MOVE_MENU {
+   position: absolute;
+   width: 160px;
+   height: 50px;
+   background-color: orange;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-weight: bold;
+   cursor: pointer;
+   user-select: none;
+   touch-action: none;
 }
