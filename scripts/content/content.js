@@ -72,14 +72,7 @@ runtimeSendMessage("C_B_ON_LOAD", async (r) => {
 //    }
 // });
 
-pageOnMessage("I_C_RESIZE_IFRAME", (data) => {
-   const frame = document.querySelector("iframe#menuFrame");
-   if (!frame) return;
-   frame.style.width = data.width;
-   frame.style.height = data.height;
-   frame.style.left = data.x;
-   frame.style.top = data.y;
-});
+
 
 // pageOnMessage("I_C_CHAT_TOGGLE", (data) => {
 //    const iFrame = document.querySelector("iframe.aid-window");

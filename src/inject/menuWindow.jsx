@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import Menu from "./Menu.jsx";
-import "./window.css";
+import "./menuWindow.css";
 
 export function App() {
    return (

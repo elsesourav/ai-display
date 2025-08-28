@@ -29,14 +29,15 @@
       {
          "matches": ["http://*/*", "https://*/*"],
          "exclude_globs": ["chrome://*"],
-         "js": ["./utils.js", "./content/content.js"]
+         "js": ["./utils.js", "./content/content.js", "./content/menuContent.js"]
       }
    ],
    "web_accessible_resources": [
       {
          "resources": [
             "inject/selection.html",
-            "inject/window.html",
+            "inject/menuWindow.html",
+            "inject/menuWindowBack.html",
             "inject/inject.html",
             "inject/*",
             "assets/*",

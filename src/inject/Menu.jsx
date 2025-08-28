@@ -46,18 +46,6 @@ export default function Menu() {
       });
    }, []);
 
-   // FIXME: Update
-   // useEffect(() => {
-   //    extensionUtils.pagePostMessage(
-   //       "I_C_CHAT_TOGGLE",
-   //       {
-   //          width: size.w,
-   //          height: size.h,
-   //       },
-   //       window.parent
-   //    );
-   // }, [size]);
-
    // Position Management
    const applyCollisionDetection = useCallback(
       (left, top) => {
@@ -78,44 +66,54 @@ export default function Menu() {
       [size]
    );
 
-   // const ensureVisibleOnScreen = useCallback(() => {
-   //    if (!menuRef.current) return;
+   const ensureVisibleOnScreen = useCallback(() => {
+      const menuEle = menuRef.current;
+      if (!menuEle) return;
 
-   //    const rect = menuRef.current.getBoundingClientRect();
-   //    const maxWidth = parseInt(SIZES.max.w);
-   //    const maxHeight = parseInt(SIZES.max.h);
+      const { left, top, width, height } = menuEle.getBoundingClientRect();
 
-   //    const newPosition = calculateOnScreenPosition(
-   //       rect,
-   //       position,
-   //       maxWidth,
-   //       maxHeight
-   //    );
-   //    const needsRepositioning =
-   //       newPosition.x !== position.x || newPosition.y !== position.y;
+      // Check if menu is currently visible on screen
+      const VW = window.innerWidth || document.documentElement.clientWidth;
+      const VH = window.innerHeight || document.documentElement.clientHeight;
 
-   //    if (needsRepositioning) {
-   //       if (!originalPosition) {
-   //          setOriginalPosition({ x: position.x, y: position.y });
-   //       }
-   //       // animateRepositioning(newPosition);
-   //    }
-   // }, [
-   //    SIZES.max.w,
-   //    SIZES.max.h,
-   //    position,
-   //    originalPosition,
-   //    calculateOnScreenPosition,
-   //    // animateRepositioning,
-   // ]);
+      const isVisible =
+         left >= 0 && top >= 0 && left + width <= VW && top + height <= VH;
 
-   // FIXME:
+      if (!isVisible) {
+         const constrainedPosition = applyCollisionDetection(left, top);
+
+         menuEle.style.transition =
+            "left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+
+         menuEle.style.left = `${constrainedPosition.x}px`;
+         menuEle.style.top = `${constrainedPosition.y}px`;
+         // Remove transition after animation completes
+         setTimeout(() => {
+            menuEle.style.transition = "";
+         }, 400);
+
+         setIframePos({
+            x: Math.round(constrainedPosition.x),
+            y: Math.round(constrainedPosition.y),
+         });
+
+         setTimeout(() => {
+            extensionUtils.pagePostMessage(
+               "I_C_RESIZE_IFRAME",
+               {
+                  width: size.w,
+                  height: size.h,
+                  x: `${constrainedPosition.x}px`,
+                  y: `${constrainedPosition.y}px`,
+               },
+               window.parent
+            );
+         }, 200);
+      }
+   }, [applyCollisionDetection, size]);
+
    useEffect(() => {
       setSize(isChatOpen ? SIZES.max : SIZES.min);
-
-      // if (isChatOpen) {
-      //    ensureVisibleOnScreen();
-      // }
    }, [isChatOpen, SIZES]);
 
    useEffect(() => {
@@ -126,17 +124,27 @@ export default function Menu() {
       const expandIframeToViewport = () => {
          clearTimeout(expandTimerRef.current);
          setMenuOpacity("0");
-         extensionUtils.pagePostMessage("I_C_RESIZE_IFRAME", {
-            width: "100svw",
-            height: "100svh",
-            x: "0px",
-            y: "0px",
-         }, window.parent);
+         extensionUtils.pagePostMessage(
+            "I_C_RESIZE_IFRAME",
+            {
+               width: "100svw",
+               height: "100svh",
+               x: "0px",
+               y: "0px",
+            },
+            window.parent
+         );
+
+         extensionUtils.pagePostMessage(
+            "IF_C_ACTIVE_MENU_WINDOW_BACK",
+            {},
+            window.parent
+         );
          menuEle.style.left = `${iframePos.x}px`;
          menuEle.style.top = `${iframePos.y}px`;
          setTimeout(() => {
             setMenuOpacity("1");
-         }, 20);
+         }, 50);
       };
 
       const shrinkIframeToBox = () => {
@@ -148,17 +156,21 @@ export default function Menu() {
             const top = Number.parseFloat(menuEle.style.top) || 0;
             setIframePos({ x: Math.round(left), y: Math.round(top) });
 
-            extensionUtils.pagePostMessage("I_C_RESIZE_IFRAME", {
-               width: size.w,
-               height: size.h,
-               x: `${iframePos.x}px`,
-               y: `${iframePos.y}px`,
-            }, window.parent);
+            extensionUtils.pagePostMessage(
+               "I_C_RESIZE_IFRAME",
+               {
+                  width: size.w,
+                  height: size.h,
+                  x: `${iframePos.x}px`,
+                  y: `${iframePos.y}px`,
+               },
+               window.parent
+            );
             menuEle.style.left = "0px";
             menuEle.style.top = "0px";
             setTimeout(() => {
                setMenuOpacity("1");
-            }, 20);
+            }, 50);
          }, 300);
       };
 
@@ -280,34 +292,31 @@ export default function Menu() {
 
    // Chat Management
    // const handleCloseChat = useCallback(() => {
-   //    setIsChatOpen(false);
 
-   //    if (originalPosition) {
-   //       setIsRepositioning(true);
+   // if (originalPosition) {
+   //    setIsRepositioning(true);
+   //    requestAnimationFrame(() => {
    //       requestAnimationFrame(() => {
-   //          requestAnimationFrame(() => {
-   //             setPosition(originalPosition);
-   //             setTimeout(() => {
-   //                setIsRepositioning(false);
-   //                setOriginalPosition(null);
-   //             }, ANIMATION_DURATION);
-   //          });
+   //          setPosition(originalPosition);
+   //          setTimeout(() => {
+   //             setIsRepositioning(false);
+   //             setOriginalPosition(null);
+   //          }, ANIMATION_DURATION);
    //       });
-   //    }
-   // }, [originalPosition, ANIMATION_DURATION]);
+   //    });
+   // }
+   // }, []);
 
    const toggleChat = useCallback(() => {
       if (!isChatOpen) {
          setIsChatOpen(true);
-         // requestAnimationFrame(() => {
-         //    requestAnimationFrame(() => {
-         //       ensureVisibleOnScreen();
-         //    });
-         // });
+         setTimeout(() => {
+            ensureVisibleOnScreen();
+         }, 300);
       } else {
-         // handleCloseChat();
+         setIsChatOpen(false);
       }
-   }, [isChatOpen, /*ensureVisibleOnScreen, handleCloseChat*/]);
+   }, [isChatOpen, ensureVisibleOnScreen]);
 
    // const handleSelectText = useCallback(() => {
    //    extensionUtils.pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
@@ -330,90 +339,79 @@ export default function Menu() {
             style={{
                width: `calc(${size.w} - 2px)`,
                height: `calc(${size.h} - 2px)`,
-               gridTemplateRows: "auto 1fr",
+               gridTemplateRows: `${SIZES.min.h} auto`,
             }}
          >
             <section
-               className="relative flex items-center justify-center"
+               className="relative flex w-[inherit] gap-[12px] items-center justify-start pl-[4px]"
                style={{
                   height: `calc(${SIZES.min.h} - 2px)`,
-                  width: isChatOpen
-                     ? `calc(${SIZES.max.w} - 2px)`
-                     : `calc(${SIZES.min.w} - 2px)`,
                }}
             >
                <div
-                  className="relative h-full w-full flex gap-[4px] items-center"
-                  id="header"
+                  ref={dragRef}
+                  className={`relative grid place-items-center rounded-lg text-xl cursor-move ${
+                     isDragging
+                        ? "bg-gray-50/90 text-gray-950"
+                        : "bg-gray-950/20 text-gray-50 hover:bg-gray-50/90  hover:text-gray-950"
+                  } transition-all duration-200`}
+                  style={{
+                     width: `calc(${SIZES.min.h} - 8px)`,
+                     aspectRatio: "1 / 1",
+                  }}
                >
-                  <div
-                     ref={dragRef}
-                     className={`relative grid place-items-center rounded-lg text-2xl cursor-move ${
-                        isDragging
-                           ? "bg-gray-50/90 text-gray-950"
-                           : "bg-gray-950/20 text-gray-50 hover:bg-gray-50/90  hover:text-gray-950"
-                     } transition-all duration-200`}
-                     style={{
-                        height: `calc(${SIZES.min.h} - 4px)`,
-                        width: `calc(${SIZES.min.h} - 4px)`,
-                     }}
-                  >
-                     <TiArrowMoveOutline />
-                  </div>
-
-                  <div
-                     onClick={toggleChat}
-                     className={`relative grid place-items-center rounded-lg text-2xl cursor-pointer transition-all duration-200 ${
-                        isChatOpen
-                           ? "bg-blue-500 text-white hover:bg-blue-600"
-                           : "bg-gray-950/20 text-gray-50 hover:bg-gray-950/40 hover:text-gray-300"
-                     }`}
-                     style={{
-                        height: `calc(${SIZES.min.h} - 4px)`,
-                        width: `calc(${SIZES.min.h} - 4px)`,
-                     }}
-                  >
-                     <RiChatVoiceAiLine />
-                  </div>
-
-                  <div
-                     className="relative grid place-items-center bg-gray-950/20 rounded-lg text-2xl cursor-pointer hover:bg-gray-950/40 text-gray-50 hover:text-gray-300 transition-all duration-200"
-                     // onClick={handleSelectText}
-                     style={{
-                        height: `calc(${SIZES.min.h} - 4px)`,
-                        width: `calc(${SIZES.min.h} - 4px)`,
-                     }}
-                  >
-                     <LuTextSelect />
-                  </div>
-
-                  {isChatOpen && (
-                     <div className="absolute right-[1px] top-[1px] p-1">
-                        <div
-                           // onClick={handleCloseChat}
-                           className="relative aspect-[7/6] grid place-items-center bg-red-500 rounded-lg text-3xl cursor-pointer hover:bg-red-700 text-white transition-all duration-200"
-                           title="Close chat"
-                           style={{
-                              height: `calc(${SIZES.min.h} - 4px)`,
-                              width: `calc(${SIZES.min.h} - 4px)`,
-                           }}
-                        >
-                           <IoClose />
-                        </div>
-                     </div>
-                  )}
+                  <TiArrowMoveOutline />
                </div>
+
+               <div
+                  onClick={toggleChat}
+                  className={`relative grid place-items-center rounded-lg text-xl cursor-pointer transition-all duration-200 ${
+                     isChatOpen
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-gray-950/20 text-gray-50 hover:bg-gray-950/40 hover:text-gray-300"
+                  }`}
+                  style={{
+                     width: `calc(${SIZES.min.h} - 8px)`,
+                     aspectRatio: "1 / 1",
+                  }}
+               >
+                  <RiChatVoiceAiLine />
+               </div>
+
+               <div
+                  className="relative grid place-items-center bg-gray-950/20 rounded-lg text-xl cursor-pointer hover:bg-gray-950/40 text-gray-50 hover:text-gray-300 transition-all duration-200"
+                  // onClick={handleSelectText}
+                  style={{
+                     width: `calc(${SIZES.min.h} - 8px)`,
+                     aspectRatio: "1 / 1",
+                  }}
+               >
+                  <LuTextSelect />
+               </div>
+
+               {isChatOpen && (
+                  <div className="absolute right-[4px] top-1/2 -translate-y-1/2">
+                     <div
+                        onClick={toggleChat}
+                        className="relative grid place-items-center bg-gray-950/20 rounded-lg text-xl cursor-pointer hover:bg-red-700 text-red-500 hover:text-white transition-all duration-200"
+                        title="Close chat"
+                        style={{
+                           width: `calc(${SIZES.min.h} - 8px)`,
+                           aspectRatio: "1 / 1",
+                        }}
+                     >
+                        <IoClose />
+                     </div>
+                  </div>
+               )}
             </section>
 
             <div
-               className={`relative overflow-hidden transition-all duration-300 ease-in-out ${
-                  isChatOpen ? "opacity-100" : "opacity-0 max-h-0"
-               }`}
+               className={`relative overflow-hidden transition-all duration-300 ease-in-out`}
                style={{
-                  maxHeight: isChatOpen
-                     ? `calc(${SIZES.max.h} - ${SIZES.min.h} - 4px)`
-                     : "0",
-               }}                          
+                  opacity: isChatOpen ? 1 : 0,
+                  height: isChatOpen ? `100%` : "0px",
+               }}
             >
                <div className="h-full">
                   <ChatBot isOpen={isChatOpen} />

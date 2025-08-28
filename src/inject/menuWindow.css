@@ -66,18 +66,3 @@
    --bg-secondary: var(--bg-secondary-dark);
    --bg-navbar: var(--bg-navbar-dark);
 }
-
-
-#MOVE_MENU {
-   position: absolute;
-   width: 160px;
-   height: 50px;
-   background-color: orange;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   font-weight: bold;
-   cursor: pointer;
-   user-select: none;
-   touch-action: none;
-}
