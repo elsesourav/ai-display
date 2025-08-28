@@ -5,17 +5,32 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <style>
          body {
-            background-color: transparent !important;
-            cursor: move;
-         }
-         html {
-            cursor: move;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            color: white;
          }
          :root {
             color-scheme: light dark;
          }
+         #DRAG_HANDLE {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: orange;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+         }
+         
       </style>
       <script defer src="./menuWindowBack.js"></script>
    </head>
-   <body></body>
+   <body>
+      <div id="DRAG_HANDLE"></div>
+   </body>
 </html>

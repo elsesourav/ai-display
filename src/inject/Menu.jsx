@@ -7,8 +7,6 @@ import ChatBot from "../components/ChatBot";
 import ES from "./../utils/utilsModule.js";
 
 export default function Menu() {
-   const MARGIN = 0;
-
    const SIZES = useMemo(
       () => ({
          min: { w: "160px", h: "50px" },
@@ -20,31 +18,10 @@ export default function Menu() {
    // State
    const [isChatOpen, setIsChatOpen] = useState(false);
    const [size, setSize] = useState(SIZES.min);
-   const [iframePos, setIframePos] = useState({ x: MARGIN, y: MARGIN });
-   const [pointerOffset, setPointerOffset] = useState({ x: 0, y: 0 });
    const [menuOpacity, setMenuOpacity] = useState("1");
-   // const [isEntering, setIsEntering] = useState(false);
    const [isDragging, setIsDragging] = useState(false);
-   // const [isCollapse, setIsCollapse] = useState(false);
    const menuRef = useRef(null);
    const dragRef = useRef(null);
-   const expandTimerRef = useRef(null);
-
-   // Position Management
-   const applyCollisionDetection = useCallback(
-      (left, top, vw, vh) => {
-         const menuRect = menuRef.current.getBoundingClientRect();
-         const menuWidth = menuRect.width || size.w;
-         const menuHeight = menuRect.height || size.h;
-
-         // Constrain position to viewport bounds
-         const constrainedLeft = Math.max(0, Math.min(left, vw - menuWidth));
-         const constrainedTop = Math.max(0, Math.min(top, vh - menuHeight));
-
-         return { x: constrainedLeft, y: constrainedTop };
-      },
-      [size]
-   );
 
    useEffect(() => {
       ES.pageOnMessage("C_I_OPEN_CHAT", () => {
@@ -61,248 +38,40 @@ export default function Menu() {
          setMenuOpacity("1");
       });
 
-      // ES.pageOnMessage("IF_IF_MENU_WINDOW_MOVE", (data) => {
-      //    const menuLeft = data.x - pointerOffset.x;
-      //    const menuTop = data.y - pointerOffset.y;
-
-      //    console.log("Menu window moved:", { left: menuLeft, top: menuTop });
-
-      //    const constrainedPosition = applyCollisionDetection(
-      //       menuLeft,
-      //       menuTop,
-      //       data.w,
-      //       data.h
-      //    );
-
-      //    ES.pagePostMessage(
-      //       "I_C_RESIZE_IFRAME",
-      //       {
-      //          width: size.w,
-      //          height: size.h,
-      //          x: `${constrainedPosition.x}px`,
-      //          y: `${constrainedPosition.y}px`,
-      //       },
-      //       window.parent
-      //    );
-      // });
-
-      ES.pageOnMessage("IF_IF_MENU_WINDOW_END", () => {
+      ES.pageOnMessage("IF_IF_MENU_WINDOW_DRAG_START", () => {
+         setIsDragging(true);
+      });
+      ES.pageOnMessage("IF_IF_MENU_WINDOW_DRAG_END", () => {
          setIsDragging(false);
       });
    }, []);
-
-   const ensureVisibleOnScreen = useCallback(() => {
-      const menuEle = menuRef.current;
-      if (!menuEle) return;
-
-      const { left, top, width, height } = menuEle.getBoundingClientRect();
-
-      // Check if menu is currently visible on screen
-      const VW = window.innerWidth || document.documentElement.clientWidth;
-      const VH = window.innerHeight || document.documentElement.clientHeight;
-
-      const isVisible =
-         left >= 0 && top >= 0 && left + width <= VW && top + height <= VH;
-
-      if (!isVisible) {
-         const constrainedPosition = applyCollisionDetection(left, top);
-
-         menuEle.style.transition =
-            "left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
-
-         menuEle.style.left = `${constrainedPosition.x}px`;
-         menuEle.style.top = `${constrainedPosition.y}px`;
-         // Remove transition after animation completes
-         setTimeout(() => {
-            menuEle.style.transition = "";
-         }, 400);
-
-         setIframePos({
-            x: Math.round(constrainedPosition.x),
-            y: Math.round(constrainedPosition.y),
-         });
-
-         setTimeout(() => {
-            ES.pagePostMessage(
-               "I_C_RESIZE_IFRAME",
-               {
-                  width: size.w,
-                  height: size.h,
-                  x: `${constrainedPosition.x}px`,
-                  y: `${constrainedPosition.y}px`,
-               },
-               window.parent
-            );
-         }, 200);
-      }
-   }, [applyCollisionDetection, size]);
 
    useEffect(() => {
       setSize(isChatOpen ? SIZES.max : SIZES.min);
    }, [isChatOpen, SIZES]);
 
    useEffect(() => {
-      const menuEle = menuRef.current;
-      const dragEle = dragRef.current;
-      if (!menuEle || !dragEle) return;
-
-      // const expandIframeToViewport = () => {
-      //    clearTimeout(expandTimerRef.current);
-      //    setMenuOpacity("0");
-      //    ES.pagePostMessage(
-      //       "I_C_RESIZE_IFRAME",
-      //       {
-      //          width: "100svw",
-      //          height: "100svh",
-      //          x: "0px",
-      //          y: "0px",
-      //       },
-      //       window.parent
-      //    );
-
-      //    ES.pagePostMessage("IF_C_ACTIVE_MENU_WINDOW_BACK", {}, window.parent);
-      //    menuEle.style.left = `${iframePos.x}px`;
-      //    menuEle.style.top = `${iframePos.y}px`;
-      //    setTimeout(() => {
-      //       setMenuOpacity("1");
-      //    }, 50);
-      // };
-
-      // const shrinkIframeToBox = () => {
-      //    clearTimeout(expandTimerRef.current);
-      //    ES.pagePostMessage("IF_C_HIDE_MENU_WINDOW_BACK", {}, window.parent);
-
-      //    expandTimerRef.current = setTimeout(() => {
-      //       setMenuOpacity("0");
-      //       const left = Number.parseFloat(menuEle.style.left) || 0;
-      //       const top = Number.parseFloat(menuEle.style.top) || 0;
-      //       setIframePos({ x: Math.round(left), y: Math.round(top) });
-
-      //       ES.pagePostMessage(
-      //          "I_C_RESIZE_IFRAME",
-      //          {
-      //             width: size.w,
-      //             height: size.h,
-      //             x: `${iframePos.x}px`,
-      //             y: `${iframePos.y}px`,
-      //          },
-      //          window.parent
-      //       );
-      //       menuEle.style.left = "0px";
-      //       menuEle.style.top = "0px";
-      //       setTimeout(() => {
-      //          setMenuOpacity("1");
-      //       }, 50);
-      //    }, 300);
-      // };
-
-      const pointerEnter = () => {
-         ES.pagePostMessage("IF_C_ACTIVE_MENU_WINDOW_BACK", {}, window.parent);
-      };
-
-      const pointerLeave = () => {
-         if (isDragging) return;
-         clearTimeout(expandTimerRef.current);
-
-         expandTimerRef.current = setTimeout(() => {
-            ES.pagePostMessage("IF_C_HIDE_MENU_WINDOW_BACK", {}, window.parent);
-         }, 300);
-      };
-
-      const pointerDown = (e) => {
-         const rect = menuEle.getBoundingClientRect();
+      const isOpen = parseInt(size.h) > 60;
+      const fun = () => {
          ES.pagePostMessage(
-            "IF_IF_MENU_WINDOW_BACK_DRAG_ON",
-            {},
+            "IF_C_MENU_WINDOW_RESIZE",
+            {
+               width: size.w,
+               height: size.h,
+            },
             window.parent
          );
-         ES.pagePostMessage(
-            "IF_C_MENU_WINDOW_BACK_ADD_BEFORE",
-            { x: e.clientX - rect.left, y: e.clientY - rect.top, ...size },
-            window.parent
-         );
-
-         setIsDragging(true);
       };
-
-      menuEle.addEventListener("pointerenter", pointerEnter);
-      menuEle.addEventListener("pointerleave", pointerLeave);
-      dragEle.addEventListener("pointerdown", pointerDown);
-      // menuEle.addEventListener("pointerdown", pointerDown);
-      // window.addEventListener("pointermove", pointerMove);
-      // menuEle.addEventListener("pointerup", pointerUp);
-      // menuEle.addEventListener("pointerleave", pointerLeaveAfter);
-
-      return () => {
-         menuEle.removeEventListener("pointerenter", pointerEnter);
-         menuEle.removeEventListener("pointerleave", pointerLeave);
-         dragEle.removeEventListener("pointerdown", pointerDown);
-         // menuEle.removeEventListener("pointerdown", pointerDown);
-         // window.removeEventListener("pointermove", pointerMove);
-         // menuEle.removeEventListener("pointerup", pointerUp);
-         // menuEle.removeEventListener("pointerleave", pointerLeaveAfter);
-      };
-   }, [
-      pointerOffset,
-      isDragging,
-      // isEntering,
-      // isCollapse,
-      size,
-      iframePos,
-      applyCollisionDetection,
-   ]);
-
-   // Activity Monitoring
-   // useEffect(() => {
-   //    resetInactivityTimer();
-
-   //    const handleUserActivity = () => {
-   //       resetInactivityTimer();
-   //    };
-
-   //    document.addEventListener("mousemove", handleUserActivity);
-   //    document.addEventListener("mousedown", handleUserActivity);
-   //    document.addEventListener("keydown", handleUserActivity);
-   //    document.addEventListener("touchstart", handleUserActivity);
-   //    return () => {
-   //       if (inactivityTimerRef.current) {
-   //          clearTimeout(inactivityTimerRef.current);
-   //       }
-
-   //       document.removeEventListener("mousemove", handleUserActivity);
-   //       document.removeEventListener("mousedown", handleUserActivity);
-   //       document.removeEventListener("keydown", handleUserActivity);
-   //       document.removeEventListener("touchstart", handleUserActivity);
-   //    };
-   // }, [resetInactivityTimer]);
-
-   // Chat Management
-   // const handleCloseChat = useCallback(() => {
-
-   // if (originalPosition) {
-   //    setIsRepositioning(true);
-   //    requestAnimationFrame(() => {
-   //       requestAnimationFrame(() => {
-   //          setPosition(originalPosition);
-   //          setTimeout(() => {
-   //             setIsRepositioning(false);
-   //             setOriginalPosition(null);
-   //          }, ANIMATION_DURATION);
-   //       });
-   //    });
-   // }
-   // }, []);
+      setTimeout(fun, isOpen ? 0 : 300);
+   }, [size]);
 
    const toggleChat = useCallback(() => {
       if (!isChatOpen) {
          setIsChatOpen(true);
-         setTimeout(() => {
-            ensureVisibleOnScreen();
-         }, 300);
       } else {
          setIsChatOpen(false);
       }
-   }, [isChatOpen, ensureVisibleOnScreen]);
+   }, [isChatOpen]);
 
    // const handleSelectText = useCallback(() => {
    //    ES.pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
@@ -311,14 +80,12 @@ export default function Menu() {
    // Render UI
    return (
       <div
-         className="absolute"
+         className="absolute transition-all duration-300 ease-in-out"
          ref={menuRef}
          style={{
-            zIndex: 9999,
+            zIndex: 1,
             opacity: menuOpacity,
          }}
-         // onMouseEnter={() => setIsTransparent(false)}
-         // onMouseLeave={() => !isDragging && resetInactivityTimer()}
       >
          <main
             className={`relative left-[1px] top-[1px] grid bg-gradient-to-bl from-[#ffe4e6] to-[#ccfbf1] dark:bg-gradient-to-r dark:from-violet-600 dark:to-indigo-600 rounded-md shadow-md outline-1 outline-white dark:outline-blue-500 overflow-hidden transition-all duration-300 ease-in-out`}

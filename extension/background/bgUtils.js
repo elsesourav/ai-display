@@ -165,7 +165,7 @@ function __PUSH_MENU__(tabId) {
                   height: 50px;
                   background: transparent !important;
                   /* background-color: #0f04; */
-                  z-index: 825003264;
+                  z-index: 825003263;
                }
             `;
 
@@ -195,11 +195,10 @@ function __PUSH_MENU__(tabId) {
                   position: fixed;
                   top: 0px;
                   left: 0px;
-                  width: 100svw;
-                  height: 100svh;
+                  width: 50px;
+                  height: 50px;
                   background-color: #00f3;
-                  display: none;
-                  z-index: 825003263;
+                  z-index: 825003264;
                }
             `;
 
