@@ -177,8 +177,6 @@ function __PUSH_MENU__(tabId) {
          }
 
          if (!existingMWbF) {
-            console.log("Creating menuWindowBackIframe");
-            
             const frame = document.createElement("iframe");
             frame.setAttribute("id", "menuWindowBackIframe");
             frame.setAttribute("frameborder", "0");
@@ -200,6 +198,7 @@ function __PUSH_MENU__(tabId) {
                   width: 100svw;
                   height: 100svh;
                   background-color: #00f3;
+                  display: none;
                   z-index: 825003263;
                }
             `;

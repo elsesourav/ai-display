@@ -2,5 +2,29 @@
 function pagePostMessage(type, data, contentWindow = window.parent) {
    contentWindow.postMessage({ type, data }, "*");
 }
+function pageOnMessage(type, callback) {
+   window.addEventListener("message", (event) => {
+      if (event.data.type === type) {
+         callback(event.data.data, event);
+      }
+   });
+}
 
-pagePostMessage("IF_IF_RESET", { msg: "Hello from menuWindowBack.js" });
+let isActive = false;
+
+pageOnMessage("IF_IF_MENU_WINDOW_BACK_DRAG_ON", () => {
+   isActive = true;
+});
+
+window.addEventListener("pointermove", (e) => {
+   if (!isActive) return;
+   pagePostMessage("IF_C_MENU_WINDOW_MOVE", { x: e.clientX, y: e.clientY });
+});
+
+window.addEventListener("pointerup", (e) => {
+   if (!isActive) return;
+   isActive = false;
+   pagePostMessage("IF_C_MENU_WINDOW_BACK_ADD_AFTER", {});
+   pagePostMessage("IF_C_MENU_WINDOW_MOVE", { x: e.clientX, y: e.clientY });
+   pagePostMessage("IF_IF_MENU_WINDOW_END", { });
+});

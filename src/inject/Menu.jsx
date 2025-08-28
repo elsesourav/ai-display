@@ -4,7 +4,7 @@ import { LuTextSelect } from "react-icons/lu";
 import { RiChatVoiceAiLine } from "react-icons/ri";
 import { TiArrowMoveOutline } from "react-icons/ti";
 import ChatBot from "../components/ChatBot";
-import extensionUtils from "./../utils/utilsModule.js";
+import ES from "./../utils/utilsModule.js";
 
 export default function Menu() {
    const MARGIN = 0;
@@ -23,48 +23,73 @@ export default function Menu() {
    const [iframePos, setIframePos] = useState({ x: MARGIN, y: MARGIN });
    const [pointerOffset, setPointerOffset] = useState({ x: 0, y: 0 });
    const [menuOpacity, setMenuOpacity] = useState("1");
-   const [isEntering, setIsEntering] = useState(false);
+   // const [isEntering, setIsEntering] = useState(false);
    const [isDragging, setIsDragging] = useState(false);
-   const [isCollapse, setIsCollapse] = useState(false);
+   // const [isCollapse, setIsCollapse] = useState(false);
    const menuRef = useRef(null);
    const dragRef = useRef(null);
    const expandTimerRef = useRef(null);
 
-   useEffect(() => {
-      extensionUtils.pageOnMessage("C_I_OPEN_CHAT", () => {
-         setIsChatOpen(true);
-      });
-      extensionUtils.pageOnMessage("C_I_CLOSE_CHAT", () => {
-         setIsChatOpen(false);
-      });
-
-      extensionUtils.pageOnMessage("C_I_HIDDEN", () => {
-         setMenuOpacity("0");
-      });
-      extensionUtils.pageOnMessage("C_I_VISIBLE", () => {
-         setMenuOpacity("1");
-      });
-   }, []);
-
    // Position Management
    const applyCollisionDetection = useCallback(
-      (left, top) => {
+      (left, top, vw, vh) => {
          const menuRect = menuRef.current.getBoundingClientRect();
          const menuWidth = menuRect.width || size.w;
          const menuHeight = menuRect.height || size.h;
 
-         // Get viewport dimensions
-         const VW = window.innerWidth || document.documentElement.clientWidth;
-         const VH = window.innerHeight || document.documentElement.clientHeight;
-
          // Constrain position to viewport bounds
-         const constrainedLeft = Math.max(0, Math.min(left, VW - menuWidth));
-         const constrainedTop = Math.max(0, Math.min(top, VH - menuHeight));
+         const constrainedLeft = Math.max(0, Math.min(left, vw - menuWidth));
+         const constrainedTop = Math.max(0, Math.min(top, vh - menuHeight));
 
          return { x: constrainedLeft, y: constrainedTop };
       },
       [size]
    );
+
+   useEffect(() => {
+      ES.pageOnMessage("C_I_OPEN_CHAT", () => {
+         setIsChatOpen(true);
+      });
+      ES.pageOnMessage("C_I_CLOSE_CHAT", () => {
+         setIsChatOpen(false);
+      });
+
+      ES.pageOnMessage("C_I_HIDDEN", () => {
+         setMenuOpacity("0");
+      });
+      ES.pageOnMessage("C_I_VISIBLE", () => {
+         setMenuOpacity("1");
+      });
+
+      // ES.pageOnMessage("IF_IF_MENU_WINDOW_MOVE", (data) => {
+      //    const menuLeft = data.x - pointerOffset.x;
+      //    const menuTop = data.y - pointerOffset.y;
+
+      //    console.log("Menu window moved:", { left: menuLeft, top: menuTop });
+
+      //    const constrainedPosition = applyCollisionDetection(
+      //       menuLeft,
+      //       menuTop,
+      //       data.w,
+      //       data.h
+      //    );
+
+      //    ES.pagePostMessage(
+      //       "I_C_RESIZE_IFRAME",
+      //       {
+      //          width: size.w,
+      //          height: size.h,
+      //          x: `${constrainedPosition.x}px`,
+      //          y: `${constrainedPosition.y}px`,
+      //       },
+      //       window.parent
+      //    );
+      // });
+
+      ES.pageOnMessage("IF_IF_MENU_WINDOW_END", () => {
+         setIsDragging(false);
+      });
+   }, []);
 
    const ensureVisibleOnScreen = useCallback(() => {
       const menuEle = menuRef.current;
@@ -98,7 +123,7 @@ export default function Menu() {
          });
 
          setTimeout(() => {
-            extensionUtils.pagePostMessage(
+            ES.pagePostMessage(
                "I_C_RESIZE_IFRAME",
                {
                   width: size.w,
@@ -121,146 +146,107 @@ export default function Menu() {
       const dragEle = dragRef.current;
       if (!menuEle || !dragEle) return;
 
-      const expandIframeToViewport = () => {
-         clearTimeout(expandTimerRef.current);
-         setMenuOpacity("0");
-         extensionUtils.pagePostMessage(
-            "I_C_RESIZE_IFRAME",
-            {
-               width: "100svw",
-               height: "100svh",
-               x: "0px",
-               y: "0px",
-            },
-            window.parent
-         );
+      // const expandIframeToViewport = () => {
+      //    clearTimeout(expandTimerRef.current);
+      //    setMenuOpacity("0");
+      //    ES.pagePostMessage(
+      //       "I_C_RESIZE_IFRAME",
+      //       {
+      //          width: "100svw",
+      //          height: "100svh",
+      //          x: "0px",
+      //          y: "0px",
+      //       },
+      //       window.parent
+      //    );
 
-         extensionUtils.pagePostMessage(
-            "IF_C_ACTIVE_MENU_WINDOW_BACK",
-            {},
-            window.parent
-         );
-         menuEle.style.left = `${iframePos.x}px`;
-         menuEle.style.top = `${iframePos.y}px`;
-         setTimeout(() => {
-            setMenuOpacity("1");
-         }, 50);
-      };
+      //    ES.pagePostMessage("IF_C_ACTIVE_MENU_WINDOW_BACK", {}, window.parent);
+      //    menuEle.style.left = `${iframePos.x}px`;
+      //    menuEle.style.top = `${iframePos.y}px`;
+      //    setTimeout(() => {
+      //       setMenuOpacity("1");
+      //    }, 50);
+      // };
 
-      const shrinkIframeToBox = () => {
-         clearTimeout(expandTimerRef.current);
+      // const shrinkIframeToBox = () => {
+      //    clearTimeout(expandTimerRef.current);
+      //    ES.pagePostMessage("IF_C_HIDE_MENU_WINDOW_BACK", {}, window.parent);
 
-         expandTimerRef.current = setTimeout(() => {
-            setMenuOpacity("0");
-            const left = Number.parseFloat(menuEle.style.left) || 0;
-            const top = Number.parseFloat(menuEle.style.top) || 0;
-            setIframePos({ x: Math.round(left), y: Math.round(top) });
+      //    expandTimerRef.current = setTimeout(() => {
+      //       setMenuOpacity("0");
+      //       const left = Number.parseFloat(menuEle.style.left) || 0;
+      //       const top = Number.parseFloat(menuEle.style.top) || 0;
+      //       setIframePos({ x: Math.round(left), y: Math.round(top) });
 
-            extensionUtils.pagePostMessage(
-               "I_C_RESIZE_IFRAME",
-               {
-                  width: size.w,
-                  height: size.h,
-                  x: `${iframePos.x}px`,
-                  y: `${iframePos.y}px`,
-               },
-               window.parent
-            );
-            menuEle.style.left = "0px";
-            menuEle.style.top = "0px";
-            setTimeout(() => {
-               setMenuOpacity("1");
-            }, 50);
-         }, 300);
-      };
+      //       ES.pagePostMessage(
+      //          "I_C_RESIZE_IFRAME",
+      //          {
+      //             width: size.w,
+      //             height: size.h,
+      //             x: `${iframePos.x}px`,
+      //             y: `${iframePos.y}px`,
+      //          },
+      //          window.parent
+      //       );
+      //       menuEle.style.left = "0px";
+      //       menuEle.style.top = "0px";
+      //       setTimeout(() => {
+      //          setMenuOpacity("1");
+      //       }, 50);
+      //    }, 300);
+      // };
 
       const pointerEnter = () => {
-         if (isEntering) return;
-         setIsEntering(true);
-         expandIframeToViewport();
+         ES.pagePostMessage("IF_C_ACTIVE_MENU_WINDOW_BACK", {}, window.parent);
       };
 
       const pointerLeave = () => {
-         if (!isEntering || isDragging) return;
-         setIsEntering(false);
-         shrinkIframeToBox();
+         if (isDragging) return;
+         clearTimeout(expandTimerRef.current);
+
+         expandTimerRef.current = setTimeout(() => {
+            ES.pagePostMessage("IF_C_HIDE_MENU_WINDOW_BACK", {}, window.parent);
+         }, 300);
       };
 
       const pointerDown = (e) => {
-         if (!isEntering) {
-            setIsEntering(true);
-            expandIframeToViewport();
-         }
-         setIsDragging(true);
          const rect = menuEle.getBoundingClientRect();
-         setPointerOffset({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-         });
-         if (menuEle.setPointerCapture) menuEle.setPointerCapture(e.pointerId);
-      };
+         ES.pagePostMessage(
+            "IF_IF_MENU_WINDOW_BACK_DRAG_ON",
+            {},
+            window.parent
+         );
+         ES.pagePostMessage(
+            "IF_C_MENU_WINDOW_BACK_ADD_BEFORE",
+            { x: e.clientX - rect.left, y: e.clientY - rect.top, ...size },
+            window.parent
+         );
 
-      const pointerMove = (e) => {
-         if (!isDragging) return;
-         const newLeft = e.clientX - pointerOffset.x;
-         const newTop = e.clientY - pointerOffset.y;
-
-         // Apply collision detection to keep menu within viewport
-         const constrainedPosition = applyCollisionDetection(newLeft, newTop);
-
-         menuEle.style.left = `${constrainedPosition.x}px`;
-         menuEle.style.top = `${constrainedPosition.y}px`;
-      };
-
-      const pointerUp = (e) => {
-         if (!isDragging) return;
-         setIsDragging(false);
-         setIsEntering(false);
-         setIsCollapse(true);
-         if (menuEle.releasePointerCapture)
-            menuEle.releasePointerCapture(e.pointerId);
-
-         const left = Number.parseFloat(menuEle.style.left) || 0;
-         const top = Number.parseFloat(menuEle.style.top) || 0;
-
-         const constrainedPosition = applyCollisionDetection(left, top);
-         menuEle.style.left = `${constrainedPosition.x}px`;
-         menuEle.style.top = `${constrainedPosition.y}px`;
-
-         setIframePos({
-            x: Math.round(constrainedPosition.x),
-            y: Math.round(constrainedPosition.y),
-         });
-      };
-
-      const pointerLeaveAfter = () => {
-         if (!isCollapse) return;
-         setIsCollapse(false);
-         shrinkIframeToBox();
+         setIsDragging(true);
       };
 
       menuEle.addEventListener("pointerenter", pointerEnter);
       menuEle.addEventListener("pointerleave", pointerLeave);
       dragEle.addEventListener("pointerdown", pointerDown);
       // menuEle.addEventListener("pointerdown", pointerDown);
-      window.addEventListener("pointermove", pointerMove);
-      menuEle.addEventListener("pointerup", pointerUp);
-      menuEle.addEventListener("pointerleave", pointerLeaveAfter);
+      // window.addEventListener("pointermove", pointerMove);
+      // menuEle.addEventListener("pointerup", pointerUp);
+      // menuEle.addEventListener("pointerleave", pointerLeaveAfter);
 
       return () => {
          menuEle.removeEventListener("pointerenter", pointerEnter);
          menuEle.removeEventListener("pointerleave", pointerLeave);
          dragEle.removeEventListener("pointerdown", pointerDown);
          // menuEle.removeEventListener("pointerdown", pointerDown);
-         window.removeEventListener("pointermove", pointerMove);
-         menuEle.removeEventListener("pointerup", pointerUp);
-         menuEle.removeEventListener("pointerleave", pointerLeaveAfter);
+         // window.removeEventListener("pointermove", pointerMove);
+         // menuEle.removeEventListener("pointerup", pointerUp);
+         // menuEle.removeEventListener("pointerleave", pointerLeaveAfter);
       };
    }, [
       pointerOffset,
       isDragging,
-      isEntering,
-      isCollapse,
+      // isEntering,
+      // isCollapse,
       size,
       iframePos,
       applyCollisionDetection,
@@ -319,7 +305,7 @@ export default function Menu() {
    }, [isChatOpen, ensureVisibleOnScreen]);
 
    // const handleSelectText = useCallback(() => {
-   //    extensionUtils.pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
+   //    ES.pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
    // }, []);
 
    // Render UI
