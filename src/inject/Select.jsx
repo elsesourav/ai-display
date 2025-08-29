@@ -9,7 +9,7 @@ export default function Select() {
    const [isSelecting, setIsSelecting] = useState(false);
 
    const handleCancel = useCallback(() => {
-      window.parent.postMessage({ type: "I_C_SELECT_CANCEL" }, "*");
+      window.parent.postMessage({ type: "IF_C_SELECT_CANCEL" }, "*");
    }, []);
 
    const handleCapture = useCallback(() => {
@@ -22,7 +22,7 @@ export default function Select() {
       const coordinates = selectorRef.current.getCoordinates();
       console.log("Selection coordinates:", coordinates);
       window.parent.postMessage(
-         { type: "I_C_SELECT_COORDS", data: { coordinates } },
+         { type: "IF_C_SELECT_COORDS", data: { coordinates } },
          "*"
       );
    }, [handleCancel]);

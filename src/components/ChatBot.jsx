@@ -165,10 +165,10 @@ export default function ChatBot({ isOpen }) {
    };
 
    useEffect(() => {
-      extensionUtils.pageOnMessage("C_I_SET_INPUTS", (data) => {
+      extensionUtils.pageOnMessage("C_IF_SET_INPUTS", (data) => {
          setInput(data.input);
          setSelectedImage(data.image);
-         handleSendMessage();
+         // handleSendMessage();
       });
 
       extensionUtils.pageOnMessage("C_I_CLEAR_CHAT", () => {

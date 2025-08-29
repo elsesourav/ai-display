@@ -24,17 +24,17 @@ export default function Menu() {
    const dragRef = useRef(null);
 
    useEffect(() => {
-      ES.pageOnMessage("C_I_OPEN_CHAT", () => {
+      ES.pageOnMessage("C_IF_OPEN_CHAT", () => {
          setIsChatOpen(true);
       });
-      ES.pageOnMessage("C_I_CLOSE_CHAT", () => {
+      ES.pageOnMessage("C_IF_CLOSE_CHAT", () => {
          setIsChatOpen(false);
       });
 
-      ES.pageOnMessage("C_I_HIDDEN", () => {
+      ES.pageOnMessage("C_IF_HIDDEN", () => {
          setMenuOpacity("0");
       });
-      ES.pageOnMessage("C_I_VISIBLE", () => {
+      ES.pageOnMessage("C_IF_VISIBLE", () => {
          setMenuOpacity("1");
       });
 

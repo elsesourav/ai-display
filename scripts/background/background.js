@@ -94,6 +94,8 @@ runtimeOnMessage(
          devicePixelRatio,
       };
 
+      console.log("START QRC");
+
       chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (img) => {
          __OCR__(id, img, rect);
       });

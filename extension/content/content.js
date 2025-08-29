@@ -30,49 +30,40 @@ runtimeSendMessage("C_B_ON_LOAD", async (r) => {
    console.log(`Menu loaded: ${JSON.stringify(r)}`);
 });
 
-// const removeIframe = (selector) => {
-//    const iFrame = document.querySelector(selector);
-//    if (iFrame) {
-//       iFrame.remove();
-//    }
-// };
+pageOnMessage("I_C_OCR_RESULT", async ({ text, image }) => {
+   document.querySelector("iframe.ai-display")?.remove();
+   console.log(text, image);
 
-// pageOnMessage("I_C_OCR_RESULT", async ({ text, image }) => {
-//    console.log(text);
-//    removeIframe("iframe.ai-display");
+   const menuFrame = document.getElementById("menuWindowIframe");
+   if (menuFrame) {
+      pagePostMessage(
+         "C_IF_SET_INPUTS",
+         { input: text, image },
+         menuFrame.contentWindow
+      );
+      pagePostMessage("C_IF_OPEN_CHAT", {}, menuFrame.contentWindow);
+   }
+});
 
-//    const windowFrame = document.querySelector("iframe.aid-window");
-//    if (windowFrame) {
-//       pagePostMessage(
-//          "C_I_SET_INPUTS",
-//          { input: text, image },
-//          windowFrame.contentWindow
-//       );
-//       pagePostMessage("C_I_OPEN_CHAT", {}, windowFrame.contentWindow);
-//    }
-// });
+pageOnMessage("IF_C_SELECT_COORDS", async ({ coordinates }) => {
+   console.log(coordinates);
+   document.getElementById("screenSelectorIframe")?.remove();
+   runtimeSendMessage("C_B_CAPTURE_DOM", {
+      coordinates,
+      devicePixelRatio: window.devicePixelRatio,
+   });
+});
 
-// pageOnMessage("I_C_SELECT_COORDS", async ({ coordinates }) => {
-//    console.log(coordinates);
-//    removeIframe("iframe.aid-selection");
-//    runtimeSendMessage("C_B_CAPTURE_DOM", {
-//       coordinates,
-//       devicePixelRatio: window.devicePixelRatio,
-//    });
-// });
-
-// pageOnMessage("I_C_SELECT_CANCEL", async () => {
-//    console.log("Selection cancelled");
-//    removeIframe("iframe.aid-selection");
-// });
+pageOnMessage("IF_C_SELECT_CANCEL", async () => {
+   console.log("Selection cancelled");
+   document.getElementById("screenSelectorIframe")?.remove();
+});
 
 // chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
 //    if (settings.enable) {
 //       // setupMenu();
 //    }
 // });
-
-
 
 // pageOnMessage("I_C_CHAT_TOGGLE", (data) => {
 //    const iFrame = document.querySelector("iframe.aid-window");

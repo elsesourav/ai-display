@@ -374,6 +374,11 @@ async function GET__(name) {
    }
 }
 
+function removeIFrame(selector) {
+   const existingFrame = document.querySelector(selector);
+   if (existingFrame) existingFrame.remove();
+}
+
 async function uploadImageToCloudinary(file) {
    const cloudName = "diysvbtwq";
    const uploadPreset = "AiDisplay";

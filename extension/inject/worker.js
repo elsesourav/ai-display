@@ -55,7 +55,7 @@ function readyWorker() {
 }
 
 function updateProgress(packet) {
-   return;
+   // return;
    // eslint-disable-next-line no-unreachable
    const percent = Math.round(packet.progress * 100);
    const barLength = 20; // total segments in the bar

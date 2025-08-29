@@ -99,11 +99,11 @@ function __SELECT__(tabId) {
    executeScript(
       tabId,
       () => {
-         const existingFrame = document.querySelector("iframe.aid-selection");
+         const existingFrame = document.getElementById("screenSelectorIframe");
 
          if (!existingFrame) {
             const frame = document.createElement("iframe");
-            frame.classList.add("aid-selection");
+            frame.setAttribute("id", "screenSelectorIframe");
             frame.setAttribute("allowtransparency", "true");
             frame.setAttribute("frameborder", "0");
 
@@ -128,7 +128,7 @@ function __SELECT__(tabId) {
             );
 
             frame.src = chrome.runtime.getURL("./inject/selection.html");
-            document.documentElement.append(frame);
+            document.body.append(frame);
          }
       },
       tabId
@@ -211,15 +211,4 @@ function __PUSH_MENU__(tabId) {
       },
       tabId
    );
-}
-
-function removeIFrame(tabId) {
-   chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => {
-         const existingFrame = document.querySelector("iframe.ai-display");
-         if (existingFrame)
-            document.querySelector("iframe.ai-display").remove();
-      },
-   });
 }
