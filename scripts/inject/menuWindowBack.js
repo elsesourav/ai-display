@@ -60,6 +60,7 @@ const expandIframeToViewport = () => {
    });
    DRAG_HANDLE.style.left = `${iframePosition.x}px`;
    DRAG_HANDLE.style.top = `${iframePosition.y}px`;
+   pagePostMessage("IF_IF_MENU_WINDOW_DRAG_START", {});
 };
 
 // Shrink iframe back to fixed size at the committed position
@@ -79,6 +80,8 @@ const shrinkIframeToBox = () => {
       DRAG_HANDLE.style.left = "0px";
       DRAG_HANDLE.style.top = "0px";
    }, delayDuration);
+
+   pagePostMessage("IF_IF_MENU_WINDOW_DRAG_END", {});
 };
 
 // Expand on hover

@@ -115,7 +115,7 @@ function __SELECT__(tabId) {
                inset: 0;
                border: none;
                background: transparent !important;
-               z-index: 8250032643;
+               z-index: 825003265;
                pointer-events: auto;
                isolation: isolate;
             `;
@@ -197,7 +197,7 @@ function __PUSH_MENU__(tabId) {
                   left: 0px;
                   width: 50px;
                   height: 50px;
-                  background-color: #00f3;
+                  background: transparent !important;
                   z-index: 825003264;
                }
             `;
@@ -212,65 +212,6 @@ function __PUSH_MENU__(tabId) {
       tabId
    );
 }
-
-// function __PUSH_MENU__(tabId) {
-//    executeScript(
-//       tabId,
-//       () => {
-//          const existingFrame = document.querySelector("iframe.aid-window");
-
-//          if (!existingFrame) {
-//             const frame = document.createElement("iframe");
-//             frame.classList.add("aid-window");
-//             // frame.setAttribute("allowtransparency", "true");
-//             frame.setAttribute("frameborder", "0");
-
-//             // Set inline styles for transparency
-//             frame.style = `
-//                position: fixed;
-//                width: 160px;
-//                height: 50px;
-//                top: 0;
-//                left: 0;
-//                background-color: #0004;
-//                z-index: 1;
-//             `;
-//             // frame.style = `
-//             //    position: fixed;
-//             //    width: 160px;
-//             //    height: 50px;
-//             //    top: 0;
-//             //    left: 0;
-//             //    border: none;
-//             //    /* background: transparent !important; */
-//             //    background-color: #0003;
-//             //    z-index: 8250032643;
-//             // `;
-
-//             // Add additional style attributes to ensure transparency
-//             // const currentStyle = frame.getAttribute("style") || "";
-//             // frame.setAttribute(
-//             //    "style",
-//             //    `${currentStyle}; color-scheme: light dark !important;`
-//             // );
-
-//             frame.onload = () => {
-//                // pagePostMessage(
-//                //    "C_I_RESIZE",
-//                //    { data: { w: window.innerWidth, h: window.innerHeight } },
-//                //    frame.contentWindow
-//                // );
-//             };
-
-//             frame.src = chrome.runtime.getURL("./inject/window.html");
-//             document.body.append(frame);
-//          } else {
-//             existingFrame.style.display = "flex";
-//          }
-//       },
-//       tabId
-//    );
-// }
 
 function removeIFrame(tabId) {
    chrome.scripting.executeScript({

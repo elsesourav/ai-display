@@ -84,9 +84,9 @@ runtimeSendMessage("C_B_ON_LOAD", async (r) => {
 //    }
 // });
 
-// pageOnMessage("I_C_SELECT_TEXT", () => {
-//    runtimeSendMessage("C_B_SELECT_TEXT");
-// });
+pageOnMessage("IF_C_SELECT_TEXT", () => {
+   runtimeSendMessage("C_B_SELECT_TEXT");
+});
 
 // pageOnMessage("C_I_SET_QUESTION", ({ question, image }) => {
 //    runtimeSendMessage("C_B_GET_ANSWER", { question, image });

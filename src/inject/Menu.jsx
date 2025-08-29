@@ -73,9 +73,9 @@ export default function Menu() {
       }
    }, [isChatOpen]);
 
-   // const handleSelectText = useCallback(() => {
-   //    ES.pagePostMessage("I_C_SELECT_TEXT", {}, window.parent);
-   // }, []);
+   const handleSelectText = useCallback(() => {
+      ES.pagePostMessage("IF_C_SELECT_TEXT", {}, window.parent);
+   }, []);
 
    // Render UI
    return (
@@ -133,7 +133,7 @@ export default function Menu() {
 
                <div
                   className="relative grid place-items-center bg-gray-950/20 rounded-lg text-xl cursor-pointer hover:bg-gray-950/40 text-gray-50 hover:text-gray-300 transition-all duration-200"
-                  // onClick={handleSelectText}
+                  onClick={handleSelectText}
                   style={{
                      width: `calc(${SIZES.min.h} - 8px)`,
                      aspectRatio: "1 / 1",

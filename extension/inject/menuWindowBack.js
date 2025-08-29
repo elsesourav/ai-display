@@ -10,25 +10,6 @@ function pageOnMessage(type, callback) {
    });
 }
 
-// let isActive = false;
-
-// pageOnMessage("IF_IF_MENU_WINDOW_BACK_DRAG_ON", () => {
-//    isActive = true;
-// });
-
-// window.addEventListener("pointermove", (e) => {
-//    if (!isActive) return;
-//    pagePostMessage("IF_C_MENU_WINDOW_MOVE", { x: e.clientX, y: e.clientY });
-// });
-
-// window.addEventListener("pointerup", (e) => {
-//    if (!isActive) return;
-//    isActive = false;
-//    pagePostMessage("IF_C_MENU_WINDOW_BACK_ADD_AFTER", {});
-//    pagePostMessage("IF_C_MENU_WINDOW_MOVE", { x: e.clientX, y: e.clientY });
-//    pagePostMessage("IF_IF_MENU_WINDOW_END", { });
-// });
-
 // Handle element inside iframe used to drag
 const DRAG_HANDLE = document.getElementById("DRAG_HANDLE");
 
@@ -79,6 +60,7 @@ const expandIframeToViewport = () => {
    });
    DRAG_HANDLE.style.left = `${iframePosition.x}px`;
    DRAG_HANDLE.style.top = `${iframePosition.y}px`;
+   pagePostMessage("IF_IF_MENU_WINDOW_DRAG_START", {});
 };
 
 // Shrink iframe back to fixed size at the committed position
@@ -98,6 +80,8 @@ const shrinkIframeToBox = () => {
       DRAG_HANDLE.style.left = "0px";
       DRAG_HANDLE.style.top = "0px";
    }, delayDuration);
+
+   pagePostMessage("IF_IF_MENU_WINDOW_DRAG_END", {});
 };
 
 // Expand on hover
