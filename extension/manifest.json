@@ -35,15 +35,17 @@
    "web_accessible_resources": [
       {
          "resources": [
+            "assets/*",
+            "inject/*",
+            "offscreen/*",
+            "offscreen/OCR/*",
+            "offscreen/OCR/Tesseract/*",
+            "offscreen/OCR/Lang/*",
             "inject/selection.html",
             "inject/menuWindow.html",
             "inject/menuWindowBack.html",
-            "inject/inject.html",
-            "inject/*",
-            "assets/*",
-            "utils.js",
-            "inject/Tesseract/*",
-            "inject/Lang/*"
+            "offscreen/offscreen.html",
+            "utils.js"
          ],
          "matches": ["http://*/*", "https://*/*"]
       }

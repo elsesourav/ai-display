@@ -52,49 +52,39 @@ function metaLlamaLlama4Maverick(text, imgData) {
    });
 }
 
-/* ---------------- inject ---------------- */
-function __OCR__(tabId, imageData, rectInfo) {
-   executeScript(
-      tabId,
-      (imageData, rectInfo) => {
-         const existingFrame = document.querySelector("iframe.ai-display");
-
-         if (!existingFrame) {
-            const frame = document.createElement("iframe");
-            frame.classList.add("ai-display");
-            frame.style = `
-               position: fixed;
-               height: 0;
-               width: 0;
-               top: 20px;
-               right: 20px;
-               border: none;
-               z-index: 8250032643;
-            `;
-
-            frame.onload = () => {
-               pagePostMessage(
-                  "C_I_OCR",
-                  { imageData, rectInfo },
-                  frame.contentWindow
-               );
-            };
-
-            frame.src = chrome.runtime.getURL("./../inject/inject.html");
-            document.documentElement.append(frame);
-         } else {
-            pagePostMessage(
-               "C_I_OCR",
-               { imageData, rectInfo },
-               existingFrame.contentWindow
-            );
-         }
-      },
-      imageData,
-      rectInfo
-   );
+function ensureOffscreen() {
+   return new Promise(async (resolve) => {
+      if (!(await chrome.offscreen.hasDocument())) {
+         await chrome.offscreen.createDocument({
+            url: "./../offscreen/offscreen.html",
+            reasons: ["BLOBS"],
+            justification: "Need hidden DOM/canvas",
+         });
+      }
+      resolve();
+   });
 }
 
+/* ---------------- offscreen ---------------- */
+function __OCR__(imageData, rectInfo) {
+   return new Promise(async (resolve) => {
+      await ensureOffscreen();
+      await wait(100);
+
+      runtimeSendMessage("C_OF_START_QRC", { imageData, rectInfo }, (res) => {
+         console.log(res);
+
+         if (res.success) {
+            resolve(res);
+         } else {
+            console.log("Failed to get rubrics PDF:", res.message);
+            resolve(res.message);
+         }
+      });
+   });
+}
+
+/* ---------------- injects content script ---------------- */
 function __SELECT__(tabId) {
    executeScript(
       tabId,

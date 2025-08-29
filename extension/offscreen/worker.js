@@ -55,7 +55,7 @@ function readyWorker() {
 }
 
 function updateProgress(packet) {
-   // return;
+   return;
    // eslint-disable-next-line no-unreachable
    const percent = Math.round(packet.progress * 100);
    const barLength = 20; // total segments in the bar
@@ -72,7 +72,7 @@ function updateProgress(packet) {
    if (packet.status === "initialized api") color = "color: lightgreen;";
 
    // Clear previous log and print the new progress bar
-   console.clear();
+   // console.clear();
    console.log(`%c[${bar}] ${percent}% - ${packet.status}`, color);
 }
 
@@ -89,7 +89,7 @@ function processOCR(imageData, rectInfo) {
          const promises = [cropImage(imageData, box), readyWorker()];
          Promise.all(promises).then(async ([croppedImage]) => {
             // console.log(croppedImage);
-            
+
             const result = await worker.recognize(croppedImage);
             resolve({
                text: result.data.text,
@@ -109,9 +109,10 @@ window.addEventListener("beforeunload", async () => {
    }
 });
 
-pageOnMessage("C_I_OCR", async ({ imageData, rectInfo }) => {
-   // console.log(imageData, rectInfo);   
+runtimeOnMessage("C_OF_START_QRC", async (data, _, sendResponse) => {
+   const { imageData, rectInfo } = data;
+   // console.log(imageData, rectInfo);
    const result = await processOCR(imageData, rectInfo);
    // console.log(result);
-   pagePostMessage("I_C_OCR_RESULT", result, window.parent);
+   sendResponse({ success: !!result, result });
 });

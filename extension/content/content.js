@@ -1,6 +1,3 @@
-// injectJSLink(chrome.runtime.getURL("./../inject/select.js"));
-// injectJSLink(chrome.runtime.getURL("./../utils.js"));
-
 console.log("content script loaded");
 
 // pageOnMessage("i_c_selected_image", async (data) => {
@@ -30,9 +27,10 @@ runtimeSendMessage("C_B_ON_LOAD", async (r) => {
    console.log(`Menu loaded: ${JSON.stringify(r)}`);
 });
 
-pageOnMessage("I_C_OCR_RESULT", async ({ text, image }) => {
+runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
+   const { text, image } = data;
    document.querySelector("iframe.ai-display")?.remove();
-   console.log(text, image);
+   sendResponse({ success: true });
 
    const menuFrame = document.getElementById("menuWindowIframe");
    if (menuFrame) {
