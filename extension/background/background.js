@@ -241,10 +241,10 @@ async function getGoogleAiAnswer(q) {
                               "border-radius",
                               "box-shadow",
                               "width",
-                              "height",
+                              // "height",
                               "max-width",
                               "min-width",
-                              "max-height",
+                              // "max-height",
                               "min-height",
                               "overflow",
                               "z-index",
@@ -269,8 +269,14 @@ async function getGoogleAiAnswer(q) {
                                  let styleStr = "";
 
                                  importantProps.forEach((prop) => {
-                                    const val = computed.getPropertyValue(prop);
+                                    let val = computed.getPropertyValue(prop);
+
                                     if (
+                                       prop === "width" ||
+                                       prop === "max-width"
+                                    ) {
+                                       styleStr += `${prop}:min(${val}, 450px)`;
+                                    } else if (
                                        val &&
                                        val !== "auto" &&
                                        val !== "normal" &&
@@ -418,10 +424,10 @@ async function getBingAiAnswer(q) {
                               "border-radius",
                               "box-shadow",
                               "width",
-                              "height",
+                              // "height",
                               "max-width",
                               "min-width",
-                              "max-height",
+                              // "max-height",
                               "min-height",
                               "overflow",
                               "z-index",
@@ -446,8 +452,14 @@ async function getBingAiAnswer(q) {
                                  let styleStr = "";
 
                                  importantProps.forEach((prop) => {
-                                    const val = computed.getPropertyValue(prop);
+                                    let val = computed.getPropertyValue(prop);
+
                                     if (
+                                       prop === "width" ||
+                                       prop === "max-width"
+                                    ) {
+                                       styleStr += `${prop}:min(${val}, 440px)`;
+                                    } else if (
                                        val &&
                                        val !== "auto" &&
                                        val !== "normal" &&

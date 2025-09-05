@@ -10,7 +10,7 @@ export default function Menu() {
    const SIZES = useMemo(
       () => ({
          min: { w: "160px", h: "50px" },
-         max: { w: "540px", h: "640px" },
+         max: { w: "480px", h: "640px" },
       }),
       []
    );

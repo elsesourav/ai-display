@@ -67,12 +67,13 @@ export default function ChatBot({ isOpen }) {
          console.log("Received answer from background:", data);
 
          const provider = data.provider || "google";
-         setAnswers({
+         setAnswers((prev) => ({
+            ...prev,
             [provider]: {
                content: data.answer,
                provider: provider,
             },
-         });
+         }));
          // console.log(data.answer);
          console.log("work");
          setIsLoading(false);
@@ -109,6 +110,10 @@ export default function ChatBot({ isOpen }) {
       //       },
       //    ]);
       // });
+   }, []);
+
+   useEffect(() => {
+      console.log(answers);
    }, [answers]);
 
    // Function to scroll to bottom
@@ -263,14 +268,31 @@ export default function ChatBot({ isOpen }) {
                   <button
                      key={provider.id}
                      onClick={() => setSelectedProvider(provider.id)}
-                     className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 border ${
-                        selectedProvider === provider.id && answers[provider.id]
-                           ? "bg-white/20 dark:bg-black/20 text-gray-700 dark:text-gray-200 border-white/30 hover:bg-white/30 dark:hover:bg-black/30"
-                           : "bg-gray-300/40 dark:bg-gray-600/20 text-gray-400 dark:text-gray-500 border-gray-400/30 cursor-not-allowed"
+                     className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 border relative ${
+                        !answers[provider.id]
+                           ? // Not loaded - disabled state
+                             "bg-gray-200/50 dark:bg-gray-700/30 text-gray-400 dark:text-gray-500 border-gray-300/40 dark:border-gray-600/40 cursor-not-allowed opacity-50"
+                           : selectedProvider === provider.id
+                           ? // Active - selected state (light blue)
+                             "bg-blue-100/80 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300/60 dark:border-blue-600/50 shadow-sm cursor-pointer"
+                           : // Loaded but not active - available state
+                             "bg-white/50 dark:bg-black/30 text-gray-700 dark:text-gray-200 border-white/50 dark:border-white/30 hover:bg-white/70 dark:hover:bg-black/40 hover:border-white/60 cursor-pointer"
                      }`}
                      disabled={!answers[provider.id]}
                   >
                      {provider.name}
+                     {/* Show checkmark for loaded providers */}
+                     {answers[provider.id] && (
+                        <span
+                           className={`ml-1 text-xs ${
+                              selectedProvider === provider.id
+                                 ? "text-blue-600 dark:text-blue-300"
+                                 : "text-green-600 dark:text-green-400"
+                           }`}
+                        >
+                           ✓
+                        </span>
+                     )}
                   </button>
                ))}
             </div>
@@ -348,7 +370,7 @@ export default function ChatBot({ isOpen }) {
                            </div>
 
                            <div
-                              className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap"
+                              className="botChat whitespace-pre-wrap"
                               style={{ zoom: 0.7 }}
                               dangerouslySetInnerHTML={{
                                  __html: answers[selectedProvider].content,
