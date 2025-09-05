@@ -8,10 +8,19 @@ export default function ChatBot({ isOpen }) {
    const [isLoading, setIsLoading] = useState(false);
    const [lastQuestion, setLastQuestion] = useState("");
    const [selectedImage, setSelectedImage] = useState(null);
-   const [answers, setAnswers] = useState([]);
+   const [answers, setAnswers] = useState({});
+   const [selectedProvider, setSelectedProvider] = useState("google");
+
+   const AI_PROVIDERS = [
+      { id: "google", name: "Google AI", color: "bg-blue-500" },
+      { id: "bing", name: "Bing AI", color: "bg-purple-500" },
+      // { id: "chatgpt", name: "ChatGPT", color: "bg-green-500" },
+      // { id: "gemini", name: "Gemini", color: "bg-orange-500" },
+   ];
 
    const scrollContainerRef = useRef(null);
    const fileInputRef = useRef(null);
+   const rootRef = useRef(null);
 
    // Clear selected image
    const clearSelectedImage = () => {
@@ -22,10 +31,14 @@ export default function ChatBot({ isOpen }) {
    };
 
    // get answer from background script
-   const getAnswerFromBackground = async (question, image) => {
+   const getAnswerFromBackground = async (
+      question,
+      image,
+      provider = "google"
+   ) => {
       UTILS.pagePostMessage(
          "IF_B_GET_ANSWER",
-         { question, image },
+         { question, image, provider },
          window.parent
       );
    };
@@ -41,16 +54,26 @@ export default function ChatBot({ isOpen }) {
       }
 
       setIsLoading(true);
-      setAnswers([]);
+      setAnswers({});
 
-      getAnswerFromBackground(input, selectedImage);
+      // Request answers from all providers
+      AI_PROVIDERS.forEach((provider) => {
+         getAnswerFromBackground(input, selectedImage, provider.id);
+      });
    };
 
    useEffect(() => {
       UTILS.pageOnMessage("IF_B_GET_ANSWER", (data) => {
          console.log("Received answer from background:", data);
-         setAnswers([{ content: data.answer, provider: "Google AI Search" }]);
-         console.log(data.answer);
+
+         const provider = data.provider || "google";
+         setAnswers({
+            [provider]: {
+               content: data.answer,
+               provider: provider,
+            },
+         });
+         // console.log(data.answer);
          console.log("work");
          setIsLoading(false);
       });
@@ -121,6 +144,21 @@ export default function ChatBot({ isOpen }) {
       return () => clearTimeout(timeoutId);
    }, [answers, isLoading]);
 
+   // When closing, if focus is inside the chat, blur it to avoid aria/inert conflicts.
+   useEffect(() => {
+      if (!isOpen && rootRef.current) {
+         const active = document.activeElement;
+         if (active && rootRef.current.contains(active)) {
+            try {
+               active.blur();
+            } catch (err) {
+               // ignore
+               void err;
+            }
+         }
+      }
+   }, [isOpen]);
+
    const handleKeyDown = (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
          e.preventDefault();
@@ -128,25 +166,27 @@ export default function ChatBot({ isOpen }) {
       }
    };
 
-   if (!isOpen) return null;
-
    return (
-      <div className="flex flex-col h-full animate-fadeIn">
+      <div
+         ref={rootRef}
+         className={`flex flex-col h-full ${isOpen ? "animate-fadeIn" : ""}`}
+         inert={!isOpen}
+      >
          {/* Input area at the top */}
          <div
-            className="p-4 border-b border-gray-200 animate-slideUp"
+            className="p-4 border-b border-white/30 dark:border-white/20 bg-white/10 dark:bg-black/10 animate-slideUp"
             style={{ animationDelay: "100ms" }}
          >
             <div className="relative w-full grid gap-2">
                {/* Text input and buttons */}
                <div className="relative grid w-full h-[97px]">
-                  <div className="flex-1 relative path border-gray-300/50 dark:border-indigo-500/30 p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70 dark:bg-indigo-900/20 text-gray-800 dark:text-white">
+                  <div className="flex-1 relative path border-white/60 dark:border-black p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70 dark:bg-black/20 text-gray-800 dark:text-white">
                      <textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask a question..."
-                        className="w-[calc(100%-50px)] h-full resize-none text-[16px] rounded-lg border-0 outline-0 "
+                        className="w-[calc(100%-50px)] h-full resize-none text-[16px] bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                         rows="3"
                         autoFocus
                      />
@@ -154,7 +194,7 @@ export default function ChatBot({ isOpen }) {
 
                   <button
                      onClick={handleImageClick}
-                     className="absolute h-[30px] w-[30px] right-[5px] top-[5px] grid place-items-center rounded-lg bg-gray-900 dark:bg-gray-100/30 text-gray-100 dark:text-gray-900 hover:bg-gray-200 dark:hover:bg-gray-500/30 transition-colors cursor-pointer z-[9211]"
+                     className="absolute h-[30px] w-[30px] right-[5px] top-[5px] grid place-items-center rounded-lg bg-white/30 dark:bg-black/30 border border-white/50 dark:border-white/30 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-200 cursor-pointer z-[9211]"
                      title="Upload image"
                   >
                      <IoImage size={18} />
@@ -163,10 +203,10 @@ export default function ChatBot({ isOpen }) {
                   <button
                      onClick={handleSendMessage}
                      disabled={input.trim() === "" || isLoading}
-                     className={`absolute h-[45px] w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg transition-colors duration-200 ${
+                     className={`absolute h-[45px] w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 ${
                         input.trim() === "" || isLoading
-                           ? "bg-gray-300 text-gray-500 dark:bg-indigo-900/30"
-                           : "bg-indigo-500 text-white hover:bg-indigo-600"
+                           ? "bg-gray-300/40 dark:bg-gray-600/20 border-gray-400/40 dark:border-gray-500/30 text-gray-400 dark:text-gray-500"
+                           : "bg-blue-500/60 border-blue-400/50 text-white hover:bg-blue-600/70 hover:border-blue-500/60"
                      } cursor-pointer`}
                      title="Send message"
                   >
@@ -185,7 +225,7 @@ export default function ChatBot({ isOpen }) {
 
                {/* Image preview area */}
                {selectedImage && (
-                  <div className="relative rounded-lg overflow-hidden border border-gray-300/50 dark:border-indigo-500/30">
+                  <div className="relative rounded-xl overflow-hidden border border-white/50 dark:border-white/30 bg-white/15 dark:bg-black/15">
                      <img
                         src={selectedImage}
                         alt="Selected"
@@ -193,7 +233,7 @@ export default function ChatBot({ isOpen }) {
                      />
                      <button
                         onClick={clearSelectedImage}
-                        className="absolute top-1 right-1 bg-gray-800/70 text-white p-1 rounded-full hover:bg-gray-900/70"
+                        className="absolute top-1 right-1 bg-gray-800/60 dark:bg-gray-900/60 text-white p-1 rounded-full hover:bg-gray-900/70 dark:hover:bg-black/70 border border-white/30 transition-all duration-200"
                         title="Remove image"
                      >
                         <svg
@@ -216,11 +256,31 @@ export default function ChatBot({ isOpen }) {
             </div>
          </div>
 
+         {/* AI Provider Selection Buttons */}
+         <div className="relative w-full px-4 py-2">
+            <div className="flex flex-wrap gap-2">
+               {AI_PROVIDERS.map((provider) => (
+                  <button
+                     key={provider.id}
+                     onClick={() => setSelectedProvider(provider.id)}
+                     className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                        selectedProvider === provider.id && answers[provider.id]
+                           ? "bg-white/20 dark:bg-black/20 text-gray-700 dark:text-gray-200 border-white/30 hover:bg-white/30 dark:hover:bg-black/30"
+                           : "bg-gray-300/40 dark:bg-gray-600/20 text-gray-400 dark:text-gray-500 border-gray-400/30 cursor-not-allowed"
+                     }`}
+                     disabled={!answers[provider.id]}
+                  >
+                     {provider.name}
+                  </button>
+               ))}
+            </div>
+         </div>
+
          <div className="relative h-full flex-1 m-4 overflow-hidden">
             {/* Scroll to bottom button */}
             <button
                onClick={scrollToBottom}
-               className="absolute bottom-4 right-4 z-10 p-2 bg-blue-500 text-white rounded-full shadow-md hover:bg-blue-600 transition-opacity duration-200 opacity-80 hover:opacity-100"
+               className="absolute bottom-4 right-4 z-10 p-2 bg-blue-500/60 border border-blue-400/50 text-white rounded-full hover:bg-blue-600/70 hover:border-blue-500/60 transition-all duration-200 opacity-80 hover:opacity-100"
                style={{ display: "none" }}
             >
                <IoArrowDown size={16} />
@@ -238,8 +298,8 @@ export default function ChatBot({ isOpen }) {
             >
                {/* Question display */}
                {lastQuestion && (
-                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg shadow-sm">
-                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">
+                  <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
+                     <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                         Your question:
                      </div>
                      <div className="text-gray-800 dark:text-gray-200 font-medium">
@@ -251,53 +311,76 @@ export default function ChatBot({ isOpen }) {
                {/* Answers section */}
                <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                     {answers.length > 1 ? "Answers" : "Answer"}
+                     Answer
                   </h3>
 
                   {/* Loading indicator */}
-                  {isLoading && (
-                     <div className="animate-pulse bg-gray-50 dark:bg-gray-800 p-3 rounded-lg mb-3">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">
-                           Thinking...
+                  {/* {isLoading && Object.keys(answers).length === 0 && (
+                     <div className="animate-pulse bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl mb-3">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
+                           Getting answers from AI models...
                         </div>
                         <div className="flex space-x-2 mt-2">
                            <div
-                              className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                              className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
                               style={{ animationDelay: "0ms" }}
                            ></div>
                            <div
-                              className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                              className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
                               style={{ animationDelay: "150ms" }}
                            ></div>
                            <div
-                              className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                              className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
                               style={{ animationDelay: "300ms" }}
                            ></div>
                         </div>
                      </div>
-                  )}
+                  )} */}
 
-                  {/* Display all answers */}
+                  {/* Display selected answer */}
                   <div className="space-y-4">
-                     {answers.map((answer, index) => (
-                        <div
-                           key={index}
-                           className="animate-fadeIn bg-gray-50 dark:bg-gray-800 p-3 rounded-lg shadow-sm"
-                           style={{ animationDelay: `${index * 300}ms` }}
-                        >
-                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">
-                              {answer.provider}
+                     {answers[selectedProvider] && (
+                        <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
+                           <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
+                              {AI_PROVIDERS.find(
+                                 (p) => p.id === selectedProvider
+                              )?.name || selectedProvider}
                            </div>
 
                            <div
                               className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap"
                               style={{ zoom: 0.7 }}
                               dangerouslySetInnerHTML={{
-                                 __html: answer.content,
+                                 __html: answers[selectedProvider].content,
                               }}
                            />
                         </div>
-                     ))}
+                     )}
+
+                     {/* Show loading for selected provider if no answer yet */}
+                     {isLoading && !answers[selectedProvider] && (
+                        <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
+                           <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
+                              {AI_PROVIDERS.find(
+                                 (p) => p.id === selectedProvider
+                              )?.name || selectedProvider}
+                           </div>
+                           <div className="flex space-x-2 mt-2">
+                              <div
+                                 className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
+                                 style={{ animationDelay: "0ms" }}
+                              ></div>
+                              <div
+                                 className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
+                                 style={{ animationDelay: "150ms" }}
+                              ></div>
+                              <div
+                                 className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
+                                 style={{ animationDelay: "300ms" }}
+                              ></div>
+                           </div>
+                        </div>
+                     )}
                   </div>
                </div>
             </div>

@@ -82,31 +82,27 @@ export default function Menu() {
       <div
          className="absolute transition-all duration-300 ease-in-out"
          ref={menuRef}
-         style={{
-            zIndex: 1,
-            opacity: menuOpacity,
-         }}
+         style={{ zIndex: 1, opacity: menuOpacity }}
       >
          <main
-            className={`relative left-[1px] top-[1px] flex flex-col bg-gradient-to-bl from-[#ffe4e6] to-[#ccfbf1] dark:bg-gradient-to-r dark:from-violet-600 dark:to-indigo-600 rounded-md shadow-md outline-1 outline-white dark:outline-blue-500 overflow-hidden transition-all duration-300 ease-in-out`}
+            className="relative left-[1px] top-[1px] backdrop-blur-xl bg-blue-500/15 dark:bg-blue-600/10 border border-white/80 dark:border-white/40 rounded-xl shadow-lg overflow-hidden transition-all duration-300 ease-in-out"
             style={{
                width: `calc(${size.w} - 2px)`,
                height: `calc(${size.h} - 2px)`,
             }}
          >
+            {/* Fixed header */}
             <section
-               className="relative flex w-[inherit] gap-[12px] items-center justify-start pl-[4px] flex-shrink-0 transition-all duration-300 ease-in-out"
-               style={{
-                  height: `calc(${SIZES.min.h} - 2px)`,
-               }}
+               className="relative h-[inherit] flex w-full gap-[12px] items-center justify-start pl-[4px] bg-white/10 dark:bg-black/10 border-b border-white/30 dark:border-white/20"
+               style={{ height: `${parseInt(SIZES.min.h) - 2}px` }}
             >
                <div
                   ref={dragRef}
-                  className={`relative grid place-items-center rounded-lg text-xl cursor-move ${
+                  className={`relative grid place-items-center rounded-lg text-xl cursor-move border border-white/50 dark:border-white/30 transition-all duration-200 ${
                      isDragging
-                        ? "bg-gray-50/90 text-gray-950"
-                        : "bg-gray-950/20 text-gray-50 hover:bg-gray-50/90  hover:text-gray-950"
-                  } transition-all duration-200`}
+                        ? "bg-white/40 text-gray-800"
+                        : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200 hover:bg-white/25 dark:hover:bg-black/25"
+                  }`}
                   style={{
                      width: `calc(${SIZES.min.h} - 8px)`,
                      aspectRatio: "1 / 1",
@@ -117,10 +113,10 @@ export default function Menu() {
 
                <div
                   onClick={toggleChat}
-                  className={`relative grid place-items-center rounded-lg text-xl cursor-pointer transition-all duration-200 ${
+                  className={`relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 ${
                      isChatOpen
-                        ? "bg-blue-500 text-white hover:bg-blue-600"
-                        : "bg-gray-950/20 text-gray-50 hover:bg-gray-950/40 hover:text-gray-300"
+                        ? "bg-blue-500/60 text-white hover:bg-blue-600/70"
+                        : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200 hover:bg-white/25 dark:hover:bg-black/25"
                   }`}
                   style={{
                      width: `calc(${SIZES.min.h} - 8px)`,
@@ -131,7 +127,7 @@ export default function Menu() {
                </div>
 
                <div
-                  className="relative grid place-items-center bg-gray-950/20 rounded-lg text-xl cursor-pointer hover:bg-gray-950/40 text-gray-50 hover:text-gray-300 transition-all duration-200"
+                  className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-white/25 dark:hover:bg-black/25 text-gray-700 dark:text-gray-200 transition-all duration-200"
                   onClick={handleSelectText}
                   style={{
                      width: `calc(${SIZES.min.h} - 8px)`,
@@ -145,7 +141,7 @@ export default function Menu() {
                   <div className="absolute right-[4px] top-1/2 -translate-y-1/2">
                      <div
                         onClick={toggleChat}
-                        className="relative grid place-items-center bg-gray-950/20 rounded-lg text-xl cursor-pointer hover:bg-red-700 text-red-500 hover:text-white transition-all duration-200"
+                        className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-red-500/50 text-red-500 hover:text-white transition-all duration-200"
                         title="Close chat"
                         style={{
                            width: `calc(${SIZES.min.h} - 8px)`,
@@ -158,21 +154,32 @@ export default function Menu() {
                )}
             </section>
 
+            {/* Chat content area */}
             <div
-               className={`relative flex-1 overflow-hidden transition-all duration-300 ease-in-out`}
+               className="absolute left-0 right-0 overflow-hidden transition-opacity duration-300 ease-in-out"
                style={{
+                  top: SIZES.min.h,
+                  bottom: 0,
                   opacity: isChatOpen ? 1 : 0,
-                  height: isChatOpen ? "auto" : "0px",
-                  maxHeight: isChatOpen
-                     ? `calc(${SIZES.max.h} - ${SIZES.min.h})`
-                     : "0px",
+                  pointerEvents: isChatOpen ? "auto" : "none",
+                  willChange: "opacity, transform",
+                  transform: isChatOpen ? "translateZ(0)" : "translateZ(0)",
                }}
             >
-               <div className="h-full">
+               <div
+                  className="h-full"
+                  style={{
+                     willChange: "opacity, transform",
+                     transform: "translateZ(0)",
+                  }}
+               >
                   <ChatBot isOpen={isChatOpen} />
                </div>
             </div>
          </main>
       </div>
    );
+}
+{
+   /* Chat area fills the remaining space below header */
 }
