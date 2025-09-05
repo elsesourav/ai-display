@@ -51,7 +51,8 @@ pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
    frame1.style.left = `${constrainedPosition.x}px`;
    frame1.style.top = `${constrainedPosition.y}px`;
 
-   frame1.style.transition = "left 300ms ease, top 300ms ease, width 300ms ease, height 300ms ease";
+   frame1.style.transition =
+      "left 300ms ease, top 300ms ease, width 300ms ease, height 300ms ease";
    frame1.style.width = iframeSize.width;
    frame1.style.height = iframeSize.height;
    setTimeout(() => {
@@ -88,7 +89,7 @@ pageOnMessage("IF_C_MENU_WINDOW_BACK_MOVE", (data) => {
 // Relay messages between the two iframes
 window.addEventListener("message", (event) => {
    if (event?.data?.type?.includes("IF_IF_")) {
-      // console.log("Relaying message:", event.data);
+      console.log("Relaying message:", event.data);
 
       const iframe1 =
          document.getElementById("menuWindowIframe")?.contentWindow;
@@ -102,6 +103,16 @@ window.addEventListener("message", (event) => {
       } else if (event.source === iframe2) {
          iframe1.postMessage(event.data, "*");
       }
+   } else if (event?.data?.type?.includes("IF_B_")) {
+      console.log("Received message from background:", event.data);
+
+      runtimeSendMessage(event.data.type, { ...event.data }, (res) => {
+         const iframe =
+            document.getElementById("menuWindowIframe")?.contentWindow;
+         console.log(res);
+
+         pagePostMessage(event.data.type, res, iframe);
+      });
    }
 });
 

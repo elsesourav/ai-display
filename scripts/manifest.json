@@ -17,7 +17,7 @@
       "offscreen"
    ],
    "optional_permissions": ["clipboardWrite"],
-   "host_permissions": ["<all_urls>", "http://*/*", "https://*/*"],
+   "host_permissions": ["<all_urls>", "http://*/*", "https://*/*", "*://www.google.com/*"],
    "background": {
       "service_worker": "./background/background.js"
    },

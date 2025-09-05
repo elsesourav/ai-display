@@ -29,7 +29,6 @@ runtimeSendMessage("C_B_ON_LOAD", async (r) => {
 
 runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
    const { text, image } = data;
-   document.querySelector("iframe.ai-display")?.remove();
    sendResponse({ success: true });
 
    const menuFrame = document.getElementById("menuWindowIframe");
@@ -44,7 +43,6 @@ runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
 });
 
 pageOnMessage("IF_C_SELECT_COORDS", async ({ coordinates }) => {
-   console.log(coordinates);
    document.getElementById("screenSelectorIframe")?.remove();
    runtimeSendMessage("C_B_CAPTURE_DOM", {
       coordinates,

@@ -10,7 +10,7 @@ export default function Menu() {
    const SIZES = useMemo(
       () => ({
          min: { w: "160px", h: "50px" },
-         max: { w: "380px", h: "560px" },
+         max: { w: "540px", h: "640px" },
       }),
       []
    );
@@ -88,15 +88,14 @@ export default function Menu() {
          }}
       >
          <main
-            className={`relative left-[1px] top-[1px] grid bg-gradient-to-bl from-[#ffe4e6] to-[#ccfbf1] dark:bg-gradient-to-r dark:from-violet-600 dark:to-indigo-600 rounded-md shadow-md outline-1 outline-white dark:outline-blue-500 overflow-hidden transition-all duration-300 ease-in-out`}
+            className={`relative left-[1px] top-[1px] flex flex-col bg-gradient-to-bl from-[#ffe4e6] to-[#ccfbf1] dark:bg-gradient-to-r dark:from-violet-600 dark:to-indigo-600 rounded-md shadow-md outline-1 outline-white dark:outline-blue-500 overflow-hidden transition-all duration-300 ease-in-out`}
             style={{
                width: `calc(${size.w} - 2px)`,
                height: `calc(${size.h} - 2px)`,
-               gridTemplateRows: `${SIZES.min.h} auto`,
             }}
          >
             <section
-               className="relative flex w-[inherit] gap-[12px] items-center justify-start pl-[4px]"
+               className="relative flex w-[inherit] gap-[12px] items-center justify-start pl-[4px] flex-shrink-0 transition-all duration-300 ease-in-out"
                style={{
                   height: `calc(${SIZES.min.h} - 2px)`,
                }}
@@ -160,10 +159,13 @@ export default function Menu() {
             </section>
 
             <div
-               className={`relative overflow-hidden transition-all duration-300 ease-in-out`}
+               className={`relative flex-1 overflow-hidden transition-all duration-300 ease-in-out`}
                style={{
                   opacity: isChatOpen ? 1 : 0,
-                  height: isChatOpen ? `100%` : "0px",
+                  height: isChatOpen ? "auto" : "0px",
+                  maxHeight: isChatOpen
+                     ? `calc(${SIZES.max.h} - ${SIZES.min.h})`
+                     : "0px",
                }}
             >
                <div className="h-full">

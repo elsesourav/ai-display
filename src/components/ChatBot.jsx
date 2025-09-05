@@ -1,134 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { IoArrowDown, IoImage, IoSend } from "react-icons/io5";
-import extensionUtils from "./../utils/utilsModule.js";
+import UTILS from "./../utils/utilsModule.js";
 import "./scrollbar-hide.css";
-
-// Demo answers from different API providers
-const demoAnswers = {
-   welcome: {
-      content:
-         "Hello! How can I help you today? I'm your AI assistant powered by AI Display. I can help answer questions, provide information, and assist with various tasks.",
-      provider: "AI Display",
-   },
-   providers: [
-      {
-         name: "GPT-4",
-         getResponse: (question) => {
-            if (
-               question.toLowerCase().includes("help") ||
-               question.toLowerCase().includes("what")
-            ) {
-               return `I can help you with various tasks including:
-
-                     1. Answering questions about almost any topic
-                     2. Providing explanations on complex subjects
-                     3. Offering suggestions and recommendations
-                     4. Helping with research and information gathering
-                     5. Assisting with creative tasks like writing or brainstorming
-
-                     Is there something specific you'd like help with today?`;
-            } else if (
-               question.toLowerCase().includes("hello") ||
-               question.toLowerCase().includes("hi")
-            ) {
-               return `Hello there! It's nice to meet you. I'm GPT-4, an advanced language model.  How can I assist you today?`;
-            } else {
-               return `Thank you for your question: "${question}"
-                  Based on my analysis, you're asking about ${question
-                     .split(" ")
-                     .slice(0, 3)
-                     .join(" ")}...
-
-                     I'd be happy to provide more information on this topic. Could you please provide a bit more context or specify what aspect you're most interested in learning about?
-
-                     I'm here to help and can provide more detailed information once I better understand your specific needs.`;
-            }
-         },
-      },
-      {
-         name: "Claude AI",
-         getResponse: (question) => {
-            if (
-               question.toLowerCase().includes("help") ||
-               question.toLowerCase().includes("what")
-            ) {
-               return `I'd be delighted to help you with:
-
-                  • Answering factual questions
-                  • Explaining complex concepts
-                  • Brainstorming ideas
-                  • Writing and editing assistance
-                  • Research summaries
-                  • Problem-solving
-
-                  What would you like to explore today?`;
-            } else if (
-               question.toLowerCase().includes("hello") ||
-               question.toLowerCase().includes("hi")
-            ) {
-               return `Hello! I'm Claude, an AI assistant created by Anthropic. I'm designed to be helpful, harmless, and honest. How may I assist you today?`;
-            } else {
-               return `Thanks for your question about "${question}".
-
-                     I notice you're interested in ${question
-                        .split(" ")
-                        .slice(0, 3)
-                        .join(
-                           " "
-                        )}. This is an interesting topic with several aspects to consider.
-
-                     To provide you with the most relevant information, could you tell me more about what specific aspects you're curious about? This will help me tailor my response to your needs.`;
-            }
-         },
-      },
-      {
-         name: "Gemini",
-         getResponse: (question) => {
-            if (
-               question.toLowerCase().includes("help") ||
-               question.toLowerCase().includes("what")
-            ) {
-               return `I can assist you with:
-
-                     - Answering questions and providing information
-                     - Generating creative content
-                     - Summarizing text
-                     - Translation between languages
-                     - Mathematical calculations
-                     - Code assistance
-
-                     What would you like help with today?`;
-            } else if (
-               question.toLowerCase().includes("hello") ||
-               question.toLowerCase().includes("hi")
-            ) {
-               return `Hi there! I'm Gemini, Google's AI assistant. I'm here to help answer questions, generate content, and assist with various tasks. How can I help you today?`;
-            } else {
-               return `Thank you for your question about "${question}".
-
-                        I understand you're interested in learning about ${question
-                           .split(" ")
-                           .slice(0, 3)
-                           .join(" ")}.
-
-                        To give you the most helpful response, could you share what specific information you're looking for? This will help me focus my answer on what matters most to you.`;
-            }
-         },
-      },
-   ],
-};
 
 export default function ChatBot({ isOpen }) {
    const [input, setInput] = useState("");
    const [isLoading, setIsLoading] = useState(false);
    const [lastQuestion, setLastQuestion] = useState("");
    const [selectedImage, setSelectedImage] = useState(null);
-   const [answers, setAnswers] = useState([
-      {
-         content: demoAnswers.welcome.content,
-         provider: demoAnswers.welcome.provider,
-      },
-   ]);
+   const [answers, setAnswers] = useState([]);
 
    const scrollContainerRef = useRef(null);
    const fileInputRef = useRef(null);
@@ -139,6 +19,15 @@ export default function ChatBot({ isOpen }) {
       if (fileInputRef.current) {
          fileInputRef.current.value = "";
       }
+   };
+
+   // get answer from background script
+   const getAnswerFromBackground = async (question, image) => {
+      UTILS.pagePostMessage(
+         "IF_B_GET_ANSWER",
+         { question, image },
+         window.parent
+      );
    };
 
    const handleSendMessage = async () => {
@@ -154,49 +43,50 @@ export default function ChatBot({ isOpen }) {
       setIsLoading(true);
       setAnswers([]);
 
-      extensionUtils.pagePostMessage(
-         "C_I_SET_QUESTION",
-         {
-            question: input,
-            image: selectedImage,
-         },
-         window.parent
-      );
+      getAnswerFromBackground(input, selectedImage);
    };
 
    useEffect(() => {
-      extensionUtils.pageOnMessage("C_IF_SET_INPUTS", (data) => {
-         setInput(data.input);
-         setSelectedImage(data.image);
-         // handleSendMessage();
-      });
-
-      extensionUtils.pageOnMessage("C_I_CLEAR_CHAT", () => {
-         setAnswers([]);
-         setInput("");
-         setLastQuestion("");
+      UTILS.pageOnMessage("IF_B_GET_ANSWER", (data) => {
+         console.log("Received answer from background:", data);
+         setAnswers([{ content: data.answer, provider: "Google AI Search" }]);
+         console.log(data.answer);
+         console.log("work");
          setIsLoading(false);
-         clearSelectedImage();
       });
 
-      extensionUtils.pageOnMessage("C_I_SET_QUESTION", (data) => {
-         setIsLoading(true);
-         setLastQuestion(data.question);
-      });
+      // UTILS.pageOnMessage("C_IF_SET_INPUTS", (data) => {
+      //    setInput(data.input);
+      //    setSelectedImage(data.image);
+      //    // handleSendMessage();
+      // });
 
-      extensionUtils.pageOnMessage("C_I_SET_ANSWER", (data) => {
-         const { answer, provider } = data;
+      // UTILS.pageOnMessage("C_I_CLEAR_CHAT", () => {
+      //    setAnswers([]);
+      //    setInput("");
+      //    setLastQuestion("");
+      //    setIsLoading(false);
+      //    clearSelectedImage();
+      // });
 
-         setIsLoading(false);
-         setAnswers([
-            ...answers,
-            {
-               content: answer,
-               provider: provider || "AI Display",
-            },
-         ]);
-      });
-   });
+      // UTILS.pageOnMessage("C_IF_SET_QUESTION", (data) => {
+      //    setIsLoading(true);
+      //    setLastQuestion(data.question);
+      // });
+
+      // UTILS.pageOnMessage("C_I_SET_ANSWER", (data) => {
+      //    const { answer, provider } = data;
+
+      //    setIsLoading(false);
+      //    setAnswers([
+      //       ...answers,
+      //       {
+      //          content: answer,
+      //          provider: provider || "AI Display",
+      //       },
+      //    ]);
+      // });
+   }, [answers]);
 
    // Function to scroll to bottom
    const scrollToBottom = () => {
@@ -256,7 +146,7 @@ export default function ChatBot({ isOpen }) {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask a question..."
-                        className="w-full h-full resize-none rounded-lg border-0 outline-0 "
+                        className="w-[calc(100%-50px)] h-full resize-none text-[16px] rounded-lg border-0 outline-0 "
                         rows="3"
                         autoFocus
                      />
@@ -326,7 +216,7 @@ export default function ChatBot({ isOpen }) {
             </div>
          </div>
 
-         <div className="relative h-full flex-1 overflow-hidden">
+         <div className="relative h-full flex-1 m-4 overflow-hidden">
             {/* Scroll to bottom button */}
             <button
                onClick={scrollToBottom}
@@ -338,7 +228,7 @@ export default function ChatBot({ isOpen }) {
 
             <div
                ref={scrollContainerRef}
-               className="absolute inset-0 p-4 space-y-4 overflow-y-auto"
+               className="absolute inset-0 space-y-4 overflow-y-auto"
                style={{
                   scrollbarWidth: "none" /* Firefox */,
                   msOverflowStyle: "none" /* IE and Edge */,
@@ -399,9 +289,13 @@ export default function ChatBot({ isOpen }) {
                               {answer.provider}
                            </div>
 
-                           <div className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                              {answer.content}
-                           </div>
+                           <div
+                              className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap"
+                              style={{ zoom: 0.7 }}
+                              dangerouslySetInnerHTML={{
+                                 __html: answer.content,
+                              }}
+                           />
                         </div>
                      ))}
                   </div>

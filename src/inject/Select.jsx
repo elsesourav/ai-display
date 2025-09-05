@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { ImCross } from "react-icons/im";
-import ElementSelector from "../utils/ElementSelector";
+import ElementSelector from "../components/ElementSelector";
 
 export default function Select() {
    const selectorRef = useRef(null);
