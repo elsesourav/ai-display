@@ -1,5 +1,115 @@
 console.log("content script loaded");
 
+function ___getHTMLCodeWithCss(container) {
+   const isMinTextComplete = container?.textContent?.trim()?.length < 10;
+
+   if (isMinTextComplete) return null;
+
+   const clone = container.cloneNode(true);
+
+   function getUserAppliedStyles(el) {
+      const computed = getComputedStyle(el);
+
+      // Create a fresh element of the same type
+      const fresh = document.createElement(el.tagName);
+      document.body.appendChild(fresh);
+      const defaultStyles = getComputedStyle(fresh);
+
+      let applied = {};
+      for (let prop of computed) {
+         if (computed[prop] !== defaultStyles[prop]) {
+            applied[prop] = computed[prop];
+         }
+      }
+
+      fresh.remove();
+      return applied;
+   }
+
+   function applyStyles(src, dst) {
+      if (!src || !dst) return;
+      const maxWidth = "400px";
+
+      if (src.nodeType === Node.COMMENT_NODE) {
+         dst.remove();
+         return;
+      }
+
+      if (
+         src.nodeType === Node.ELEMENT_NODE &&
+         dst.nodeType === Node.ELEMENT_NODE
+      ) {
+         const appliedStyles = getUserAppliedStyles(src);
+         let styleStr = "";
+
+         const allowedStyles = [
+            "margin",
+            "margin-top",
+            "margin-right",
+            "margin-bottom",
+            "margin-left",
+            "padding",
+            "padding-top",
+            "padding-right",
+            "padding-bottom",
+            "padding-left",
+            "border-radius",
+            "font-weight",
+            "font-size",
+         ];
+
+         Object.entries(appliedStyles).forEach(([prop, val]) => {
+            if (prop === "width" || prop === "max-width") {
+               styleStr += `${prop}:min(${val}, ${maxWidth});`;
+            } else if (
+               prop === "height" ||
+               prop === "max-height" ||
+               prop === "min-height"
+            ) {
+               styleStr += `${prop}:auto;`;
+            } else if (
+               allowedStyles.includes(prop) &&
+               val &&
+               val !== "auto" &&
+               val !== "normal" &&
+               val !== "none" &&
+               val !== "rgba(0, 0, 0, 0)"
+            ) {
+               styleStr += `${prop}:${val};`;
+            }
+         });
+
+         if (styleStr) {
+            dst.setAttribute("style", styleStr);
+         }
+      }
+
+      const srcChildren = src.childNodes;
+      const dstChildren = dst.childNodes;
+      for (let i = 0; i < srcChildren.length; i++) {
+         applyStyles(srcChildren[i], dstChildren[i]);
+      }
+   }
+
+   applyStyles(container, clone);
+   return clone.outerHTML;
+}
+
+function ___pollForContent(cleanFunction, maxLimit = 50, checkDelay = 500) {
+   return new Promise(async (resolve) => {
+      for (let i = 0; i < maxLimit; i++) {
+         let html = cleanFunction();
+         if (html) {
+            // wait for more content if have
+            await new Promise((r) => setTimeout(r, checkDelay));
+            resolve(html);
+            return;
+         } else await new Promise((r) => setTimeout(r, checkDelay));
+      }
+      resolve("");
+   });
+}
+
 // pageOnMessage("i_c_selected_image", async (data) => {
 //    if (!data.imgData) return;
 //    const { imgData } = data;

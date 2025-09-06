@@ -10,11 +10,22 @@
 
    .botChat * {
       color: #222 !important;
+      font-size: 12px !important;
+      font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+   }
+
+   .botChat mark {
+      background-color: #155dfc !important;
+      color: #fff !important;
    }
 
    @media (prefers-color-scheme: dark) {
       .botChat * {
          color: #ddd !important;
+      }
+
+      .botChat mark {
+         color: #000 !important;
       }
    }
 }

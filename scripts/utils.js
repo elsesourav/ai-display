@@ -315,17 +315,15 @@ function executeScript(tabId, func, ...args) {
    chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] });
 }
 
-function executeScriptReturn(tabId, func, _return = (r) => r, ...args) {
-   return new Promise((resolve, reject) => {
-      chrome.scripting.executeScript(
-         {
-            target: { tabId },
-            func,
-            args: [...args],
-         },
-         _return
-      );
-   });
+function executeScriptReturn(tabId, func, _return = (r) => r, args = []) {
+   chrome.scripting.executeScript(
+      {
+         target: { tabId },
+         func,
+         args,
+      },
+      _return
+   );
 }
 
 /* ################# EXAMPLE ##################

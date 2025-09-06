@@ -1,11 +1,5 @@
 importScripts("./../utils.js", "./bgUtils.js", "./apiCall.js", "./requestAi.js");
 
-const tabID = {
-   google: null,
-   chatgpt: null,
-   grok: null,
-   bing: null,
-};
 
 console.log("background script loaded");
 

@@ -13,9 +13,9 @@ export default function ChatBot({ isOpen }) {
    const currentRequestIdRef = useRef(null);
 
    const AI_PROVIDERS = [
-      { id: "google", name: "Google AI", zoom: 0.8 },
-      { id: "bing", name: "Bing AI", zoom: 0.7 },
-      { id: "grok", name: "Grok AI", zoom: 0.8 },
+      { id: "google", name: "Google AI", zoom: 1 },
+      { id: "bing", name: "Bing AI", zoom: 1 },
+      { id: "grok", name: "Grok AI", zoom: 1 },
       // { id: "gemini", name: "Gemini" },
    ];
 
@@ -54,11 +54,13 @@ export default function ChatBot({ isOpen }) {
          }
 
          const provider = AI_PROVIDERS[i];
-         console.log(`Loading provider ${provider.id} (${i + 1}/${AI_PROVIDERS.length})`);
-         
+         console.log(
+            `Loading provider ${provider.id} (${i + 1}/${AI_PROVIDERS.length})`
+         );
+
          // Send request to current provider
          getAnswerFromBackground(question, image, provider.id);
-         
+
          // Wait for this provider to respond before moving to next
          if (i < AI_PROVIDERS.length - 1) {
             await new Promise((resolve) => {
@@ -68,7 +70,7 @@ export default function ChatBot({ isOpen }) {
                      resolve();
                      return;
                   }
-                  
+
                   // Check if current provider has answered
                   setAnswers((current) => {
                      if (current[provider.id]) {
@@ -336,18 +338,6 @@ export default function ChatBot({ isOpen }) {
                      disabled={!answers[provider.id]}
                   >
                      {provider.name}
-                     {/* Show checkmark for loaded providers */}
-                     {answers[provider.id] && (
-                        <span
-                           className={`ml-1 text-xs ${
-                              selectedProvider === provider.id
-                                 ? "text-blue-600 dark:text-blue-300"
-                                 : "text-green-600 dark:text-green-400"
-                           }`}
-                        >
-                           ✓
-                        </span>
-                     )}
                   </button>
                ))}
             </div>
@@ -407,7 +397,7 @@ export default function ChatBot({ isOpen }) {
                                  zoom:
                                     AI_PROVIDERS.find(
                                        (p) => p.id === selectedProvider
-                                    )?.zoom || 0.7,
+                                    )?.zoom || 1,
                               }}
                               dangerouslySetInnerHTML={{
                                  __html: answers[selectedProvider].content,
