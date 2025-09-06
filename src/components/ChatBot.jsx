@@ -10,12 +10,13 @@ export default function ChatBot({ isOpen }) {
    const [selectedImage, setSelectedImage] = useState(null);
    const [answers, setAnswers] = useState({});
    const [selectedProvider, setSelectedProvider] = useState("google");
+   const currentRequestIdRef = useRef(null);
 
    const AI_PROVIDERS = [
-      { id: "google", name: "Google AI", color: "bg-blue-500" },
-      { id: "bing", name: "Bing AI", color: "bg-purple-500" },
-      // { id: "chatgpt", name: "ChatGPT", color: "bg-green-500" },
-      // { id: "gemini", name: "Gemini", color: "bg-orange-500" },
+      { id: "google", name: "Google AI", zoom: 0.8 },
+      { id: "bing", name: "Bing AI", zoom: 0.7 },
+      { id: "grok", name: "Grok AI", zoom: 0.8 },
+      // { id: "gemini", name: "Gemini" },
    ];
 
    const scrollContainerRef = useRef(null);
@@ -43,8 +44,54 @@ export default function ChatBot({ isOpen }) {
       );
    };
 
+   // Sequential provider loading
+   const loadProvidersSequentially = async (question, image, requestId) => {
+      for (let i = 0; i < AI_PROVIDERS.length; i++) {
+         // Check if request was cancelled (new message sent)
+         if (currentRequestIdRef.current !== requestId) {
+            console.log("Request cancelled, stopping sequential loading");
+            return;
+         }
+
+         const provider = AI_PROVIDERS[i];
+         console.log(`Loading provider ${provider.id} (${i + 1}/${AI_PROVIDERS.length})`);
+         
+         // Send request to current provider
+         getAnswerFromBackground(question, image, provider.id);
+         
+         // Wait for this provider to respond before moving to next
+         if (i < AI_PROVIDERS.length - 1) {
+            await new Promise((resolve) => {
+               const checkAnswer = () => {
+                  // If request was cancelled, resolve immediately
+                  if (currentRequestIdRef.current !== requestId) {
+                     resolve();
+                     return;
+                  }
+                  
+                  // Check if current provider has answered
+                  setAnswers((current) => {
+                     if (current[provider.id]) {
+                        resolve();
+                     } else {
+                        // Check again in 500ms
+                        setTimeout(checkAnswer, 500);
+                     }
+                     return current;
+                  });
+               };
+               checkAnswer();
+            });
+         }
+      }
+   };
+
    const handleSendMessage = async () => {
       if (input.trim() === "") return;
+
+      // Generate unique request ID
+      const requestId = Date.now().toString();
+      currentRequestIdRef.current = requestId;
 
       setLastQuestion(input);
       setInput("");
@@ -56,10 +103,8 @@ export default function ChatBot({ isOpen }) {
       setIsLoading(true);
       setAnswers({});
 
-      // Request answers from all providers
-      AI_PROVIDERS.forEach((provider) => {
-         getAnswerFromBackground(input, selectedImage, provider.id);
-      });
+      // Start sequential loading
+      loadProvidersSequentially(input, selectedImage, requestId);
    };
 
    useEffect(() => {
@@ -67,16 +112,26 @@ export default function ChatBot({ isOpen }) {
          console.log("Received answer from background:", data);
 
          const provider = data.provider || "google";
-         setAnswers((prev) => ({
-            ...prev,
-            [provider]: {
-               content: data.answer,
-               provider: provider,
-            },
-         }));
-         // console.log(data.answer);
+
+         setAnswers((prev) => {
+            const isFirstAnswer = Object.keys(prev).length === 0;
+
+            // If this is the first answer, also set it as selected provider and stop loading
+            if (isFirstAnswer) {
+               setSelectedProvider(provider);
+               setIsLoading(false);
+            }
+
+            return {
+               ...prev,
+               [provider]: {
+                  content: data.answer,
+                  provider: provider,
+               },
+            };
+         });
+
          console.log("work");
-         setIsLoading(false);
       });
 
       // UTILS.pageOnMessage("C_IF_SET_INPUTS", (data) => {
@@ -336,29 +391,6 @@ export default function ChatBot({ isOpen }) {
                      Answer
                   </h3>
 
-                  {/* Loading indicator */}
-                  {/* {isLoading && Object.keys(answers).length === 0 && (
-                     <div className="animate-pulse bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl mb-3">
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-                           Getting answers from AI models...
-                        </div>
-                        <div className="flex space-x-2 mt-2">
-                           <div
-                              className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
-                              style={{ animationDelay: "0ms" }}
-                           ></div>
-                           <div
-                              className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
-                              style={{ animationDelay: "150ms" }}
-                           ></div>
-                           <div
-                              className="w-2 h-2 rounded-full bg-blue-400/60 animate-bounce"
-                              style={{ animationDelay: "300ms" }}
-                           ></div>
-                        </div>
-                     </div>
-                  )} */}
-
                   {/* Display selected answer */}
                   <div className="space-y-4">
                      {answers[selectedProvider] && (
@@ -371,7 +403,12 @@ export default function ChatBot({ isOpen }) {
 
                            <div
                               className="botChat whitespace-pre-wrap"
-                              style={{ zoom: 0.7 }}
+                              style={{
+                                 zoom:
+                                    AI_PROVIDERS.find(
+                                       (p) => p.id === selectedProvider
+                                    )?.zoom || 0.7,
+                              }}
                               dangerouslySetInnerHTML={{
                                  __html: answers[selectedProvider].content,
                               }}
