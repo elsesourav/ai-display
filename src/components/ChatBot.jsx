@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { IoArrowDown, IoImage, IoSend } from "react-icons/io5";
+import { IoImage, IoSend } from "react-icons/io5";
 import UTILS from "./../utils/utilsModule.js";
 import "./scrollbar-hide.css";
 
@@ -13,6 +13,7 @@ export default function ChatBot({ isOpen }) {
    const currentRequestIdRef = useRef(null);
 
    const AI_PROVIDERS = [
+      { id: "chatgpt", name: "ChatGPT", zoom: 1 },
       { id: "google", name: "Google AI", zoom: 1 },
       { id: "bing", name: "Bing AI", zoom: 1 },
       { id: "grok", name: "Grok AI", zoom: 1 },
@@ -105,6 +106,8 @@ export default function ChatBot({ isOpen }) {
       setIsLoading(true);
       setAnswers({});
 
+      // No automatic scrolling - user controls scroll position
+
       // Start sequential loading
       loadProvidersSequentially(input, selectedImage, requestId);
    };
@@ -173,14 +176,6 @@ export default function ChatBot({ isOpen }) {
       console.log(answers);
    }, [answers]);
 
-   // Function to scroll to bottom
-   const scrollToBottom = () => {
-      const container = scrollContainerRef.current;
-      if (container) {
-         container.scrollTop = container.scrollHeight;
-      }
-   };
-
    // Handle image selection
    const handleImageClick = () => {
       fileInputRef.current?.click();
@@ -199,12 +194,9 @@ export default function ChatBot({ isOpen }) {
    };
 
    useEffect(() => {
-      scrollToBottom();
-
-      const timeoutId = setTimeout(scrollToBottom, 100);
-
-      return () => clearTimeout(timeoutId);
-   }, [answers, isLoading]);
+      // No auto-scroll when answers update - let user stay where they are
+      // Only manual scroll or new message will trigger scroll
+   }, [answers]);
 
    // When closing, if focus is inside the chat, blur it to avoid aria/inert conflicts.
    useEffect(() => {
@@ -344,15 +336,6 @@ export default function ChatBot({ isOpen }) {
          </div>
 
          <div className="relative h-full flex-1 m-4 overflow-hidden">
-            {/* Scroll to bottom button */}
-            <button
-               onClick={scrollToBottom}
-               className="absolute bottom-4 right-4 z-10 p-2 bg-blue-500/60 border border-blue-400/50 text-white rounded-full hover:bg-blue-600/70 hover:border-blue-500/60 transition-all duration-200 opacity-80 hover:opacity-100"
-               style={{ display: "none" }}
-            >
-               <IoArrowDown size={16} />
-            </button>
-
             <div
                ref={scrollContainerRef}
                className="absolute inset-0 space-y-4 overflow-y-auto"
@@ -366,9 +349,6 @@ export default function ChatBot({ isOpen }) {
                {/* Question display */}
                {lastQuestion && (
                   <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
-                     <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-                        Your question:
-                     </div>
                      <div className="text-gray-800 dark:text-gray-200 font-medium">
                         {lastQuestion}
                      </div>
@@ -392,7 +372,7 @@ export default function ChatBot({ isOpen }) {
                            </div>
 
                            <div
-                              className="botChat whitespace-pre-wrap"
+                              className="botChat whitespace-pre-wrap overflow-x-auto overflow-y-hidden"
                               style={{
                                  zoom:
                                     AI_PROVIDERS.find(

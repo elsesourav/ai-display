@@ -11,21 +11,24 @@
    .botChat * {
       color: #222 !important;
       font-size: 12px !important;
+      opacity: 1 !important;
       font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
    }
 
+   .botChat * ul, .botChat * ol {
+      display: flex !important;
+      flex-direction: column !important;
+   }
+
    .botChat mark {
-      background-color: #155dfc !important;
-      color: #fff !important;
+      background: #155dfc77 !important;
+      padding: 1px 2px !important;
+      border-radius: 3px !important;
    }
 
    @media (prefers-color-scheme: dark) {
       .botChat * {
          color: #ddd !important;
-      }
-
-      .botChat mark {
-         color: #000 !important;
       }
    }
 }
@@ -66,6 +69,21 @@
    text-rendering: optimizeLegibility;
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+   overflow: hidden;
+   scrollbar-width: none;
+   -ms-overflow-style: none;
+
+   * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+   }
+}
+
+body::-webkit-scrollbar {
+   display: none;
 }
 
 .light-theme {

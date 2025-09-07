@@ -101,7 +101,8 @@ function ___pollForContent(cleanFunction, maxLimit = 50, checkDelay = 500) {
          let html = cleanFunction();
          if (html) {
             // wait for more content if have
-            await new Promise((r) => setTimeout(r, checkDelay));
+            await new Promise((r) => setTimeout(r, checkDelay * 2));
+            html = cleanFunction();
             resolve(html);
             return;
          } else await new Promise((r) => setTimeout(r, checkDelay));
@@ -109,6 +110,40 @@ function ___pollForContent(cleanFunction, maxLimit = 50, checkDelay = 500) {
       resolve("");
    });
 }
+
+async function ___askGPT(prompt) {
+   const editor = document.querySelector("div.ProseMirror");
+
+   if (editor) {
+      editor.textContent = prompt;
+      editor.dispatchEvent(
+         new InputEvent("input", {
+            bubbles: true,
+            cancelable: true,
+            inputType: "insertText",
+            data: prompt,
+         })
+      );
+
+      await new Promise((r) => setTimeout(r, 100));
+
+      editor.dispatchEvent(
+         new KeyboardEvent("keydown", {
+            bubbles: true,
+            cancelable: true,
+            key: "Enter",
+            code: "Enter",
+            which: 13,
+            keyCode: 13,
+         })
+      );
+   } else {
+      console.error("ChatGPT input box not found.");
+   }
+}
+
+
+// ___askGPT("Hello gpt?");
 
 // pageOnMessage("i_c_selected_image", async (data) => {
 //    if (!data.imgData) return;
