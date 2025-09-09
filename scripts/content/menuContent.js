@@ -89,7 +89,7 @@ pageOnMessage("IF_C_MENU_WINDOW_BACK_MOVE", (data) => {
 // Relay messages between the two iframes
 window.addEventListener("message", (event) => {
    if (event?.data?.type?.includes("IF_IF_")) {
-      console.log("Relaying message:", event.data);
+      // console.log("Relaying message:", event.data);
 
       const iframe1 =
          document.getElementById("menuWindowIframe")?.contentWindow;
@@ -104,12 +104,12 @@ window.addEventListener("message", (event) => {
          iframe1.postMessage(event.data, "*");
       }
    } else if (event?.data?.type?.includes("IF_B_")) {
-      console.log("Received message from background:", event.data);
+      // console.log("Received message from background:", event.data);
 
       runtimeSendMessage(event.data.type, { ...event.data }, (res) => {
          const iframe =
             document.getElementById("menuWindowIframe")?.contentWindow;
-         console.log(res);
+         // console.log(res);
 
          pagePostMessage(event.data.type, res, iframe);
       });

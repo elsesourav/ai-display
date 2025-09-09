@@ -1,6 +1,5 @@
 importScripts("./../utils.js", "./bgUtils.js", "./apiCall.js", "./requestAi.js");
 
-
 console.log("background script loaded");
 
 function sendAnswer(tabId, answer) {
@@ -136,8 +135,7 @@ runtimeOnMessage("C_B_REMOVE_IFRAME", (_, { tab }, sendResponse) => {
 
 
 runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
-   console.log("Received request for answer:", data);
-
+   // console.log("Received request for answer:", data);
    const provider = data.provider || "google";
 
    let answer;
@@ -154,14 +152,12 @@ runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
       case "grok":
          answer = await getGrokAnswer(data.question);
          break;
-      // case "gemini":
-      //    answer = await getGeminiAnswer(data.question);
-      //    break;
-      // default:
-      //    answer = await getGoogleAiAnswer(data.question);
+      case "gemini":
+         answer = await getGeminiAnswer(data.question);
+         break;
+      default:
+         answer = await getGoogleAiAnswer(data.question);
    }
-
-   console.log(answer);
    sendResponse({ status: "success", answer, provider });
 });
 

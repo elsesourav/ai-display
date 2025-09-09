@@ -1,24 +1,47 @@
 console.log("content script loaded");
 
-const CONTENT_STABLE_WAIT_TIME = 500; // ms - wait time for content to be stable
+function removeElementBySelector(container, selector) {
+   container.querySelector(selector)?.remove();
+}
+function removeElementsBySelector(container, selector) {
+   container.querySelectorAll(selector)?.forEach((el) => el.remove());
+}
+function removeAllAttributes(container) {
+   // Remove all attributes from the container itself
+   if (container.attributes) {
+      Array.from(container.attributes).forEach((attr) => {
+         container.removeAttribute(attr.name);
+      });
+   }
 
-function ___getHTMLCodeWithCss(container) {
+   // Remove all attributes from all child elements recursively
+   container.querySelectorAll("*").forEach((element) => {
+      if (element.attributes) {
+         Array.from(element.attributes).forEach((attr) => {
+            element.removeAttribute(attr.name);
+         });
+      }
+   });
+}
+
+const CONTENT_STABLE_WAIT_TIME = 1500; // ms - wait time for content to be stable
+
+function ___getHTMLCodeWithCss(container, provider) {
    return new Promise((resolve) => {
+      // Validation
       const isMinTextComplete = container?.textContent?.trim()?.length < 10;
-
       if (isMinTextComplete) {
          resolve(null);
          return;
       }
 
+      // Content monitoring variables
       let lastContent = container.innerHTML;
-      let lastUpdateTime = Date.now();
       let intervalId;
 
+      // Helper function to get user-applied styles
       function getUserAppliedStyles(el) {
          const computed = getComputedStyle(el);
-
-         // Create a fresh element of the same type
          const fresh = document.createElement(el.tagName);
          document.body.appendChild(fresh);
          const defaultStyles = getComputedStyle(fresh);
@@ -34,6 +57,7 @@ function ___getHTMLCodeWithCss(container) {
          return applied;
       }
 
+      // Apply filtered styles to cloned elements
       function applyStyles(src, dst) {
          if (!src || !dst) return;
          const maxWidth = "400px";
@@ -92,6 +116,7 @@ function ___getHTMLCodeWithCss(container) {
             }
          }
 
+         // Recursively apply styles to children
          const srcChildren = src.childNodes;
          const dstChildren = dst.childNodes;
          for (let i = 0; i < srcChildren.length; i++) {
@@ -99,32 +124,69 @@ function ___getHTMLCodeWithCss(container) {
          }
       }
 
+      // Clean provider-specific elements
+      function cleanProviderSpecificElements(container, provider) {
+         removeElementsBySelector(container, "* > button:has(svg)");
+         removeElementsBySelector(container, "* > a:has(svg)");
+
+         switch (provider) {
+            case "google":
+               removeElementBySelector(document, ".DBd2Wb");
+               removeElementsBySelector(container, "img");
+               removeElementsBySelector(container, "svg");
+               removeElementsBySelector(
+                  document,
+                  `div[data-container-id="main-col"] > div > div:has(img)`
+               );
+               removeElementBySelector(container, "[jsmodel]");
+               break;
+
+            case "bing":
+               removeElementsBySelector(container, "* > a");
+               removeElementBySelector(container, ".gs_ans_head_group");
+               break;
+
+            case "perplexity":
+               removeElementBySelector(container, "div:first-child:has(img)");
+               removeElementsBySelector(container, " button:has(img)");
+               removeElementsBySelector(container, "* > [rel='noopener']");
+               break;
+
+            case "grok":
+               break;
+
+            case "gemini":
+               removeElementsBySelector(container, "* > button:has(mat-icon)");
+               removeElementsBySelector(container, "response-element");
+               break;
+         }
+      }
+
+      // Generate final HTML with all processing
       function generateHTMLCode() {
+         cleanProviderSpecificElements(container, provider);
          const clone = container.cloneNode(true);
          applyStyles(container, clone);
+         removeAllAttributes(clone);
          return clone.outerHTML;
       }
 
+      // Monitor content changes
       function checkForUpdates() {
-         const currentContent = container.innerHTML;
-         const currentTime = Date.now();
+         const currentContent = container.textContent.length;
 
          if (currentContent !== lastContent) {
             lastContent = currentContent;
-            lastUpdateTime = currentTime;
-         } else if (currentTime - lastUpdateTime >= CONTENT_STABLE_WAIT_TIME) {
-            // No updates for specified time, return the HTML code
+         } else {
             clearInterval(intervalId);
             const htmlCode = generateHTMLCode();
             resolve(htmlCode);
          }
       }
 
-      // Start checking for updates every 500ms
-      intervalId = setInterval(checkForUpdates, 500);
-
-      // Also check immediately
+      // Start monitoring
       checkForUpdates();
+      intervalId = setInterval(checkForUpdates, CONTENT_STABLE_WAIT_TIME);
    });
 }
 
@@ -134,12 +196,19 @@ function ___pollForContent(cleanFunction) {
    return new Promise(async (resolve) => {
       for (let i = 0; i < maxLimit; i++) {
          let html = await cleanFunction();
-         if (html) {
+
+         if (html === false) {
+            resolve(
+               "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>"
+            );
+         } else if (html) {
             resolve(html);
             return;
          } else await new Promise((r) => setTimeout(r, checkDelay));
       }
-      resolve("<mark>Slow Network or Limit Exceeded, Try Again</mark>");
+      resolve(
+         "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>"
+      );
    });
 }
 
@@ -171,6 +240,38 @@ async function ___askGPT(prompt) {
       );
    } else {
       console.error("ChatGPT input box not found.");
+   }
+}
+
+async function ___askGemini(prompt) {
+   // Find Gemini’s rich-text editor
+   const editor = document.querySelector("div.ql-editor.textarea.new-input-ui");
+   console.log(editor);
+
+   if (editor) {
+      // Clear any existing text
+      editor.textContent = "";
+      editor.textContent = prompt;
+
+      editor.dispatchEvent(
+         new InputEvent("input", {
+            bubbles: true,
+            cancelable: true,
+            inputType: "insertText",
+            data: prompt,
+         })
+      );
+
+      await new Promise((r) => setTimeout(r, 200));
+
+      const sendBtn = document.querySelector("button.send-button");
+      if (sendBtn) {
+         sendBtn.click();
+      } else {
+         console.error("Send button not found.");
+      }
+   } else {
+      console.error("Gemini input box not found.");
    }
 }
 

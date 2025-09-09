@@ -21,24 +21,7 @@ async function getGoogleAiAnswer(q) {
                               'div[data-container-id="main-col"]'
                            );
                            if (!container) return null;
-                           container
-                              .querySelectorAll("* > button:has(svg)")
-                              ?.forEach((el) => el.remove());
-                           
-                           container
-                              .querySelector("[class='DBd2Wb']")
-                              ?.remove();
-
-                           document
-                              .querySelectorAll(
-                                 `div[data-container-id="main-col"] > div > div:has(img)`
-                              )
-                              ?.forEach((el) => el?.remove());
-
-                           container.querySelector("[jsmodel]")?.remove();
-
-
-                           return await ___getHTMLCodeWithCss(container);
+                           return await ___getHTMLCodeWithCss(container, "google");
                         }
 
                         const result = await ___pollForContent(cleanMainCol);
@@ -86,17 +69,10 @@ async function getBingAiAnswer(q) {
                                  "#ca_main .gs_multianshead_main"
                               );
                            if (!container) return "";
-                           container
-                              .querySelectorAll("a")
-                              .forEach((el) => el.parentElement.remove());
-                           container
-                              .querySelector(".gs_ans_head_group")
-                              ?.remove();
-
                            return await ___getHTMLCodeWithCss(container);
                         }
 
-                        const result = await ___pollForContent(cleanMainCol);
+                        const result = await ___pollForContent(cleanMainCol, "bing");
                         resolve(result);
                      });
                   },
@@ -140,14 +116,22 @@ async function getGrokAnswer(q) {
                            const container2 = document.querySelector(
                               "main #last-reply-container .thinking-container ~ div"
                            );
+
+                           const isLimitOver = [
+                              ...document.querySelectorAll("div"),
+                           ].find((el) =>
+                              el
+                                 .querySelector("h2")
+                                 ?.textContent.includes(
+                                    "Sign up to continue with Grok"
+                                 )
+                           );
+
+                           if (isLimitOver) return false;
                            if (!container1 && !container2) return "";
 
-                           (container1 || container2)
-                              ?.querySelectorAll("* > button:has(svg)")
-                              ?.forEach((el) => el.remove());
-
                            return await ___getHTMLCodeWithCss(
-                              container1 || container2
+                              container1 || container2, "grok"
                            );
                         }
 
@@ -193,26 +177,7 @@ async function getPerplexityAnswer(q) {
                               "#markdown-content-0"
                            );
                            if (!container) return "";
-
-                           // remove first row images
-                           container
-                              .querySelector("div:first-child:has(img)")
-                              ?.remove();
-
-                           // remove inside images
-                           container
-                              .querySelectorAll(" button:has(img)")
-                              ?.forEach((el) => el.remove());
-                           
-                           container
-                              .querySelectorAll("* > button:has(svg)")
-                              ?.forEach((el) => el.remove());
-
-                           container
-                              .querySelectorAll("* > [rel='noopener']")
-                              ?.forEach((el) => el.remove());
-
-                           return await ___getHTMLCodeWithCss(container);
+                           return await ___getHTMLCodeWithCss(container, "perplexity");
                         }
 
                         const result = await ___pollForContent(cleanMainCol);
@@ -226,6 +191,68 @@ async function getPerplexityAnswer(q) {
                      chromeTabMediaAccess(tabId, false);
                      chrome.tabs.remove(tabId);
                   }
+               );
+            }
+         }
+
+         chrome.tabs.onUpdated.addListener(listener);
+      });
+   });
+}
+
+async function getGeminiAnswer(q) {
+   return new Promise((resolve) => {
+      const url = "https://gemini.google.com/app";
+
+      chrome.tabs.create({ url, active: false }, (tab) => {
+         const tabId = tab.id;
+         chromeTabMediaAccess(tabId, true);
+
+         function listener(updatedTabId, info) {
+            if (updatedTabId === tabId && info.status === "complete") {
+               chrome.tabs.onUpdated.removeListener(listener);
+
+               // Small delay so Google loads
+               executeScriptReturn(
+                  tabId,
+                  (prompt) => {
+                     return new Promise(async (resolve) => {
+                        const getSearchArea = () => {
+                           return document.querySelector(
+                              "div.ql-editor.textarea.new-input-ui"
+                           );
+                        };
+
+                        const isFindSearchArea = await ___pollForContent(
+                           getSearchArea
+                        );
+
+                        if (!isFindSearchArea) {
+                           resolve("");
+                           return;
+                        }
+
+                        await ___askGemini(prompt);
+
+                        async function cleanMainCol() {
+                           const container = document.querySelector(
+                              ".markdown-main-panel"
+                           );
+                           if (!container) return "";
+                           return await ___getHTMLCodeWithCss(container, "gemini");
+                        }
+
+                        const result = await ___pollForContent(cleanMainCol);
+                        resolve(result);
+                     });
+                  },
+                  (injectResult) => {
+                     const cleanedHtml = injectResult?.[0]?.result || "";
+                     resolve(cleanedHtml);
+                     chromeTabMediaAccess(tabId, false);
+                     chrome.tabs.remove(tabId);
+                  },
+                  [q]
                );
             }
          }

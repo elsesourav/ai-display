@@ -10,12 +10,14 @@ export default function ChatBot({ isOpen }) {
    const [selectedImage, setSelectedImage] = useState(null);
    const [answers, setAnswers] = useState({});
    const [selectedProvider, setSelectedProvider] = useState("google");
+   const [allProvidersCompleted, setAllProvidersCompleted] = useState(true);
    const currentRequestIdRef = useRef(null);
 
    const AI_PROVIDERS = [
       { id: "google", name: "Google AI", zoom: 1 },
-      { id: "bing", name: "Bing AI", zoom: 1 },
       { id: "perplexity", name: "Perplexity", zoom: 1 },
+      { id: "bing", name: "Bing AI", zoom: 1 },
+      { id: "gemini", name: "Gemini", zoom: 1 },
       { id: "grok", name: "Grok AI", zoom: 1 },
    ];
 
@@ -57,6 +59,9 @@ export default function ChatBot({ isOpen }) {
          `Starting concurrent loading with max ${MAX_CONCURRENT_REQUESTS} simultaneous requests`
       );
 
+      // Mark that providers are not all completed
+      setAllProvidersCompleted(false);
+
       const startProviderRequest = (provider) => {
          console.log(`Starting request for ${provider.id}`);
 
@@ -95,11 +100,13 @@ export default function ChatBot({ isOpen }) {
       while (activeRequests.size > 0) {
          if (currentRequestIdRef.current !== requestId) {
             console.log("Request cancelled, stopping concurrent loading");
+            setAllProvidersCompleted(true);
             return;
          }
          const completedRequest = await Promise.race(activeRequests.values());
 
          if (completedRequest.cancelled) {
+            setAllProvidersCompleted(true);
             return;
          }
 
@@ -121,10 +128,20 @@ export default function ChatBot({ isOpen }) {
       }
 
       console.log(`All ${completedCount} providers completed`);
+      // Mark that all providers have completed
+      setAllProvidersCompleted(true);
    };
 
    const handleSendMessage = async () => {
       if (input.trim() === "") return;
+
+      // Prevent sending if not all providers have completed
+      if (!allProvidersCompleted) {
+         console.log(
+            "Cannot send message: waiting for all providers to complete"
+         );
+         return;
+      }
 
       // Generate unique request ID
       const requestId = Date.now().toString();
@@ -146,8 +163,6 @@ export default function ChatBot({ isOpen }) {
 
    useEffect(() => {
       UTILS.pageOnMessage("IF_B_GET_ANSWER", (data) => {
-         console.log("Received answer from background:", data);
-
          const provider = data.provider || "google";
 
          setAnswers((prev) => {
@@ -166,8 +181,6 @@ export default function ChatBot({ isOpen }) {
                },
             };
          });
-
-         console.log("work");
       });
 
       // UTILS.pageOnMessage("C_IF_SET_INPUTS", (data) => {
@@ -287,13 +300,23 @@ export default function ChatBot({ isOpen }) {
 
                   <button
                      onClick={handleSendMessage}
-                     disabled={input.trim() === "" || isLoading}
+                     disabled={
+                        input.trim() === "" ||
+                        isLoading ||
+                        !allProvidersCompleted
+                     }
                      className={`absolute h-[45px] w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 ${
-                        input.trim() === "" || isLoading
+                        input.trim() === "" ||
+                        isLoading ||
+                        !allProvidersCompleted
                            ? "bg-gray-300/40 dark:bg-gray-600/20 border-gray-400/40 dark:border-gray-500/30 text-gray-400 dark:text-gray-500"
                            : "bg-blue-500/60 border-blue-400/50 text-white hover:bg-blue-600/70 hover:border-blue-500/60"
                      } cursor-pointer`}
-                     title="Send message"
+                     title={
+                        !allProvidersCompleted
+                           ? "Waiting for all AI responses..."
+                           : "Send message"
+                     }
                   >
                      <IoSend size={26} />
                   </button>
