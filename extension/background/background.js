@@ -148,11 +148,11 @@ runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
       case "bing":
          answer = await getBingAiAnswer(data.question);
          break;
+      case "perplexity":
+         answer = await getPerplexityAnswer(data.question);
+         break;
       case "grok":
          answer = await getGrokAnswer(data.question);
-         break;
-      case "chatgpt":
-         answer = await getChatGptAnswer(data.question);
          break;
       // case "gemini":
       //    answer = await getGeminiAnswer(data.question);
@@ -170,3 +170,4 @@ runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
 // chatgpt: https://chat.openai.com/  ?????!!!!!
 // grok: https://grok.com/?q=what+is+java?
 // gemini: https://gemini.google.com/app ?????!!!!!
+// Perplexity: https://www.perplexity.ai/search?q=what+is+java

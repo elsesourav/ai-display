@@ -1,9 +1,12 @@
 async function getGoogleAiAnswer(q) {
    return new Promise((resolve) => {
-      const url = `https://www.google.com/search?q=${encodeURI(q)}&sa=X&udm=50`;
+      const url = `https://www.google.com/search?q=${encodeURIComponent(
+         q
+      )}&sa=X&udm=50`;
 
       chrome.tabs.create({ url, active: false }, (tab) => {
          const tabId = tab.id;
+         chromeTabMediaAccess(tabId, true);
 
          function listener(updatedTabId, info) {
             if (updatedTabId === tabId && info.status === "complete") {
@@ -13,30 +16,29 @@ async function getGoogleAiAnswer(q) {
                   tabId,
                   () => {
                      return new Promise(async (resolve) => {
-                        function cleanMainCol() {
+                        async function cleanMainCol() {
                            const container = document.querySelector(
                               'div[data-container-id="main-col"]'
                            );
                            if (!container) return null;
+                           container
+                              .querySelectorAll("* > button:has(svg)")
+                              ?.forEach((el) => el.remove());
+                           
+                           container
+                              .querySelector("[class='DBd2Wb']")
+                              ?.remove();
 
-                           container.querySelector("[jsmodel]")?.remove();
-
-                           // remove if <img> has no <mark>
-                           document
-                              .querySelector(
-                                 `div[data-container-id="main-col"] > div > div:has(img):has(img)`
-                              )
-                              ?.querySelector("img")
-                              ?.parentElement.remove();
-
-                           // remove all img tag parent divs
                            document
                               .querySelectorAll(
                                  `div[data-container-id="main-col"] > div > div:has(img)`
                               )
                               ?.forEach((el) => el?.remove());
 
-                           return ___getHTMLCodeWithCss(container);
+                           container.querySelector("[jsmodel]")?.remove();
+
+
+                           return await ___getHTMLCodeWithCss(container);
                         }
 
                         const result = await ___pollForContent(cleanMainCol);
@@ -46,6 +48,7 @@ async function getGoogleAiAnswer(q) {
                   (injectResult) => {
                      const cleanedHtml = injectResult?.[0]?.result || "";
                      resolve(cleanedHtml);
+                     chromeTabMediaAccess(tabId, false);
                      chrome.tabs.remove(tabId);
                   }
                );
@@ -59,12 +62,13 @@ async function getGoogleAiAnswer(q) {
 
 async function getBingAiAnswer(q) {
    return new Promise((resolve) => {
-      const url = `https://www.bing.com/copilotsearch?q=${encodeURI(
+      const url = `https://www.bing.com/copilotsearch?q=${encodeURIComponent(
          q
       )}&FORM=CSSCOP`;
 
       chrome.tabs.create({ url, active: false }, (tab) => {
          const tabId = tab.id;
+         chromeTabMediaAccess(tabId, true);
 
          function listener(updatedTabId, info) {
             if (updatedTabId === tabId && info.status === "complete") {
@@ -75,7 +79,7 @@ async function getBingAiAnswer(q) {
                   tabId,
                   () => {
                      return new Promise(async (resolve) => {
-                        function cleanMainCol() {
+                        async function cleanMainCol() {
                            const container = document
                               .querySelector(".frame_cont iframe")
                               ?.contentDocument?.querySelector(
@@ -89,7 +93,7 @@ async function getBingAiAnswer(q) {
                               .querySelector(".gs_ans_head_group")
                               ?.remove();
 
-                           return ___getHTMLCodeWithCss(container);
+                           return await ___getHTMLCodeWithCss(container);
                         }
 
                         const result = await ___pollForContent(cleanMainCol);
@@ -100,6 +104,7 @@ async function getBingAiAnswer(q) {
                   (injectResult) => {
                      const cleanedHtml = injectResult?.[0]?.result || "";
                      resolve(cleanedHtml);
+                     chromeTabMediaAccess(tabId, false);
                      chrome.tabs.remove(tabId);
                   }
                );
@@ -113,10 +118,11 @@ async function getBingAiAnswer(q) {
 
 async function getGrokAnswer(q) {
    return new Promise((resolve) => {
-      const url = `https://grok.com/?q=${encodeURI(q)}`;
+      const url = `https://grok.com/?q=${encodeURIComponent(q)}`;
 
       chrome.tabs.create({ url, active: false }, (tab) => {
          const tabId = tab.id;
+         chromeTabMediaAccess(tabId, true);
 
          function listener(updatedTabId, info) {
             if (updatedTabId === tabId && info.status === "complete") {
@@ -127,13 +133,22 @@ async function getGrokAnswer(q) {
                   tabId,
                   () => {
                      return new Promise(async (resolve) => {
-                        function cleanMainCol() {
-                           const container = document.querySelector(
+                        async function cleanMainCol() {
+                           const container1 = document.querySelector(
                               "main #last-reply-container > div:nth-child(2) > div > [dir='auto']"
                            );
-                           if (!container) return "";
+                           const container2 = document.querySelector(
+                              "main #last-reply-container .thinking-container ~ div"
+                           );
+                           if (!container1 && !container2) return "";
 
-                           return ___getHTMLCodeWithCss(container);
+                           (container1 || container2)
+                              ?.querySelectorAll("* > button:has(svg)")
+                              ?.forEach((el) => el.remove());
+
+                           return await ___getHTMLCodeWithCss(
+                              container1 || container2
+                           );
                         }
 
                         const result = await ___pollForContent(cleanMainCol);
@@ -144,6 +159,7 @@ async function getGrokAnswer(q) {
                   (injectResult) => {
                      const cleanedHtml = injectResult?.[0]?.result || "";
                      resolve(cleanedHtml);
+                     chromeTabMediaAccess(tabId, false);
                      chrome.tabs.remove(tabId);
                   }
                );
@@ -155,12 +171,13 @@ async function getGrokAnswer(q) {
    });
 }
 
-async function getChatGptAnswer(prompt) {
+async function getPerplexityAnswer(q) {
    return new Promise((resolve) => {
-      const url = "https://chat.openai.com";
+      const url = `https://www.perplexity.ai/search?q=${encodeURIComponent(q)}`;
 
       chrome.tabs.create({ url, active: false }, (tab) => {
          const tabId = tab.id;
+         chromeTabMediaAccess(tabId, true);
 
          function listener(updatedTabId, info) {
             if (updatedTabId === tabId && info.status === "complete") {
@@ -169,95 +186,46 @@ async function getChatGptAnswer(prompt) {
                // Small delay so Google loads
                executeScriptReturn(
                   tabId,
-                  (prompt) => {
+                  () => {
                      return new Promise(async (resolve) => {
-                        await new Promise((r) => setTimeout(r, 1000));
-                        document
-                           .querySelector("[data-testid='dismiss-welcome']")
-                           ?.click();
-
-                        await new Promise((r) => setTimeout(r, 100));
-
-                        const getSearchArea = () => {
-                           return document.querySelector("div.ProseMirror");
-                        };
-
-                        const isFindSearchArea = await ___pollForContent(
-                           getSearchArea
-                        );
-
-                        if (!isFindSearchArea) {
-                           resolve("");
-                           return;
-                        }
-
-                        try {
-                           const define = (proto, prop, val) => {
-                              try {
-                                 Object.defineProperty(proto, prop, {
-                                    configurable: true,
-                                    get: () => val,
-                                 });
-                              } catch {}
-                           };
-                           const apply = () => {
-                              define(Document.prototype, "hidden", false);
-                              define(
-                                 Document.prototype,
-                                 "visibilityState",
-                                 "visible"
-                              );
-                              document.hasFocus = () => true;
-                           };
-                           apply();
-
-                           // Re-apply if site redefines
-                           [
-                              "visibilitychange",
-                              "readystatechange",
-                              "blur",
-                              "focus",
-                           ].forEach((ev) =>
-                              document.addEventListener(ev, apply, true)
-                           );
-
-                           // Periodic nudge so internal checks think page is active
-                           setInterval(() => {
-                              document.dispatchEvent(
-                                 new Event("visibilitychange")
-                              );
-                              window.dispatchEvent(new Event("focus"));
-                           }, 4000);
-                        } catch {}
-
-                        await ___askGPT(prompt);
-
-                        function cleanMainCol() {
+                        async function cleanMainCol() {
                            const container = document.querySelector(
-                              "[data-message-author-role='assistant']"
+                              "#markdown-content-0"
                            );
-
-                           console.log(container);
-
                            if (!container) return "";
 
-                           console.log(container.innerHTML);
+                           // remove first row images
+                           container
+                              .querySelector("div:first-child:has(img)")
+                              ?.remove();
 
-                           console.log(___getHTMLCodeWithCss(container));
+                           // remove inside images
+                           container
+                              .querySelectorAll(" button:has(img)")
+                              ?.forEach((el) => el.remove());
+                           
+                           container
+                              .querySelectorAll("* > button:has(svg)")
+                              ?.forEach((el) => el.remove());
 
-                           return ___getHTMLCodeWithCss(container);
+                           container
+                              .querySelectorAll("* > [rel='noopener']")
+                              ?.forEach((el) => el.remove());
+
+                           return await ___getHTMLCodeWithCss(container);
                         }
 
                         const result = await ___pollForContent(cleanMainCol);
                         resolve(result);
                      });
                   },
+
                   (injectResult) => {
                      const cleanedHtml = injectResult?.[0]?.result || "";
                      resolve(cleanedHtml);
-                     // chrome.tabs.remove(tabId);
-                  },
-                  [prompt]
+                     chromeTabMediaAccess(tabId, false);
+                     chrome.tabs.remove(tabId);
+                  }
                );
             }
          }

@@ -13,12 +13,14 @@ export default function ChatBot({ isOpen }) {
    const currentRequestIdRef = useRef(null);
 
    const AI_PROVIDERS = [
-      { id: "chatgpt", name: "ChatGPT", zoom: 1 },
       { id: "google", name: "Google AI", zoom: 1 },
       { id: "bing", name: "Bing AI", zoom: 1 },
+      { id: "perplexity", name: "Perplexity", zoom: 1 },
       { id: "grok", name: "Grok AI", zoom: 1 },
-      // { id: "gemini", name: "Gemini" },
    ];
+
+   // Maximum concurrent requests
+   const MAX_CONCURRENT_REQUESTS = 2;
 
    const scrollContainerRef = useRef(null);
    const fileInputRef = useRef(null);
@@ -45,48 +47,80 @@ export default function ChatBot({ isOpen }) {
       );
    };
 
-   // Sequential provider loading
-   const loadProvidersSequentially = async (question, image, requestId) => {
-      for (let i = 0; i < AI_PROVIDERS.length; i++) {
-         // Check if request was cancelled (new message sent)
+   // Concurrent provider loading - maintains constant number of active requests
+   const loadProvidersWithConcurrency = async (question, image, requestId) => {
+      const providersToProcess = [...AI_PROVIDERS];
+      const activeRequests = new Map();
+      let completedCount = 0;
+
+      console.log(
+         `Starting concurrent loading with max ${MAX_CONCURRENT_REQUESTS} simultaneous requests`
+      );
+
+      const startProviderRequest = (provider) => {
+         console.log(`Starting request for ${provider.id}`);
+
+         getAnswerFromBackground(question, image, provider.id);
+
+         const promise = new Promise((resolve) => {
+            const checkAnswer = () => {
+               if (currentRequestIdRef.current !== requestId) {
+                  resolve({ cancelled: true });
+                  return;
+               }
+
+               setAnswers((current) => {
+                  if (current[provider.id]) {
+                     console.log(`${provider.id} completed`);
+                     resolve({ provider, completed: true });
+                  } else {
+                     setTimeout(checkAnswer, 500);
+                  }
+                  return current;
+               });
+            };
+            checkAnswer();
+         });
+
+         activeRequests.set(provider.id, promise);
+         return promise;
+      };
+
+      const initialRequests = providersToProcess.splice(
+         0,
+         MAX_CONCURRENT_REQUESTS
+      );
+      initialRequests.forEach((provider) => startProviderRequest(provider));
+
+      while (activeRequests.size > 0) {
          if (currentRequestIdRef.current !== requestId) {
-            console.log("Request cancelled, stopping sequential loading");
+            console.log("Request cancelled, stopping concurrent loading");
+            return;
+         }
+         const completedRequest = await Promise.race(activeRequests.values());
+
+         if (completedRequest.cancelled) {
             return;
          }
 
-         const provider = AI_PROVIDERS[i];
-         console.log(
-            `Loading provider ${provider.id} (${i + 1}/${AI_PROVIDERS.length})`
-         );
+         if (completedRequest.completed) {
+            completedCount++;
+            const providerId = completedRequest.provider.id;
 
-         // Send request to current provider
-         getAnswerFromBackground(question, image, provider.id);
+            activeRequests.delete(providerId);
 
-         // Wait for this provider to respond before moving to next
-         if (i < AI_PROVIDERS.length - 1) {
-            await new Promise((resolve) => {
-               const checkAnswer = () => {
-                  // If request was cancelled, resolve immediately
-                  if (currentRequestIdRef.current !== requestId) {
-                     resolve();
-                     return;
-                  }
+            console.log(
+               `${providerId} finished. Completed: ${completedCount}/${AI_PROVIDERS.length}`
+            );
 
-                  // Check if current provider has answered
-                  setAnswers((current) => {
-                     if (current[provider.id]) {
-                        resolve();
-                     } else {
-                        // Check again in 500ms
-                        setTimeout(checkAnswer, 500);
-                     }
-                     return current;
-                  });
-               };
-               checkAnswer();
-            });
+            if (providersToProcess.length > 0) {
+               const nextProvider = providersToProcess.shift();
+               startProviderRequest(nextProvider);
+            }
          }
       }
+
+      console.log(`All ${completedCount} providers completed`);
    };
 
    const handleSendMessage = async () => {
@@ -106,10 +140,8 @@ export default function ChatBot({ isOpen }) {
       setIsLoading(true);
       setAnswers({});
 
-      // No automatic scrolling - user controls scroll position
-
-      // Start sequential loading
-      loadProvidersSequentially(input, selectedImage, requestId);
+      // Start concurrent loading
+      loadProvidersWithConcurrency(input, selectedImage, requestId);
    };
 
    useEffect(() => {
@@ -121,7 +153,6 @@ export default function ChatBot({ isOpen }) {
          setAnswers((prev) => {
             const isFirstAnswer = Object.keys(prev).length === 0;
 
-            // If this is the first answer, also set it as selected provider and stop loading
             if (isFirstAnswer) {
                setSelectedProvider(provider);
                setIsLoading(false);

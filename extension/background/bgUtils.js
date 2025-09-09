@@ -202,3 +202,25 @@ function __PUSH_MENU__(tabId) {
       tabId
    );
 }
+
+function chromeTabMediaAccess(tabId, isBlocked = false) {
+   if (!isBlocked) {
+      chrome.declarativeNetRequest.updateSessionRules({
+         removeRuleIds: [tabId],
+      });
+      return;
+   }
+   chrome.declarativeNetRequest.updateSessionRules({
+      addRules: [
+         {
+            id: tabId,
+            priority: 1,
+            action: { type: "block" },
+            condition: {
+               resourceTypes: ["image", "media", "font"],
+               tabIds: [tabId],
+            },
+         },
+      ],
+   });
+}

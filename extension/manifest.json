@@ -17,7 +17,12 @@
       "offscreen"
    ],
    "optional_permissions": ["clipboardWrite"],
-   "host_permissions": ["<all_urls>", "http://*/*", "https://*/*", "*://www.google.com/*"],
+   "host_permissions": [
+      "<all_urls>",
+      "http://*/*",
+      "https://*/*",
+      "*://www.google.com/*"
+   ],
    "background": {
       "service_worker": "./background/background.js"
    },
@@ -29,7 +34,11 @@
       {
          "matches": ["http://*/*", "https://*/*"],
          "exclude_globs": ["chrome://*"],
-         "js": ["./utils.js", "./content/content.js", "./content/menuContent.js"]
+         "js": [
+            "./utils.js",
+            "./content/content.js",
+            "./content/menuContent.js"
+         ]
       }
    ],
    "web_accessible_resources": [

@@ -1,113 +1,145 @@
 console.log("content script loaded");
 
+const CONTENT_STABLE_WAIT_TIME = 500; // ms - wait time for content to be stable
+
 function ___getHTMLCodeWithCss(container) {
-   const isMinTextComplete = container?.textContent?.trim()?.length < 10;
+   return new Promise((resolve) => {
+      const isMinTextComplete = container?.textContent?.trim()?.length < 10;
 
-   if (isMinTextComplete) return null;
-
-   const clone = container.cloneNode(true);
-
-   function getUserAppliedStyles(el) {
-      const computed = getComputedStyle(el);
-
-      // Create a fresh element of the same type
-      const fresh = document.createElement(el.tagName);
-      document.body.appendChild(fresh);
-      const defaultStyles = getComputedStyle(fresh);
-
-      let applied = {};
-      for (let prop of computed) {
-         if (computed[prop] !== defaultStyles[prop]) {
-            applied[prop] = computed[prop];
-         }
-      }
-
-      fresh.remove();
-      return applied;
-   }
-
-   function applyStyles(src, dst) {
-      if (!src || !dst) return;
-      const maxWidth = "400px";
-
-      if (src.nodeType === Node.COMMENT_NODE) {
-         dst.remove();
+      if (isMinTextComplete) {
+         resolve(null);
          return;
       }
 
-      if (
-         src.nodeType === Node.ELEMENT_NODE &&
-         dst.nodeType === Node.ELEMENT_NODE
-      ) {
-         const appliedStyles = getUserAppliedStyles(src);
-         let styleStr = "";
+      let lastContent = container.innerHTML;
+      let lastUpdateTime = Date.now();
+      let intervalId;
 
-         const allowedStyles = [
-            "margin",
-            "margin-top",
-            "margin-right",
-            "margin-bottom",
-            "margin-left",
-            "padding",
-            "padding-top",
-            "padding-right",
-            "padding-bottom",
-            "padding-left",
-            "border-radius",
-            "font-weight",
-            "font-size",
-         ];
+      function getUserAppliedStyles(el) {
+         const computed = getComputedStyle(el);
 
-         Object.entries(appliedStyles).forEach(([prop, val]) => {
-            if (prop === "width" || prop === "max-width") {
-               styleStr += `${prop}:min(${val}, ${maxWidth});`;
-            } else if (
-               prop === "height" ||
-               prop === "max-height" ||
-               prop === "min-height"
-            ) {
-               styleStr += `${prop}:auto;`;
-            } else if (
-               allowedStyles.includes(prop) &&
-               val &&
-               val !== "auto" &&
-               val !== "normal" &&
-               val !== "none" &&
-               val !== "rgba(0, 0, 0, 0)"
-            ) {
-               styleStr += `${prop}:${val};`;
+         // Create a fresh element of the same type
+         const fresh = document.createElement(el.tagName);
+         document.body.appendChild(fresh);
+         const defaultStyles = getComputedStyle(fresh);
+
+         let applied = {};
+         for (let prop of computed) {
+            if (computed[prop] !== defaultStyles[prop]) {
+               applied[prop] = computed[prop];
             }
-         });
+         }
 
-         if (styleStr) {
-            dst.setAttribute("style", styleStr);
+         fresh.remove();
+         return applied;
+      }
+
+      function applyStyles(src, dst) {
+         if (!src || !dst) return;
+         const maxWidth = "400px";
+
+         if (src.nodeType === Node.COMMENT_NODE) {
+            dst.remove();
+            return;
+         }
+
+         if (
+            src.nodeType === Node.ELEMENT_NODE &&
+            dst.nodeType === Node.ELEMENT_NODE
+         ) {
+            const appliedStyles = getUserAppliedStyles(src);
+            let styleStr = "";
+
+            const allowedStyles = [
+               "margin",
+               "margin-top",
+               "margin-right",
+               "margin-bottom",
+               "margin-left",
+               "padding",
+               "padding-top",
+               "padding-right",
+               "padding-bottom",
+               "padding-left",
+               "border-radius",
+               "font-weight",
+               "font-size",
+            ];
+
+            Object.entries(appliedStyles).forEach(([prop, val]) => {
+               if (prop === "width" || prop === "max-width") {
+                  styleStr += `${prop}:min(${val}, ${maxWidth});`;
+               } else if (
+                  prop === "height" ||
+                  prop === "max-height" ||
+                  prop === "min-height"
+               ) {
+                  styleStr += `${prop}:auto;`;
+               } else if (
+                  allowedStyles.includes(prop) &&
+                  val &&
+                  val !== "auto" &&
+                  val !== "normal" &&
+                  val !== "none" &&
+                  val !== "rgba(0, 0, 0, 0)"
+               ) {
+                  styleStr += `${prop}:${val};`;
+               }
+            });
+
+            if (styleStr) {
+               dst.setAttribute("style", styleStr);
+            }
+         }
+
+         const srcChildren = src.childNodes;
+         const dstChildren = dst.childNodes;
+         for (let i = 0; i < srcChildren.length; i++) {
+            applyStyles(srcChildren[i], dstChildren[i]);
          }
       }
 
-      const srcChildren = src.childNodes;
-      const dstChildren = dst.childNodes;
-      for (let i = 0; i < srcChildren.length; i++) {
-         applyStyles(srcChildren[i], dstChildren[i]);
+      function generateHTMLCode() {
+         const clone = container.cloneNode(true);
+         applyStyles(container, clone);
+         return clone.outerHTML;
       }
-   }
 
-   applyStyles(container, clone);
-   return clone.outerHTML;
+      function checkForUpdates() {
+         const currentContent = container.innerHTML;
+         const currentTime = Date.now();
+
+         if (currentContent !== lastContent) {
+            lastContent = currentContent;
+            lastUpdateTime = currentTime;
+         } else if (currentTime - lastUpdateTime >= CONTENT_STABLE_WAIT_TIME) {
+            // No updates for specified time, return the HTML code
+            clearInterval(intervalId);
+            const htmlCode = generateHTMLCode();
+            resolve(htmlCode);
+         }
+      }
+
+      // Start checking for updates every 500ms
+      intervalId = setInterval(checkForUpdates, 500);
+
+      // Also check immediately
+      checkForUpdates();
+   });
 }
 
-function ___pollForContent(cleanFunction, maxLimit = 50, checkDelay = 500) {
+function ___pollForContent(cleanFunction) {
+   const maxLimit = 40;
+   const checkDelay = 500; // ms
    return new Promise(async (resolve) => {
       for (let i = 0; i < maxLimit; i++) {
-         let html = cleanFunction();
+         let html = await cleanFunction();
          if (html) {
-            // wait for more content if have
-            await new Promise((r) => setTimeout(r, checkDelay * 2));
-            html = cleanFunction();
             resolve(html);
             return;
          } else await new Promise((r) => setTimeout(r, checkDelay));
       }
-      resolve("");
+      resolve("<mark>Slow Network or Limit Exceeded, Try Again</mark>");
    });
 }
 
@@ -141,7 +173,6 @@ async function ___askGPT(prompt) {
       console.error("ChatGPT input box not found.");
    }
 }
-
 
 // ___askGPT("Hello gpt?");
 
