@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IoClose } from "react-icons/io5";
+import { FiMinimize } from "react-icons/fi";
 import { LuTextSelect } from "react-icons/lu";
 import { RiChatVoiceAiLine } from "react-icons/ri";
 import { TiArrowMoveOutline } from "react-icons/ti";
@@ -26,6 +26,7 @@ export default function Menu() {
    useEffect(() => {
       ES.pageOnMessage("C_IF_OPEN_CHAT", () => {
          setIsChatOpen(true);
+         setMenuOpacity("1");
       });
       ES.pageOnMessage("C_IF_CLOSE_CHAT", () => {
          setIsChatOpen(false);
@@ -75,6 +76,7 @@ export default function Menu() {
 
    const handleSelectText = useCallback(() => {
       ES.pagePostMessage("IF_C_SELECT_TEXT", {}, window.parent);
+      setMenuOpacity("0");
    }, []);
 
    // Render UI
@@ -98,7 +100,7 @@ export default function Menu() {
             >
                <div
                   ref={dragRef}
-                  className={`relative grid place-items-center rounded-lg text-xl cursor-move border border-white/50 dark:border-white/30 transition-all duration-200 ${
+                  className={`relative grid place-items-center rounded-lg text-xl cursor-move border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none ${
                      isDragging
                         ? "bg-white/40 text-gray-800"
                         : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200 hover:bg-white/25 dark:hover:bg-black/25"
@@ -113,7 +115,7 @@ export default function Menu() {
 
                <div
                   onClick={toggleChat}
-                  className={`relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 ${
+                  className={`relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none ${
                      isChatOpen
                         ? "bg-blue-500/60 text-white hover:bg-blue-600/70"
                         : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200 hover:bg-white/25 dark:hover:bg-black/25"
@@ -127,7 +129,7 @@ export default function Menu() {
                </div>
 
                <div
-                  className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-white/25 dark:hover:bg-black/25 text-gray-700 dark:text-gray-200 transition-all duration-200"
+                  className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-black/30 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-200 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
                   onClick={handleSelectText}
                   style={{
                      width: `calc(${SIZES.min.h} - 8px)`,
@@ -141,14 +143,14 @@ export default function Menu() {
                   <div className="absolute right-[4px] top-1/2 -translate-y-1/2">
                      <div
                         onClick={toggleChat}
-                        className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-red-500/50 text-red-500 hover:text-white transition-all duration-200"
-                        title="Close chat"
+                        className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-black/30 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-200 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
+                        title="Minimize chat"
                         style={{
                            width: `calc(${SIZES.min.h} - 8px)`,
                            aspectRatio: "1 / 1",
                         }}
                      >
-                        <IoClose />
+                        <FiMinimize />
                      </div>
                   </div>
                )}

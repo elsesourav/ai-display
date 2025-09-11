@@ -369,20 +369,6 @@ window.decryptData = async (encrypted) => {
    return decoder.decode(decryptedData);
 };
 
-window.GET__ = async (name) => {
-   try {
-      const res = await fetch(chrome.runtime.getURL("config.json"));
-      const config = await res.json();
-      const key = config.keys[name];
-
-      if (key) return key;
-      return null;
-   } catch (error) {
-      console.log(error);
-      return null;
-   }
-};
-
 window.uploadImageToCloudinary = async (file) => {
    const cloudName = "diysvbtwq";
    const uploadPreset = "AiDisplay";

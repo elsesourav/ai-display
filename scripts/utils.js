@@ -371,20 +371,6 @@ async function decryptData(encrypted) {
    return decoder.decode(decryptedData);
 }
 
-async function GET__(name) {
-   try {
-      const res = await fetch(chrome.runtime.getURL("config.json"));
-      const config = await res.json();
-      const key = config.keys[name];
-
-      if (key) return key;
-      return null;
-   } catch (error) {
-      console.log(error);
-      return null;
-   }
-}
-
 function removeIFrame(selector) {
    const existingFrame = document.querySelector(selector);
    if (existingFrame) existingFrame.remove();

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { IoImage, IoSend } from "react-icons/io5";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { IoClose, IoSend } from "react-icons/io5";
 import UTILS from "./../utils/utilsModule.js";
 import "./scrollbar-hide.css";
 
@@ -7,159 +7,160 @@ export default function ChatBot({ isOpen }) {
    const [input, setInput] = useState("");
    const [isLoading, setIsLoading] = useState(false);
    const [lastQuestion, setLastQuestion] = useState("");
-   const [selectedImage, setSelectedImage] = useState(null);
    const [answers, setAnswers] = useState({});
    const [selectedProvider, setSelectedProvider] = useState("google");
    const [allProvidersCompleted, setAllProvidersCompleted] = useState(true);
    const currentRequestIdRef = useRef(null);
 
-   const AI_PROVIDERS = [
-      { id: "google", name: "Google AI", zoom: 1 },
-      { id: "perplexity", name: "Perplexity", zoom: 1 },
-      { id: "bing", name: "Bing AI", zoom: 1 },
-      { id: "gemini", name: "Gemini", zoom: 1 },
-      { id: "grok", name: "Grok AI", zoom: 1 },
-   ];
+   const AI_PROVIDERS = useMemo(
+      () => [
+         { id: "google", name: "Google AI", zoom: 1 },
+         { id: "perplexity", name: "Perplexity", zoom: 1 },
+         { id: "bing", name: "Bing AI", zoom: 1 },
+         { id: "gemini", name: "Gemini", zoom: 1 },
+         { id: "grok", name: "Grok AI", zoom: 1 },
+      ],
+      []
+   );
 
    // Maximum concurrent requests
    const MAX_CONCURRENT_REQUESTS = 2;
 
    const scrollContainerRef = useRef(null);
-   const fileInputRef = useRef(null);
    const rootRef = useRef(null);
+   const textareaRef = useRef(null);
 
-   // Clear selected image
-   const clearSelectedImage = () => {
-      setSelectedImage(null);
-      if (fileInputRef.current) {
-         fileInputRef.current.value = "";
-      }
-   };
+   // Clear input function
+   const clearInput = useCallback(() => {
+      setInput("");
+   }, []);
 
    // get answer from background script
-   const getAnswerFromBackground = async (
-      question,
-      image,
-      provider = "google"
-   ) => {
+   const getAnswerFromBackground = async (question, provider = "google") => {
       UTILS.pagePostMessage(
          "IF_B_GET_ANSWER",
-         { question, image, provider },
+         { question, provider },
          window.parent
       );
    };
 
    // Concurrent provider loading - maintains constant number of active requests
-   const loadProvidersWithConcurrency = async (question, image, requestId) => {
-      const providersToProcess = [...AI_PROVIDERS];
-      const activeRequests = new Map();
-      let completedCount = 0;
+   const loadProvidersWithConcurrency = useCallback(
+      async (question, requestId) => {
+         const providersToProcess = [...AI_PROVIDERS];
+         const activeRequests = new Map();
+         let completedCount = 0;
 
-      console.log(
-         `Starting concurrent loading with max ${MAX_CONCURRENT_REQUESTS} simultaneous requests`
-      );
+         console.log(
+            `Starting concurrent loading with max ${MAX_CONCURRENT_REQUESTS} simultaneous requests`
+         );
 
-      // Mark that providers are not all completed
-      setAllProvidersCompleted(false);
+         // Mark that providers are not all completed
+         setAllProvidersCompleted(false);
 
-      const startProviderRequest = (provider) => {
-         console.log(`Starting request for ${provider.id}`);
+         const startProviderRequest = (provider) => {
+            console.log(`Starting request for ${provider.id}`);
 
-         getAnswerFromBackground(question, image, provider.id);
+            getAnswerFromBackground(question, provider.id);
 
-         const promise = new Promise((resolve) => {
-            const checkAnswer = () => {
-               if (currentRequestIdRef.current !== requestId) {
-                  resolve({ cancelled: true });
-                  return;
-               }
-
-               setAnswers((current) => {
-                  if (current[provider.id]) {
-                     console.log(`${provider.id} completed`);
-                     resolve({ provider, completed: true });
-                  } else {
-                     setTimeout(checkAnswer, 500);
+            const promise = new Promise((resolve) => {
+               const checkAnswer = () => {
+                  if (currentRequestIdRef.current !== requestId) {
+                     resolve({ cancelled: true });
+                     return;
                   }
-                  return current;
-               });
-            };
-            checkAnswer();
-         });
 
-         activeRequests.set(provider.id, promise);
-         return promise;
-      };
+                  setAnswers((current) => {
+                     if (current[provider.id]) {
+                        console.log(`${provider.id} completed`);
+                        resolve({ provider, completed: true });
+                     } else {
+                        setTimeout(checkAnswer, 500);
+                     }
+                     return current;
+                  });
+               };
+               checkAnswer();
+            });
 
-      const initialRequests = providersToProcess.splice(
-         0,
-         MAX_CONCURRENT_REQUESTS
-      );
-      initialRequests.forEach((provider) => startProviderRequest(provider));
+            activeRequests.set(provider.id, promise);
+            return promise;
+         };
 
-      while (activeRequests.size > 0) {
-         if (currentRequestIdRef.current !== requestId) {
-            console.log("Request cancelled, stopping concurrent loading");
-            setAllProvidersCompleted(true);
-            return;
-         }
-         const completedRequest = await Promise.race(activeRequests.values());
+         const initialRequests = providersToProcess.splice(
+            0,
+            MAX_CONCURRENT_REQUESTS
+         );
+         initialRequests.forEach((provider) => startProviderRequest(provider));
 
-         if (completedRequest.cancelled) {
-            setAllProvidersCompleted(true);
-            return;
-         }
-
-         if (completedRequest.completed) {
-            completedCount++;
-            const providerId = completedRequest.provider.id;
-
-            activeRequests.delete(providerId);
-
-            console.log(
-               `${providerId} finished. Completed: ${completedCount}/${AI_PROVIDERS.length}`
+         while (activeRequests.size > 0) {
+            if (currentRequestIdRef.current !== requestId) {
+               console.log("Request cancelled, stopping concurrent loading");
+               setAllProvidersCompleted(true);
+               return;
+            }
+            const completedRequest = await Promise.race(
+               activeRequests.values()
             );
 
-            if (providersToProcess.length > 0) {
-               const nextProvider = providersToProcess.shift();
-               startProviderRequest(nextProvider);
+            if (completedRequest.cancelled) {
+               setAllProvidersCompleted(true);
+               return;
+            }
+
+            if (completedRequest.completed) {
+               completedCount++;
+               const providerId = completedRequest.provider.id;
+
+               activeRequests.delete(providerId);
+
+               console.log(
+                  `${providerId} finished. Completed: ${completedCount}/${AI_PROVIDERS.length}`
+               );
+
+               if (providersToProcess.length > 0) {
+                  const nextProvider = providersToProcess.shift();
+                  startProviderRequest(nextProvider);
+               }
             }
          }
-      }
 
-      console.log(`All ${completedCount} providers completed`);
-      // Mark that all providers have completed
-      setAllProvidersCompleted(true);
-   };
+         console.log(`All ${completedCount} providers completed`);
+         // Mark that all providers have completed
+         setAllProvidersCompleted(true);
+      },
+      [AI_PROVIDERS, MAX_CONCURRENT_REQUESTS]
+   );
 
-   const handleSendMessage = async () => {
-      if (input.trim() === "") return;
+   const handleSendMessage = useCallback(
+      async (messageInput = null) => {
+         const actualInput = messageInput !== null ? messageInput : input;
 
-      // Prevent sending if not all providers have completed
-      if (!allProvidersCompleted) {
-         console.log(
-            "Cannot send message: waiting for all providers to complete"
-         );
-         return;
-      }
+         if (actualInput.trim() === "") return;
 
-      // Generate unique request ID
-      const requestId = Date.now().toString();
-      currentRequestIdRef.current = requestId;
+         // Prevent sending if not all providers have completed
+         if (!allProvidersCompleted) {
+            console.log(
+               "Cannot send message: waiting for all providers to complete"
+            );
+            return;
+         }
 
-      setLastQuestion(input);
-      setInput("");
+         // Generate unique request ID
+         const requestId = Date.now().toString();
+         currentRequestIdRef.current = requestId;
 
-      if (selectedImage) {
-         clearSelectedImage();
-      }
+         setLastQuestion(actualInput);
+         setInput("");
 
-      setIsLoading(true);
-      setAnswers({});
+         setIsLoading(true);
+         setAnswers({});
 
-      // Start concurrent loading
-      loadProvidersWithConcurrency(input, selectedImage, requestId);
-   };
+         // Start concurrent loading
+         loadProvidersWithConcurrency(actualInput, requestId);
+      },
+      [input, allProvidersCompleted, loadProvidersWithConcurrency]
+   );
 
    useEffect(() => {
       UTILS.pageOnMessage("IF_B_GET_ANSWER", (data) => {
@@ -183,18 +184,17 @@ export default function ChatBot({ isOpen }) {
          });
       });
 
-      // UTILS.pageOnMessage("C_IF_SET_INPUTS", (data) => {
-      //    setInput(data.input);
-      //    setSelectedImage(data.image);
-      //    // handleSendMessage();
-      // });
+      UTILS.pageOnMessage("C_IF_SET_INPUTS", (data) => {
+         setTimeout(() => {
+            handleSendMessage(data.input);
+         }, 500);
+      });
 
       // UTILS.pageOnMessage("C_I_CLEAR_CHAT", () => {
       //    setAnswers([]);
       //    setInput("");
       //    setLastQuestion("");
       //    setIsLoading(false);
-      //    clearSelectedImage();
       // });
 
       // UTILS.pageOnMessage("C_IF_SET_QUESTION", (data) => {
@@ -214,32 +214,10 @@ export default function ChatBot({ isOpen }) {
       //       },
       //    ]);
       // });
-   }, []);
+   }, [handleSendMessage]);
 
    useEffect(() => {
       console.log(answers);
-   }, [answers]);
-
-   // Handle image selection
-   const handleImageClick = () => {
-      fileInputRef.current?.click();
-   };
-
-   // Handle image change
-   const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (file && file.type.startsWith("image/")) {
-         const reader = new FileReader();
-         reader.onload = () => {
-            setSelectedImage(reader.result);
-         };
-         reader.readAsDataURL(file);
-      }
-   };
-
-   useEffect(() => {
-      // No auto-scroll when answers update - let user stay where they are
-      // Only manual scroll or new message will trigger scroll
    }, [answers]);
 
    // When closing, if focus is inside the chat, blur it to avoid aria/inert conflicts.
@@ -254,6 +232,15 @@ export default function ChatBot({ isOpen }) {
                void err;
             }
          }
+      }
+   }, [isOpen]);
+
+   // Focus textarea when chat opens
+   useEffect(() => {
+      if (isOpen && textareaRef.current) {
+         setTimeout(() => {
+            textareaRef.current?.focus();
+         }, 100);
       }
    }, [isOpen]);
 
@@ -280,22 +267,23 @@ export default function ChatBot({ isOpen }) {
                <div className="relative grid w-full h-[97px]">
                   <div className="flex-1 relative path border-white/60 dark:border-black p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70 dark:bg-black/20 text-gray-800 dark:text-white">
                      <textarea
+                        ref={textareaRef}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask a question..."
-                        className="w-[calc(100%-50px)] h-full resize-none text-[16px] bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+                        className="w-[calc(100%-50px)] h-full resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                         rows="3"
                         autoFocus
                      />
                   </div>
 
                   <button
-                     onClick={handleImageClick}
-                     className="absolute h-[30px] w-[30px] right-[5px] top-[5px] grid place-items-center rounded-lg bg-white/30 dark:bg-black/30 border border-white/50 dark:border-white/30 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-200 cursor-pointer z-[9211]"
-                     title="Upload image"
+                     onClick={clearInput}
+                     className="absolute h-[30px] w-[30px] right-[5px] top-[5px] grid place-items-center rounded-lg text-gray-700 dark:text-gray-200 hover:text-red-500 dark:hover:text-red-600 transition-all duration-200 cursor-pointer z-[9211] focus:outline-none"
+                     title="Clear input"
                   >
-                     <IoImage size={18} />
+                     <IoClose size={24} />
                   </button>
 
                   <button
@@ -305,7 +293,7 @@ export default function ChatBot({ isOpen }) {
                         isLoading ||
                         !allProvidersCompleted
                      }
-                     className={`absolute h-[45px] w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 ${
+                     className={`absolute h-[45px] w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 focus:outline-none ${
                         input.trim() === "" ||
                         isLoading ||
                         !allProvidersCompleted
@@ -320,47 +308,7 @@ export default function ChatBot({ isOpen }) {
                   >
                      <IoSend size={26} />
                   </button>
-
-                  {/* Hidden file input */}
-                  <input
-                     type="file"
-                     ref={fileInputRef}
-                     onChange={handleImageChange}
-                     accept="image/*"
-                     className="col-span-2 hidden"
-                  />
                </div>
-
-               {/* Image preview area */}
-               {selectedImage && (
-                  <div className="relative rounded-xl overflow-hidden border border-white/50 dark:border-white/30 bg-white/15 dark:bg-black/15">
-                     <img
-                        src={selectedImage}
-                        alt="Selected"
-                        className="w-full object-contain max-h-20"
-                     />
-                     <button
-                        onClick={clearSelectedImage}
-                        className="absolute top-1 right-1 bg-gray-800/60 dark:bg-gray-900/60 text-white p-1 rounded-full hover:bg-gray-900/70 dark:hover:bg-black/70 border border-white/30 transition-all duration-200"
-                        title="Remove image"
-                     >
-                        <svg
-                           xmlns="http://www.w3.org/2000/svg"
-                           width="16"
-                           height="16"
-                           viewBox="0 0 24 24"
-                           fill="none"
-                           stroke="currentColor"
-                           strokeWidth="2"
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                        >
-                           <line x1="18" y1="6" x2="6" y2="18"></line>
-                           <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                     </button>
-                  </div>
-               )}
             </div>
          </div>
 
@@ -371,7 +319,7 @@ export default function ChatBot({ isOpen }) {
                   <button
                      key={provider.id}
                      onClick={() => setSelectedProvider(provider.id)}
-                     className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 border relative ${
+                     className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 border relative focus:outline-none ${
                         !answers[provider.id]
                            ? // Not loaded - disabled state
                              "bg-gray-200/50 dark:bg-gray-700/30 text-gray-400 dark:text-gray-500 border-gray-300/40 dark:border-gray-600/40 cursor-not-allowed opacity-50"

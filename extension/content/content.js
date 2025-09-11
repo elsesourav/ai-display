@@ -6,6 +6,7 @@ function removeElementBySelector(container, selector) {
 function removeElementsBySelector(container, selector) {
    container.querySelectorAll(selector)?.forEach((el) => el.remove());
 }
+
 function removeAllAttributes(container) {
    // Remove all attributes from the container itself
    if (container.attributes) {
@@ -300,38 +301,6 @@ async function ___askGemini(prompt) {
 //    closeMenu();
 // });
 
-runtimeSendMessage("C_B_ON_LOAD", async (r) => {
-   console.log(`Menu loaded: ${JSON.stringify(r)}`);
-});
-
-runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
-   const { text, image } = data;
-   sendResponse({ success: true });
-
-   const menuFrame = document.getElementById("menuWindowIframe");
-   if (menuFrame) {
-      pagePostMessage(
-         "C_IF_SET_INPUTS",
-         { input: text, image },
-         menuFrame.contentWindow
-      );
-      pagePostMessage("C_IF_OPEN_CHAT", {}, menuFrame.contentWindow);
-   }
-});
-
-pageOnMessage("IF_C_SELECT_COORDS", async ({ coordinates }) => {
-   document.getElementById("screenSelectorIframe")?.remove();
-   runtimeSendMessage("C_B_CAPTURE_DOM", {
-      coordinates,
-      devicePixelRatio: window.devicePixelRatio,
-   });
-});
-
-pageOnMessage("IF_C_SELECT_CANCEL", async () => {
-   console.log("Selection cancelled");
-   document.getElementById("screenSelectorIframe")?.remove();
-});
-
 // chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
 //    if (settings.enable) {
 //       // setupMenu();
@@ -348,23 +317,12 @@ pageOnMessage("IF_C_SELECT_CANCEL", async () => {
 //    }
 // });
 
-pageOnMessage("IF_C_SELECT_TEXT", () => {
-   runtimeSendMessage("C_B_SELECT_TEXT");
-});
+
 
 // pageOnMessage("C_I_SET_QUESTION", ({ question, image }) => {
 //    runtimeSendMessage("C_B_GET_ANSWER", { question, image });
 // });
 
-// runtimeOnMessage("B_C_SET_ANS", async ({ answer }, _, sendResponse) => {
-//    console.log(answer);
-//    const windowFrame = document.querySelector("iframe.aid-window");
-//    if (windowFrame) {
-//       pagePostMessage("C_I_SET_ANSWER", { answer }, windowFrame.contentWindow);
-//    }
-
-//    sendResponse("ok");
-// });
 
 // function closeMenu() {
 //    const existingMenu = document.querySelector("iframe.aid-window");

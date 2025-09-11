@@ -116,43 +116,46 @@ window.addEventListener("message", (event) => {
    }
 });
 
-// pageOnMessage("IF_C_ACTIVE_MENU_WINDOW_BACK", () => {
-//    console.log("Activating menu window back");
-//    const frame = document.getElementById("menuWindowBackIframe");
-//    if (!frame) return;
-//    frame.style.display = "block";
-// });
 
-// pageOnMessage("IF_C_HIDE_MENU_WINDOW_BACK", () => {
-//    console.log("Hiding menu window back");
-//    const frame = document.getElementById("menuWindowBackIframe");
-//    if (!frame) return;
-//    frame.style.display = "none";
-// });
 
-// pageOnMessage("IF_C_MENU_WINDOW_BACK_ADD_BEFORE", ({ x, y, w, h }) => {
-//    const frame = document.getElementById("menuWindowIframe");
-//    if (!frame) return;
-//    frame.style.zIndex = "825003262";
-//    frame.style.pointerEvents = "none";
-//    pointerOffset.x = x;
-//    pointerOffset.y = y;
-//    iframeSize.width = w;
-//    iframeSize.height = h;
-// });
 
-// pageOnMessage("IF_C_MENU_WINDOW_BACK_ADD_AFTER", () => {
-//    const frame = document.getElementById("menuWindowIframe");
-//    if (!frame) return;
-//    frame.style.zIndex = "825003264";
-//    frame.style.pointerEvents = "auto";
-// });
+/* -------- Message Passing Section --------- */
+runtimeSendMessage("C_B_ON_LOAD", async (r) => {
+   console.log(`Menu loaded: ${JSON.stringify(r)}`);
+});
 
-// pageOnMessage("_RESIZE_", (data) => {
-//    const frame = document.getElementById("menuWindowBackIframe");
-//    if (!frame) return;
-//    frame.style.width = data.width;
-//    frame.style.height = data.height;
-//    frame.style.left = data.x;
-//    frame.style.top = data.y;
-// });
+pageOnMessage("IF_C_SELECT_COORDS", async ({ coordinates }) => {
+   document.getElementById("screenSelectorIframe")?.remove();
+   runtimeSendMessage("C_B_CAPTURE_DOM", {
+      coordinates,
+      devicePixelRatio: window.devicePixelRatio,
+   });
+});
+
+runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
+   const { text, image } = data;
+   sendResponse({ success: true });
+
+   const menuFrame = document.getElementById("menuWindowIframe");
+   if (menuFrame) {
+      pagePostMessage(
+         "C_IF_SET_INPUTS",
+         { input: text, image },
+         menuFrame.contentWindow
+      );
+      pagePostMessage("C_IF_OPEN_CHAT", {}, menuFrame.contentWindow);
+   }
+});
+
+pageOnMessage("IF_C_SELECT_CANCEL", async () => {
+   console.log("Selection cancelled");
+   const menuFrame = document.getElementById("menuWindowIframe");
+   if (menuFrame) {
+      document.getElementById("screenSelectorIframe")?.remove();
+      pagePostMessage("C_IF_VISIBLE", {}, menuFrame.contentWindow);
+   }
+});
+
+pageOnMessage("IF_C_SELECT_TEXT", () => {
+   runtimeSendMessage("C_B_SELECT_TEXT");
+});
