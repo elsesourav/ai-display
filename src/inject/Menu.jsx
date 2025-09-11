@@ -129,7 +129,7 @@ export default function Menu() {
                </div>
 
                <div
-                  className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-black/30 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-200 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
+                  className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-white/40 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-800 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
                   onClick={handleSelectText}
                   style={{
                      width: `calc(${SIZES.min.h} - 8px)`,
@@ -143,7 +143,7 @@ export default function Menu() {
                   <div className="absolute right-[4px] top-1/2 -translate-y-1/2">
                      <div
                         onClick={toggleChat}
-                        className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-black/30 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-200 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
+                        className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-white/40 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-800 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
                         title="Minimize chat"
                         style={{
                            width: `calc(${SIZES.min.h} - 8px)`,
@@ -181,7 +181,4 @@ export default function Menu() {
          </main>
       </div>
    );
-}
-{
-   /* Chat area fills the remaining space below header */
 }

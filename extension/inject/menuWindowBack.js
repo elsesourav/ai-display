@@ -20,7 +20,7 @@ let iframePosition = { x: 0, y: 0 }; // last committed iframe left/top in parent
 let pointerOffset = { x: 0, y: 0 }; // pointer offset from handle's top-left during drag
 let collapsePending = false; // set true on pointerup; collapse on subsequent pointerleave
 let expandTimer = null;
-const delayDuration = 50;
+const delayDuration = 10;
 const boundarySize = { width: 160, height: 50 };
 
 // Collision detection function to keep DRAG_HANDLE within viewport bounds

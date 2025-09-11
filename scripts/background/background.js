@@ -27,8 +27,8 @@ runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
 });
 
 runtimeOnMessage("C_B_SELECT_TEXT", (_, { tab }, sendResponse) => {
-   sendResponse("ok");
    __SELECT__(tab.id);
+   sendResponse("ok");
 });
 
 runtimeOnMessage(

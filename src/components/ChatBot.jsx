@@ -189,31 +189,6 @@ export default function ChatBot({ isOpen }) {
             handleSendMessage(data.input);
          }, 500);
       });
-
-      // UTILS.pageOnMessage("C_I_CLEAR_CHAT", () => {
-      //    setAnswers([]);
-      //    setInput("");
-      //    setLastQuestion("");
-      //    setIsLoading(false);
-      // });
-
-      // UTILS.pageOnMessage("C_IF_SET_QUESTION", (data) => {
-      //    setIsLoading(true);
-      //    setLastQuestion(data.question);
-      // });
-
-      // UTILS.pageOnMessage("C_I_SET_ANSWER", (data) => {
-      //    const { answer, provider } = data;
-
-      //    setIsLoading(false);
-      //    setAnswers([
-      //       ...answers,
-      //       {
-      //          content: answer,
-      //          provider: provider || "AI Display",
-      //       },
-      //    ]);
-      // });
    }, [handleSendMessage]);
 
    useEffect(() => {

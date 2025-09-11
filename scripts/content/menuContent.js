@@ -15,7 +15,7 @@ const applyCollisionDetection = (left, top) => {
 };
 
 pageOnMessage("IF_C_MENU_WINDOW_MOVE", (data) => {
-   const frame = document.getElementById("menuWindowIframe");
+   const frame = document.getElementById("__menuWindowIframe");
    if (!frame) return;
    const constrainedPosition = applyCollisionDetection(
       data.x - pointerOffset.x,
@@ -35,7 +35,7 @@ pageOnMessage("IF_C_MENU_WINDOW_BACK_RESIZE", (data) => {
 });
 
 pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
-   const frame1 = document.getElementById("menuWindowIframe");
+   const frame1 = document.getElementById("__menuWindowIframe");
    const iframe2 = document.getElementById("menuWindowBackIframe");
    if (!frame1 || !iframe2) return;
    iframeSize.width = data.width;
@@ -74,7 +74,7 @@ pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
 });
 
 pageOnMessage("IF_C_MENU_WINDOW_BACK_MOVE", (data) => {
-   const frame1 = document.getElementById("menuWindowIframe");
+   const frame1 = document.getElementById("__menuWindowIframe");
    if (!frame1) return;
    const constrainedPosition = applyCollisionDetection(
       data.x - pointerOffset.x,
@@ -92,7 +92,7 @@ window.addEventListener("message", (event) => {
       // console.log("Relaying message:", event.data);
 
       const iframe1 =
-         document.getElementById("menuWindowIframe")?.contentWindow;
+         document.getElementById("__menuWindowIframe")?.contentWindow;
       const iframe2 = document.getElementById(
          "menuWindowBackIframe"
       )?.contentWindow;
@@ -108,16 +108,13 @@ window.addEventListener("message", (event) => {
 
       runtimeSendMessage(event.data.type, { ...event.data }, (res) => {
          const iframe =
-            document.getElementById("menuWindowIframe")?.contentWindow;
+            document.getElementById("__menuWindowIframe")?.contentWindow;
          // console.log(res);
 
          pagePostMessage(event.data.type, res, iframe);
       });
    }
 });
-
-
-
 
 /* -------- Message Passing Section --------- */
 runtimeSendMessage("C_B_ON_LOAD", async (r) => {
@@ -136,7 +133,7 @@ runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
    const { text, image } = data;
    sendResponse({ success: true });
 
-   const menuFrame = document.getElementById("menuWindowIframe");
+   const menuFrame = document.getElementById("__menuWindowIframe");
    if (menuFrame) {
       pagePostMessage(
          "C_IF_SET_INPUTS",
@@ -149,7 +146,7 @@ runtimeOnMessage("B_C_OCR_RESULT", async (data, _, sendResponse) => {
 
 pageOnMessage("IF_C_SELECT_CANCEL", async () => {
    console.log("Selection cancelled");
-   const menuFrame = document.getElementById("menuWindowIframe");
+   const menuFrame = document.getElementById("__menuWindowIframe");
    if (menuFrame) {
       document.getElementById("screenSelectorIframe")?.remove();
       pagePostMessage("C_IF_VISIBLE", {}, menuFrame.contentWindow);
@@ -157,5 +154,9 @@ pageOnMessage("IF_C_SELECT_CANCEL", async () => {
 });
 
 pageOnMessage("IF_C_SELECT_TEXT", () => {
-   runtimeSendMessage("C_B_SELECT_TEXT");
+   runtimeSendMessage("C_B_SELECT_TEXT", () => {
+      setTimeout(() => {
+         document.getElementById("screenSelectorIframe")?.focus();
+      }, 100);
+   });
 });

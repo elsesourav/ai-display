@@ -37,7 +37,8 @@
          "js": [
             "./utils.js",
             "./content/content.js",
-            "./content/menuContent.js"
+            "./content/menuContent.js",
+            "./content/menuWindowBack.js"
          ]
       }
    ],

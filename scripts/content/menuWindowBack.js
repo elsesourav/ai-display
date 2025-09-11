@@ -1,27 +1,10 @@
-// Page messaging utilities
-function pagePostMessage(type, data, contentWindow = window.parent) {
-   contentWindow.postMessage({ type, data }, "*");
-}
-function pageOnMessage(type, callback) {
-   window.addEventListener("message", (event) => {
-      if (event.data.type === type) {
-         callback(event.data.data, event);
-      }
-   });
-}
-
-// Handle element inside iframe used to drag
 const DRAG_HANDLE = document.getElementById("DRAG_HANDLE");
 
-// State flags
-let isExpanded = false; // whether iframe is currently expanded to full viewport
-let isDragging = false; // whether a drag gesture is active
-let iframePosition = { x: 0, y: 0 }; // last committed iframe left/top in parent
-let pointerOffset = { x: 0, y: 0 }; // pointer offset from handle's top-left during drag
-let collapsePending = false; // set true on pointerup; collapse on subsequent pointerleave
-let expandTimer = null;
-const delayDuration = 50;
-const boundarySize = { width: 160, height: 50 };
+
+let isDragging = false;
+let iframePosition = { x: 0, y: 0 }; 
+let pointerOffset = { x: 0, y: 0 };
+let collapsePending = false;
 
 // Collision detection function to keep DRAG_HANDLE within viewport bounds
 const applyCollisionDetection = (left, top) => {
