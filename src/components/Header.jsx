@@ -4,6 +4,9 @@ import { useTheme } from "../hooks/useTheme";
 export default function Header() {
    const { isDarkMode, toggleTheme } = useTheme();
 
+   console.log(isDarkMode);
+   console.log(toggleTheme);
+
    return (
       <div>
          <header className="relative w-[400px] p-2">
@@ -17,17 +20,16 @@ export default function Header() {
                   </h1>
                   <div
                      className={`size-10 rounded-xl grid place-items-center ${
-                        isDarkMode ? "bg-black/10" : "bg-white/10"
+                        isDarkMode ? "bg-white/20" : "bg-black/20"
                      }`}
                   >
                      <DarkModeSwitch
-                        className={`relative size-8 cursor-pointer transition-all duration-300 ${
-                           isDarkMode
-                              ? "hover:text-blue-500"
-                              : "hover:text-amber-400"
-                        } sbi-${isDarkMode ? "sun" : "moon-o"}`}
-                        checked={isDarkMode}
+                        className="relative size-8 cursor-pointer transition-all duration-300"
+                        checked={!isDarkMode}
                         onChange={toggleTheme}
+                        size={28}
+                        sunColor="#f59e0b"
+                        moonColor="#3b82f6"
                      />
                   </div>
                </div>

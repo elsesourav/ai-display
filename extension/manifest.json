@@ -52,7 +52,6 @@
             "offscreen/OCR/Lang/*",
             "inject/selection.html",
             "inject/menuWindow.html",
-            "inject/menuWindowBack.html",
             "offscreen/offscreen.html",
             "utils.js"
          ],

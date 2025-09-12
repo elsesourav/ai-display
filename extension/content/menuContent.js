@@ -1,122 +1,159 @@
-const pointerOffset = { x: 0, y: 0 };
-const iframePosition = { x: 0, y: 0 };
-const iframeSize = { width: "160px", height: "50px" };
+const __iframeSize = { width: "160px", height: "50px" };
+const __spacing = 110;
+let __isDragging = false;
+const __pointerOffset = { x: 0, y: 0 };
+let __main_menu__ = null;
+let __menu_back__ = null;
+let __isFirstSetup = true;
 
-const applyCollisionDetection = (left, top) => {
-   const menuWidth = parseInt(iframeSize.width);
-   const menuHeight = parseInt(iframeSize.height);
-   const vw = window.innerWidth;
-   const vh = window.innerHeight;
+// Collision detection function to keep back within viewport bounds
+const __applyCollisionDetection__ = (left, top) => {
+   const menuWidth = parseInt(__iframeSize.width);
+   const menuHeight = parseInt(__iframeSize.height);
 
-   const constrainedLeft = Math.max(0, Math.min(left, vw - menuWidth));
-   const constrainedTop = Math.max(0, Math.min(top, vh - menuHeight));
+   // Get viewport dimensions
+   const VW = window.innerWidth;
+   const VH = window.innerHeight;
+
+   // Constrain position to viewport bounds
+   const constrainedLeft = Math.max(0, Math.min(left, VW - menuWidth));
+   const constrainedTop = Math.max(0, Math.min(top, VH - menuHeight));
 
    return { x: constrainedLeft, y: constrainedTop };
 };
 
-pageOnMessage("IF_C_MENU_WINDOW_MOVE", (data) => {
-   const frame = document.getElementById("__menuWindowIframe");
-   if (!frame) return;
-   const constrainedPosition = applyCollisionDetection(
-      data.x - pointerOffset.x,
-      data.y - pointerOffset.y
+function __pointerenter__() {
+   __menu_back__ = document.getElementById("__menuWindowBack");
+   __main_menu__ = document.getElementById("__menuWindowIframe");
+   const menuFrame = document.getElementById("__menuWindowIframe");
+   pagePostMessage("C_IF_MENU_WINDOW_DRAG_START", {}, menuFrame?.contentWindow);
+}
+
+function __pointerleave__() {
+   __isDragging = false;
+   const menuFrame = document.getElementById("__menuWindowIframe");
+   pagePostMessage("C_IF_MENU_WINDOW_DRAG_END", {}, menuFrame?.contentWindow);
+}
+
+function __pointerdown__(e) {
+   __isDragging = true;
+   const rect = __menu_back__?.getBoundingClientRect();
+   __pointerOffset.x = e.clientX - rect.left;
+   __pointerOffset.y = e.clientY - rect.top;
+
+   if (__menu_back__?.setPointerCapture)
+      __menu_back__.setPointerCapture(e.pointerId);
+}
+
+function __pointermove__(e) {
+   if (!__isDragging) return;
+   const newLeft = e.clientX - __pointerOffset.x;
+   const newTop = e.clientY - __pointerOffset.y;
+
+   // Apply collision detection to keep __menu_back__ within viewport
+   const constrainedPosition = __applyCollisionDetection__(
+      newLeft - __spacing,
+      newTop
    );
-   frame.style.left = `${constrainedPosition.x}px`;
-   frame.style.top = `${constrainedPosition.y}px`;
-});
 
-pageOnMessage("IF_C_MENU_WINDOW_BACK_RESIZE", (data) => {
-   const frame = document.getElementById("menuWindowBackIframe");
-   if (!frame) return;
-   frame.style.width = data.width;
-   frame.style.height = data.height;
-   frame.style.left = data.x;
-   frame.style.top = data.y;
-});
+   __menu_back__.style.left = `${constrainedPosition.x + __spacing}px`;
+   __menu_back__.style.top = `${constrainedPosition.y}px`;
 
-pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
-   const frame1 = document.getElementById("__menuWindowIframe");
-   const iframe2 = document.getElementById("menuWindowBackIframe");
-   if (!frame1 || !iframe2) return;
-   iframeSize.width = data.width;
-   iframeSize.height = data.height;
+   __main_menu__.style.left = `${constrainedPosition.x}px`;
+   __main_menu__.style.top = `${constrainedPosition.y}px`;
+}
 
-   const constrainedPosition = applyCollisionDetection(
-      iframePosition.x,
-      iframePosition.y
+function __pointerup__(e) {
+   if (!__isDragging) return;
+   __isDragging = false;
+
+   if (__menu_back__?.releasePointerCapture)
+      __menu_back__.releasePointerCapture(e.pointerId);
+
+   const left = Number.parseFloat(__menu_back__?.style.left) || 0;
+   const top = Number.parseFloat(__menu_back__?.style.top) || 0;
+
+   // Apply collision detection to final position
+   const constrainedPosition = __applyCollisionDetection__(
+      left - __spacing,
+      top
    );
+   __menu_back__.style.left = `${constrainedPosition.x + __spacing}px`;
+   __menu_back__.style.top = `${constrainedPosition.y}px`;
 
-   iframePosition.x = constrainedPosition.x;
-   iframePosition.y = constrainedPosition.y;
-   frame1.style.left = `${constrainedPosition.x}px`;
-   frame1.style.top = `${constrainedPosition.y}px`;
+   __main_menu__.style.left = `${constrainedPosition.x}px`;
+   __main_menu__.style.top = `${constrainedPosition.y}px`;
+}
 
-   frame1.style.transition =
-      "left 300ms ease, top 300ms ease, width 300ms ease, height 300ms ease";
-   frame1.style.width = iframeSize.width;
-   frame1.style.height = iframeSize.height;
-   setTimeout(() => {
-      frame1.style.transition = "";
-   }, 300);
+function __firstSetup() {
+   const menu = document.getElementById("__menuWindowIframe");
+   let timeIdSmall, timeIdBig;
+   const timeSmallDuration = 15 * 1000;
+   const timeBigDuration = 60 * 1000;
 
-   // resize and position the back iframe
-   pagePostMessage(
-      "C_IF_MENU_WINDOW_BACK_RESIZE",
-      {
-         width: iframeSize.width,
-         height: iframeSize.height,
-         ...constrainedPosition,
-      },
-      iframe2.contentWindow
-   );
-   iframe2.style.left = `${constrainedPosition.x}px`;
-   iframe2.style.top = `${constrainedPosition.y}px`;
-});
+   menu.onmouseenter = () => {
+      document.body.style.overflow = "hidden";
+      if (timeIdSmall) clearTimeout(timeIdSmall);
+      if (timeIdBig) clearTimeout(timeIdBig);
+      menu.style.opacity = "1";
+   };
 
-pageOnMessage("IF_C_MENU_WINDOW_BACK_MOVE", (data) => {
-   const frame1 = document.getElementById("__menuWindowIframe");
-   if (!frame1) return;
-   const constrainedPosition = applyCollisionDetection(
-      data.x - pointerOffset.x,
-      data.y - pointerOffset.y
-   );
-   iframePosition.x = constrainedPosition.x;
-   iframePosition.y = constrainedPosition.y;
-   frame1.style.left = `${constrainedPosition.x}px`;
-   frame1.style.top = `${constrainedPosition.y}px`;
-});
+   menu.onmouseleave = () => {
+      document.body.style.overflow = "";
 
-// Relay messages between the two iframes
-window.addEventListener("message", (event) => {
-   if (event?.data?.type?.includes("IF_IF_")) {
-      // console.log("Relaying message:", event.data);
+      timeIdSmall = setTimeout(() => {
+         menu.style.opacity = "0.6";
+         pagePostMessage("C_IF_CLOSE_CHAT", {}, menu.contentWindow);
+      }, timeSmallDuration);
 
-      const iframe1 =
-         document.getElementById("__menuWindowIframe")?.contentWindow;
-      const iframe2 = document.getElementById(
-         "menuWindowBackIframe"
-      )?.contentWindow;
-      if (!iframe1 || !iframe2) return;
-
-      if (event.source === iframe1) {
-         iframe2.postMessage(event.data, "*");
-      } else if (event.source === iframe2) {
-         iframe1.postMessage(event.data, "*");
-      }
-   } else if (event?.data?.type?.includes("IF_B_")) {
-      // console.log("Received message from background:", event.data);
-
-      runtimeSendMessage(event.data.type, { ...event.data }, (res) => {
-         const iframe =
-            document.getElementById("__menuWindowIframe")?.contentWindow;
-         // console.log(res);
-
-         pagePostMessage(event.data.type, res, iframe);
-      });
-   }
-});
+      timeIdBig = setTimeout(() => {
+         menu.style.opacity = "0.2";
+      }, timeBigDuration);
+   };
+}
 
 /* -------- Message Passing Section --------- */
+pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
+   __menu_back__ = document.getElementById("__menuWindowBack");
+   __main_menu__ = document.getElementById("__menuWindowIframe");
+
+   const iframeWidth = parseInt(data.width);
+   const newBackWidth = iframeWidth > 160 ? 315 : 50;
+   __menu_back__.style.width = `${newBackWidth}px`;
+
+   __iframeSize.width = data.width;
+   __iframeSize.height = data.height;
+
+   const rect = __menu_back__.getBoundingClientRect();
+   const constrainedPosition = __applyCollisionDetection__(
+      rect.left - __spacing,
+      rect.top
+   );
+
+   __pointerOffset.x = constrainedPosition.x + __spacing;
+   __pointerOffset.y = constrainedPosition.y;
+   __menu_back__.style.left = `${constrainedPosition.x + __spacing}px`;
+   __menu_back__.style.top = `${constrainedPosition.y}px`;
+   __main_menu__.style.left = `${constrainedPosition.x}px`;
+   __main_menu__.style.top = `${constrainedPosition.y}px`;
+
+   // for first time remove transition
+   if (!__isFirstSetup) {
+      __main_menu__.style.transition =
+         "left 300ms ease, top 300ms ease, width 300ms ease, height 300ms ease";
+   } else {
+      __isFirstSetup = false;
+      __firstSetup();
+   }
+
+   __main_menu__.style.width = __iframeSize.width;
+   __main_menu__.style.height = __iframeSize.height;
+
+   setTimeout(() => {
+      __main_menu__.style.transition = "";
+   }, 300);
+});
+
 runtimeSendMessage("C_B_ON_LOAD", async (r) => {
    console.log(`Menu loaded: ${JSON.stringify(r)}`);
 });
@@ -159,4 +196,32 @@ pageOnMessage("IF_C_SELECT_TEXT", () => {
          document.getElementById("screenSelectorIframe")?.focus();
       }, 100);
    });
+});
+
+runtimeOnMessage("B_C_CLOSE_MENU", async (_, __, sendResponse) => {
+   console.log("Close Menu");
+   __isFirstSetup = true;
+   sendResponse("ok");
+   document.getElementById("__menuWindowIframe")?.remove();
+   const back = document.getElementById("__menuWindowBack");
+
+   if (back) {
+      back.removeEventListener("pointerenter", __pointerenter__);
+      back.removeEventListener("pointerleave", __pointerleave__);
+      back.removeEventListener("pointerdown", __pointerdown__);
+      window.removeEventListener("pointermove", __pointermove__);
+      back.removeEventListener("pointerup", __pointerup__);
+      back.remove();
+   }
+});
+
+window.addEventListener("message", (event) => {
+   if (event?.data?.type?.includes("IF_B_")) {
+      // console.log("Received message from background:", event.data);
+
+      runtimeSendMessage(event.data.type, { ...event.data }, (res) => {
+         const iframe = document.getElementById("__menuWindowIframe");
+         pagePostMessage(event.data.type, res, iframe?.contentWindow);
+      });
+   }
 });

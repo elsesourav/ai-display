@@ -37,8 +37,7 @@
          "js": [
             "./utils.js",
             "./content/content.js",
-            "./content/menuContent.js",
-            "./content/menuWindowBack.js"
+            "./content/menuContent.js"
          ]
       }
    ],
@@ -53,7 +52,6 @@
             "offscreen/OCR/Lang/*",
             "inject/selection.html",
             "inject/menuWindow.html",
-            "inject/menuWindowBack.html",
             "offscreen/offscreen.html",
             "utils.js"
          ],

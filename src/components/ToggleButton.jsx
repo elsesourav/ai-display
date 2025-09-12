@@ -26,7 +26,7 @@ export default function ToggleButton() {
             extensionUtils.runtimeSendMessage("P_B_TOGGLE");
          }
       );
-   }, [checked]);
+   }, [settings, checked]);
 
    const handleClick = (element) => {
       setChecked(element.checked);

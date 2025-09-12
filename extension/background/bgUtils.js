@@ -77,7 +77,7 @@ function __PUSH_MENU__(tabId) {
       tabId,
       () => {
          const existingMWF = document.getElementById("__menuWindowIframe");
-         const existingMWbF = document.getElementById("menuWindowBackIframe");
+         const existingMWB = document.getElementById("__menuWindowBack");
 
          if (!existingMWF) {
             /* ---------------- theme detection ---------------- */
@@ -181,6 +181,7 @@ function __PUSH_MENU__(tabId) {
                   background: transparent !important;
                   /* background-color: #0f04; */
                   z-index: 825003263;
+                  transition: opacity 200ms ease-in-out;
                }
             `;
 
@@ -206,55 +207,32 @@ function __PUSH_MENU__(tabId) {
             existingMWF.style.display = "block";
          }
 
-         if (!existingMWbF) {
-            const currentTheme = detectPageTheme();
-
-            const frame = document.createElement("iframe");
-            frame.setAttribute("id", "menuWindowBackIframe");
-            frame.setAttribute("frameborder", "0");
-            frame.setAttribute("allowtransparency", "true");
-
-            // Add additional style attributes with dynamic theme
-            const currentStyle = frame.getAttribute("style") || "";
-            frame.setAttribute(
+         if (!existingMWB) {
+            const back = document.createElement("div");
+            back.setAttribute("id", "__menuWindowBack");
+            const left = window.innerWidth - 110;
+            back.setAttribute(
                "style",
-               `${currentStyle}; color-scheme: ${currentTheme} !important;`
+               `
+               position: fixed;
+               top: 80px;
+               left: ${left}px;
+               width: 50px;
+               height: 50px;
+               background: transparent !important;
+               z-index: 2147483646;
+               cursor: move;
+               `
             );
+            document.body.append(back);
 
-            const style = document.createElement("style");
-            style.textContent = `
-               #menuWindowBackIframe {
-                  position: fixed;
-                  top: 0px;
-                  left: 0px;
-                  width: 50px;
-                  height: 50px;
-                  background: transparent !important;
-                  z-index: 825003264;
-               }
-            `;
-
-            document.head.appendChild(style);
-            frame.src = chrome.runtime.getURL("./inject/menuWindowBack.html");
-            document.body.append(frame);
-
-            // Setup theme observer for back iframe
-            setupThemeObserver((newTheme) => {
-               const existingFrame = document.getElementById(
-                  "menuWindowBackIframe"
-               );
-               if (existingFrame) {
-                  const currentStyle =
-                     existingFrame.getAttribute("style") || "";
-                  const updatedStyle = currentStyle.replace(
-                     /color-scheme:\s*\w+\s*!important;?/,
-                     `color-scheme: ${newTheme} !important;`
-                  );
-                  existingFrame.setAttribute("style", updatedStyle);
-               }
-            });
+            back.addEventListener("pointerenter", __pointerenter__);
+            back.addEventListener("pointerleave", __pointerleave__);
+            back.addEventListener("pointerdown", __pointerdown__);
+            window.addEventListener("pointermove", __pointermove__);
+            back.addEventListener("pointerup", __pointerup__);
          } else {
-            existingMWbF.style.display = "block";
+            existingMWB.style.display = "block";
          }
       },
       tabId

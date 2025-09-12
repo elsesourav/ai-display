@@ -276,6 +276,17 @@ async function ___askGemini(prompt) {
    }
 }
 
+onload = () => {
+   const style = document.createElement("style");
+   style.innerHTML = `
+      iframe {
+         overflow: hidden !important;
+         overscroll-behavior: contain;
+      }
+   `;
+   document.head.appendChild(style);
+};
+
 // ___askGPT("Hello gpt?");
 
 // pageOnMessage("i_c_selected_image", async (data) => {
@@ -293,12 +304,6 @@ async function ___askGemini(prompt) {
 
 // pageOnMessage("I_C_IFRAME_LOAD_STATUS", async ({ message }) => {
 //    runtimeSendMessage("C_B_IFRAME_LOAD_STATUS", { message });
-// });
-
-// runtimeOnMessage("B_C_CLOSE_MENU", async (_, __, sendResponse) => {
-//    console.log("Close Menu");
-//    sendResponse("ok");
-//    closeMenu();
 // });
 
 // chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {

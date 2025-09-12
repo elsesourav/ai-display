@@ -4,23 +4,30 @@
 @layer utilities {
    .path {
       clip-path: path(
-         "M 0,5 A 7.37,5 0,0,1 7.37,0 L 440,0 A 7.37,5 0,0,1 446,5 L 446,35 A 7.37,5 0,0,1 440,40 L 404,40 A 7.37,5 0,0,0 400,45 L 400,92 A 7.37,5 0,0,1 392,97 L 7.37,97 A 7.37,5 0,0,1 0,92 Z"
+         " M 0,8       A 8,8 0 0 1 8,0       L 436,0       A 8,8 0 0 1 444,8       L 444,32       A 8,8 0 0 1 436,40       L 404,40       A 8,8 0 0 0 396,48       L 396,89       A 8,8 0 0 1 388,97       L 8,97       A 8,8 0 0 1 0,89       Z"
       );
+   }
+
+   .mainBtn {
+      @apply relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none hover:bg-blue-600/70 hover:dark:bg-blue-600/70 hover:text-white hover:dark:text-white;
    }
 
    .botChat * {
       color: #222 !important;
-      font-size: 12px !important;
+      font-size: 14px !important;
       opacity: 1 !important;
       font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
    }
 
-   .botChat * ul, .botChat * ol {
+   .botChat * ul,
+   .botChat * ol {
       display: flex !important;
       flex-direction: column !important;
    }
 
-   .botChat mark, .botChat mark > *, .botChat mark > * > * {
+   .botChat mark,
+   .botChat mark > *,
+   .botChat mark > * > * {
       background: #155dfc77 !important;
       padding: 1px 2px !important;
       border-radius: 3px !important;

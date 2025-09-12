@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IoClose, IoSend } from "react-icons/io5";
 import UTILS from "./../utils/utilsModule.js";
-import "./scrollbar-hide.css";
 
 export default function ChatBot({ isOpen }) {
    const [input, setInput] = useState("");
@@ -136,7 +135,7 @@ export default function ChatBot({ isOpen }) {
       async (messageInput = null) => {
          const actualInput = messageInput !== null ? messageInput : input;
 
-         if (actualInput.trim() === "") return;
+         if (actualInput?.trim() === "") return;
 
          // Prevent sending if not all providers have completed
          if (!allProvidersCompleted) {
@@ -186,10 +185,10 @@ export default function ChatBot({ isOpen }) {
 
       UTILS.pageOnMessage("C_IF_SET_INPUTS", (data) => {
          setTimeout(() => {
-            handleSendMessage(data.input);
-         }, 500);
+            setInput(data.input);
+         }, 100);
       });
-   }, [handleSendMessage]);
+   }, [setInput]);
 
    useEffect(() => {
       console.log(answers);

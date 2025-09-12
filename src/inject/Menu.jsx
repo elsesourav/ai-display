@@ -39,32 +39,47 @@ export default function Menu() {
          setMenuOpacity("1");
       });
 
-      ES.pageOnMessage("IF_IF_MENU_WINDOW_DRAG_START", () => {
+      ES.pageOnMessage("C_IF_MENU_WINDOW_DRAG_START", () => {
          setIsDragging(true);
       });
-      ES.pageOnMessage("IF_IF_MENU_WINDOW_DRAG_END", () => {
+      ES.pageOnMessage("C_IF_MENU_WINDOW_DRAG_END", () => {
          setIsDragging(false);
       });
    }, []);
+
+   
 
    useEffect(() => {
       setSize(isChatOpen ? SIZES.max : SIZES.min);
    }, [isChatOpen, SIZES]);
 
    useEffect(() => {
-      const isOpen = parseInt(size.h) > 60;
-      const fun = () => {
-         ES.pagePostMessage(
-            "IF_C_MENU_WINDOW_RESIZE",
-            {
-               width: size.w,
-               height: size.h,
-            },
-            window.parent
-         );
-      };
-      setTimeout(fun, isOpen ? 0 : 300);
+      ES.pagePostMessage(
+         "IF_C_MENU_WINDOW_RESIZE",
+         {
+            width: size.w,
+            height: size.h,
+         },
+         window.parent
+      );
    }, [size]);
+
+   // Prevent scroll propagation to parent document
+   useEffect(() => {
+      const stopPropagation = (e) => {
+         e.stopPropagation();
+      };
+
+      window.addEventListener("wheel", stopPropagation, { passive: false });
+      window.addEventListener("scroll", stopPropagation, { passive: false });
+      window.addEventListener("touchmove", stopPropagation, { passive: false });
+
+      return () => {
+         window.removeEventListener("wheel", stopPropagation, { passive: false });
+         window.removeEventListener("scroll", stopPropagation, { passive: false });
+         window.removeEventListener("touchmove", stopPropagation, { passive: false });
+      };
+   }, []);
 
    const toggleChat = useCallback(() => {
       if (!isChatOpen) {
@@ -95,63 +110,76 @@ export default function Menu() {
          >
             {/* Fixed header */}
             <section
-               className="relative h-[inherit] flex w-full gap-[12px] items-center justify-start pl-[4px] bg-white/10 dark:bg-black/10 border-b border-white/30 dark:border-white/20"
+               className="relative h-[inherit] flex w-full items-center justify-between pl-[4px] pr-[4px] bg-white/10 dark:bg-black/10 border-b border-white/30 dark:border-white/20"
                style={{ height: `${parseInt(SIZES.min.h) - 2}px` }}
             >
+               {/* Left side buttons */}
+               <div className="flex items-center gap-[12px]">
+                  <div
+                     onClick={toggleChat}
+                     className={`mainBtn ${
+                        isChatOpen
+                           ? "bg-blue-500/60 dark:bg-blue-500/60 text-white dark:text-white"
+                           : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                     }`}
+                     style={{
+                        width: `calc(${SIZES.min.h} - 8px)`,
+                        aspectRatio: "1 / 1",
+                     }}
+                  >
+                     <RiChatVoiceAiLine />
+                  </div>
+
+                  <div
+                     className="mainBtn bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                     onClick={handleSelectText}
+                     style={{
+                        width: `calc(${SIZES.min.h} - 8px)`,
+                        aspectRatio: "1 / 1",
+                     }}
+                  >
+                     <LuTextSelect />
+                  </div>
+               </div>
+
+               {/* Center - Move button (flex-grow when chat is open) */}
                <div
-                  ref={dragRef}
-                  className={`relative grid place-items-center rounded-lg text-xl cursor-move border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none ${
-                     isDragging
-                        ? "bg-white/40 text-gray-800"
-                        : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200 hover:bg-white/25 dark:hover:bg-black/25"
+                  className={`flex items-center ${
+                     isChatOpen ? "flex-1 justify-center mx-[12px]" : ""
                   }`}
-                  style={{
-                     width: `calc(${SIZES.min.h} - 8px)`,
-                     aspectRatio: "1 / 1",
-                  }}
                >
-                  <TiArrowMoveOutline />
+                  <div
+                     ref={dragRef}
+                     className={`mainBtn ${
+                        isDragging
+                           ? "bg-blue-500/60 dark:bg-blue-500/60 text-white dark:text-white"
+                           : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                     }`}
+                     style={{
+                        width: isChatOpen
+                           ? "100%"
+                           : `calc(${SIZES.min.h} - 8px)`,
+                        minWidth: `calc(${SIZES.min.h} - 8px)`,
+                        aspectRatio: isChatOpen ? "auto" : "1 / 1",
+                        height: `calc(${SIZES.min.h} - 8px)`,
+                     }}
+                  >
+                     <TiArrowMoveOutline />
+                  </div>
                </div>
 
-               <div
-                  onClick={toggleChat}
-                  className={`relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none ${
-                     isChatOpen
-                        ? "bg-blue-500/60 text-white hover:bg-blue-600/70"
-                        : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200 hover:bg-white/25 dark:hover:bg-black/25"
-                  }`}
-                  style={{
-                     width: `calc(${SIZES.min.h} - 8px)`,
-                     aspectRatio: "1 / 1",
-                  }}
-               >
-                  <RiChatVoiceAiLine />
-               </div>
-
-               <div
-                  className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-white/40 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-800 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
-                  onClick={handleSelectText}
-                  style={{
-                     width: `calc(${SIZES.min.h} - 8px)`,
-                     aspectRatio: "1 / 1",
-                  }}
-               >
-                  <LuTextSelect />
-               </div>
-
+               {/* Right side - Minimize button (only when chat is open) */}
                {isChatOpen && (
-                  <div className="absolute right-[4px] top-1/2 -translate-y-1/2">
-                     <div
-                        onClick={toggleChat}
-                        className="relative grid place-items-center bg-white/15 dark:bg-black/15 border border-white/50 dark:border-white/30 rounded-lg text-xl cursor-pointer hover:bg-white/40 dark:hover:bg-white/40 text-gray-700 dark:text-white hover:text-gray-800 dark:hover:text-gray-800 transition-all duration-200 focus:outline-none"
-                        title="Minimize chat"
-                        style={{
-                           width: `calc(${SIZES.min.h} - 8px)`,
-                           aspectRatio: "1 / 1",
-                        }}
-                     >
-                        <FiMinimize />
-                     </div>
+                  <div
+                     onClick={toggleChat}
+                     className="mainBtn bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                     title="Minimize chat"
+                     style={{
+                        width: `calc(${SIZES.min.h} - 8px)`,
+                        aspectRatio: "1 / 1",
+                     }}
+                  >
+                     <FiMinimize />
                   </div>
                )}
             </section>
