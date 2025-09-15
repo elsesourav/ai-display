@@ -261,13 +261,13 @@ export default function ChatBot({ isOpen }) {
                   </button>
 
                   <button
-                     onClick={handleSendMessage}
+                     onClick={() => handleSendMessage()}
                      disabled={
                         input.trim() === "" ||
                         isLoading ||
                         !allProvidersCompleted
                      }
-                     className={`absolute h-[45px] w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 focus:outline-none ${
+                     className={`absolute h-[45px] z-10 w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 focus:outline-none ${
                         input.trim() === "" ||
                         isLoading ||
                         !allProvidersCompleted
