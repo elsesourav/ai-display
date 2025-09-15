@@ -1,6 +1,6 @@
 # AI Display Chrome Extension
 
-<center><img src="src/assets/icons/icon.png" width="128" height="128" alt="AI Display Icon"></center>
+<center><img src="./scripts/assets/icons/icon.png" width="128" height="128" alt="AI Display Icon"></center>
 
 A powerful Chrome extension that brings multiple AI assistants together in one convenient interface. Get answers from Google Gemini, Bing AI, Perplexity, Grok, and more - all at once!
 
@@ -70,27 +70,27 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 -  **Provider Settings**: Configure which AI services to use
 -  **Keyboard Shortcuts**: Press Escape to close, Enter to send
 
-## Screenshot
+## Highlights
 
 <table>
   <tr>
     <td>
       <h4>Extension Popup</h4>
-      <img src="./src/assets/screenshots/popup-overview.png">
+      <img height="200" src="./scripts/assets/gif/popup-overview.gif">
     </td>
     <td>
       <h4>Multi-AI Chat</h4>
-      <img src="./src/assets/screenshots/chat-interface.png">
+      <img height="200" src="./scripts/assets/gif/chat-interface.gif">
     </td>
   </tr>
   <tr>
     <td>
       <h4>Floating Menu</h4>
-      <img src="./src/assets/screenshots/floating-menu.png">
+      <img height="200" src="./scripts/assets/gif/floating-menu.gif">
     </td>
     <td>
       <h4>Screen Selection OCR</h4>
-      <img src="./src/assets/screenshots/screen-selection.png">
+      <img height="200" src="./scripts/assets/gif/screen-selection.gif">
     </td>
   </tr>
 </table>
