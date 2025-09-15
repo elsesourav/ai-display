@@ -3,13 +3,36 @@
    <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-     <script type="module" crossorigin src="../assets/popup-BPNtPUOH.js"></script>
-     <link rel="modulepreload" crossorigin href="../assets/client-Dsk2-liH.js">
-     <link rel="modulepreload" crossorigin href="../assets/utilsModule-Be-ZMCF3.js">
-     <link rel="stylesheet" crossorigin href="../assets/popup-C5fHX-1u.css">
-   </head>
-   <body class="relative w-[400px] h-[500px] flex justify-center">
-      <div id="root"></div>
+      <style>
+         body {
+            overflow: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
 
+            * {
+               scrollbar-width: none;
+               -ms-overflow-style: none;
+            }
+         }
+
+         body::-webkit-scrollbar {
+            display: none;
+         }
+
+         #root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: scroll;
+         }
+      </style>
+     <script type="module" crossorigin src="../assets/popup-CnAGxbYG.js"></script>
+     <link rel="modulepreload" crossorigin href="../assets/iconBase-DNAvlnZY.js">
+     <link rel="modulepreload" crossorigin href="../assets/utilsModule-C7pc4HZY.js">
+     <link rel="stylesheet" crossorigin href="../assets/popup-BIcwoml-.css">
+   </head>
+   <body class="relative p-2 w-[400px] h-[600px] flex justify-center bg-gray-50 text-[#213547] dark:bg-[#242424] dark:text-[#ffffffde] transition-all duration-300">
+      <div id="root"></div>
    </body>
 </html>

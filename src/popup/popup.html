@@ -4,10 +4,33 @@
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="stylesheet" href="/assets/icons/css/icon.css" />
-   </head>
-   <body class="relative w-[400px] h-[500px] flex justify-center">
-      <div id="root"></div>
+      <style>
+         body {
+            overflow: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
 
+            * {
+               scrollbar-width: none;
+               -ms-overflow-style: none;
+            }
+         }
+
+         body::-webkit-scrollbar {
+            display: none;
+         }
+
+         #root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: scroll;
+         }
+      </style>
+   </head>
+   <body class="relative p-2 w-[400px] h-[600px] flex justify-center bg-gray-50 text-[#213547] dark:bg-[#242424] dark:text-[#ffffffde] transition-all duration-300">
+      <div id="root"></div>
       <script type="module" src="./popup.jsx"></script>
    </body>
 </html>

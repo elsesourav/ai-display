@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
-   plugins: [react(), tailwindcss()],
+   plugins: [tailwindcss(), react()],
    root: resolve(__dirname, "./src"),
    resolve: {
       alias: {

@@ -59,6 +59,7 @@ export default function Menu() {
          {
             width: size.w,
             height: size.h,
+            isOpen: parseInt(size.w) > 160,
          },
          window.parent
       );

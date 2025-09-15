@@ -99,7 +99,7 @@ function runtimeOnMessage(type, callback) {
 }
 
 function pagePostMessage(type, data, contentWindow = window) {
-   contentWindow.postMessage({ type, data }, "*");
+   contentWindow?.postMessage({ type, data }, "*");
 }
 
 /* ######## send inject script to => content script ########

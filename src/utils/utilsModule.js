@@ -19,6 +19,7 @@ function setDataFromLocalStorage(key, object) {
 
 const KEYS = {
    SETTINGS: "Ai-Display-Settings",
+   CONTROLS: "Ai-Display-Controls",
 };
 
 function getDataFromLocalStorage(key) {
@@ -134,7 +135,7 @@ function chromeStorageGet(key, callback = () => {}) {
          return;
       }
       chrome.storage.sync.get([key], function (result) {
-         if (chrome.runtime.lastError) {
+         if (chrome?.runtime?.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
             resolve(null);
          } else {
@@ -179,7 +180,7 @@ function chromeStorageGetLocal(key, callback) {
          return;
       }
       chrome.storage.local.get([key], (result) => {
-         if (chrome.runtime.lastError) {
+         if (chrome?.runtime?.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
             resolve(null);
          } else {
@@ -263,7 +264,7 @@ function tabSendMessage(tabId, type, message, callback) {
 
 // Page messaging utilities (for injected scripts)
 function pagePostMessage(type, data, contentWindow = window) {
-   contentWindow.postMessage({ type, data }, "*");
+   contentWindow?.postMessage({ type, data }, "*");
 }
 
 function pageOnMessage(type, callback) {

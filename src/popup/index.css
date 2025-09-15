@@ -1,36 +1,14 @@
 @import "tailwindcss";
+@tailwind utilities;
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
    line-height: 1.5;
    font-weight: 400;
-   color-scheme: light dark;
 
-   --text-color-light: #213547;
-   --text-color-dark: #ffffffde;
-   --bg-color-light: #ffffff;
-   --bg-color-dark: #242424;
-
-   --primary-blue: rgb(0, 0, 255);
-   --secondary-blue: rgb(96, 96, 182);
-
-   --text-primary-light: black;
-   --text-primary-dark: white;
-
-   --text-secondary-light: rgb(70, 70, 70);
-   --text-secondary-dark: rgb(160, 160, 160);
-
-   --bg-primary-light: #ffffff;
-   --bg-primary-dark: #242424;
-
-   --bg-secondary-light: rgb(212, 212, 212);
-   --bg-secondary-dark: rgb(34, 34, 34);
-
-   --bg-navbar-light: rgb(104, 104, 255);
-   --bg-navbar-dark: rgb(29, 29, 58);
-
-   color: var(--text-color-dark);
-   background-color: var(--bg-color-dark);
+   --s: 12px;
 
    font-synthesis: none;
    text-rendering: optimizeLegibility;
@@ -38,22 +16,195 @@
    -moz-osx-font-smoothing: grayscale;
 }
 
-.light-theme {
-   color: var(--text-color-light);
-   background-color: var(--bg-color-light);
-   --text-primary: var(--text-primary-light);
-   --text-secondary: var(--text-secondary-light);
-   --bg-primary: var(--bg-primary-light);
-   --bg-secondary: var(--bg-secondary-light);
-   --bg-navbar: var(--bg-navbar-light);
+body {
+   overflow: hidden;
+   scrollbar-width: none;
+   -ms-overflow-style: none;
+
+   * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+   }
 }
 
-.dark-theme {
-   color: var(--text-color-dark);
-   background-color: var(--bg-color-dark);
-   --text-primary: var(--text-primary-dark);
-   --text-secondary: var(--text-secondary-dark);
-   --bg-primary: var(--bg-primary-dark);
-   --bg-secondary: var(--bg-secondary-dark);
-   --bg-navbar: var(--bg-navbar-dark);
+body::-webkit-scrollbar {
+   display: none;
+}
+
+input[type="checkbox"]:not(.btn) {
+   --S: calc(var(--s) * 1.8);
+   height: calc(var(--S) + var(--S) / 5);
+   width: auto;
+   aspect-ratio: 2.25;
+   border-radius: var(--S);
+   outline: solid 1px #7773;
+   margin: calc(var(--S) / 2);
+   display: grid;
+   cursor: pointer;
+   background-color: var(--switch-color-off);
+   box-sizing: content-box;
+   overflow: hidden;
+   transition: 300ms 100ms;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+}
+
+input[type="checkbox"]:not(.btn):before {
+   content: "";
+   padding: calc(var(--S) / 10);
+   --_g: radial-gradient(
+      circle closest-side at calc(100% - var(--S) / 2) 50%,
+      #000 96%,
+      #0000
+   );
+   background: var(--_g) 0 / var(--_p, var(--S)) 100% no-repeat content-box,
+      var(--_g) var(--_p, 0) / var(--S) 100% no-repeat content-box, #fff;
+   mix-blend-mode: darken;
+   filter: blur(calc(var(--S) / 12)) contrast(11);
+   transition: 400ms, background-position 400ms 100ms,
+      padding
+         cubic-bezier(
+            0,
+            calc(var(--_i, -1) * 200),
+            1,
+            calc(var(--_i, -1) * 200)
+         )
+         250ms 100s;
+}
+
+input[type="checkbox"]:not(.btn):checked {
+   background-color: var(--switch-color-on);
+}
+
+input[type="checkbox"]:not(.btn):checked:before {
+   padding: calc(var(--S) / 10 + 0.05px) calc(var(--S) / 10);
+   --_p: 100%;
+   --_i: 1;
+}
+
+/*  remove number input increase decrease */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+   -webkit-appearance: none;
+   margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+   -moz-appearance: textfield;
+}
+
+.animated-button {
+   position: relative;
+   text-align: center;
+   padding: calc(14px * 0.15) calc(14px * 0.6);
+   border-radius: calc(14px * 0.2);
+   outline: none;
+   border: none;
+   cursor: pointer;
+   z-index: 2;
+   overflow: hidden;
+   display: flex;
+   background: linear-gradient(
+      135deg,
+      var(--button-gradient-start),
+      var(--button-gradient-end)
+   );
+}
+
+.animated-button:before {
+   position: absolute;
+   content: "";
+   display: inline-block;
+   top: -110%;
+   left: 0;
+   width: 20%;
+   height: 100%;
+   background: #fff;
+   z-index: 5;
+   animation: shiny-btn1 3s ease-in-out infinite;
+   animation-delay: 4000ms;
+}
+
+.animated-button:after {
+   position: absolute;
+   content: "";
+   left: 4px;
+   top: 4px;
+   width: calc(100% - 8px);
+   height: 40%;
+   background: rgba(255, 255, 255, 0.2);
+   border-radius: inherit;
+   transition: ease-in-out background 200ms;
+   z-index: 3;
+}
+
+@-webkit-keyframes shiny-btn1 {
+   0% {
+      -webkit-transform: scale(0) rotate(45deg);
+      transform: scale(0) rotate(45deg);
+      opacity: 0;
+   }
+   80% {
+      -webkit-transform: scale(0) rotate(45deg);
+      transform: scale(0) rotate(45deg);
+      opacity: 0.5;
+   }
+   81% {
+      -webkit-transform: scale(4) rotate(45deg);
+      transform: scale(4) rotate(45deg);
+      opacity: 1;
+   }
+   100% {
+      -webkit-transform: scale(50) rotate(45deg);
+      transform: scale(50) rotate(45deg);
+      opacity: 0;
+   }
+}
+
+@keyframes shiny-btn1 {
+   0% {
+      transform: scale(0) rotate(45deg);
+      opacity: 0;
+   }
+   80% {
+      transform: scale(0) rotate(45deg);
+      opacity: 0.5;
+   }
+   81% {
+      transform: scale(4) rotate(45deg);
+      opacity: 1;
+   }
+   100% {
+      transform: scale(50) rotate(45deg);
+      opacity: 0;
+   }
+}
+
+/* Theme variables */
+:root {
+   --button-gradient-start: #ea4cda;
+   --button-gradient-end: #fb2175;
+   --toggle-switch-off: #64748b;
+   --toggle-switch-on: #10b981;
+   --toggle-bg-light: rgba(255, 255, 255, 0.1);
+   --toggle-bg-dark: rgba(0, 0, 0, 0.1);
+   --text-primary: #1f2937;
+   --text-secondary: #6b7280;
+   --bg-primary: #ffffff;
+   --bg-secondary: #f3f4f6;
+}
+
+.dark {
+   --button-gradient-start: #8b5cf6;
+   --button-gradient-end: #3b82f6;
+   --toggle-switch-off: #94a3b8;
+   --toggle-switch-on: #34d399;
+   --toggle-bg-light: rgba(255, 255, 255, 0.2);
+   --toggle-bg-dark: rgba(0, 0, 0, 0.2);
+   --text-primary: #f9fafb;
+   --text-secondary: #d1d5db;
+   --bg-primary: #1f2937;
+   --bg-secondary: #374151;
 }

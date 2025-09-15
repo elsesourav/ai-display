@@ -5,7 +5,8 @@ const __pointerOffset = { x: 0, y: 0 };
 let __main_menu__ = null;
 let __menu_back__ = null;
 let __isFirstSetup = true;
-let __lastMoveChange = true;
+let __isNoMoveOpenToClose = false;
+const __lastLocation = { x: 0, y: 0 };
 
 // Collision detection function to keep back within viewport bounds
 const __applyCollisionDetection__ = (left, top) => {
@@ -48,6 +49,7 @@ function __pointerdown__(e) {
 
 function __pointermove__(e) {
    if (!__isDragging) return;
+   __isNoMoveOpenToClose = false;
    const newLeft = e.clientX - __pointerOffset.x;
    const newTop = e.clientY - __pointerOffset.y;
 
@@ -105,7 +107,7 @@ function __firstSetup() {
       timeIdSmall = setTimeout(() => {
          menu.style.opacity = "0.6";
       }, timeSmallDuration);
-      
+
       timeIdBig = setTimeout(() => {
          menu.style.opacity = "0.2";
          pagePostMessage("C_IF_CLOSE_CHAT", {}, menu.contentWindow);
@@ -115,21 +117,34 @@ function __firstSetup() {
 
 /* -------- Message Passing Section --------- */
 pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
+   const { width, height, isOpen } = data;
    __menu_back__ = document.getElementById("__menuWindowBack");
    __main_menu__ = document.getElementById("__menuWindowIframe");
 
-   const iframeWidth = parseInt(data.width);
-   const newBackWidth = iframeWidth > 160 ? 315 : 50;
+   __iframeSize.width = width;
+   __iframeSize.height = height;
+
+   const newBackWidth = isOpen ? 315 : 50;
    __menu_back__.style.width = `${newBackWidth}px`;
 
-   __iframeSize.width = data.width;
-   __iframeSize.height = data.height;
-
    const rect = __menu_back__.getBoundingClientRect();
-   const constrainedPosition = __applyCollisionDetection__(
+   let constrainedPosition = __applyCollisionDetection__(
       rect.left - __spacing,
       rect.top
    );
+
+   // if no change open and close then set old position
+   if (isOpen && !__isNoMoveOpenToClose) {
+      __lastLocation.x = parseInt(rect.left);
+      __lastLocation.y = parseInt(rect.top);
+      __isNoMoveOpenToClose = true;
+   } else if (__isNoMoveOpenToClose) {
+      __isNoMoveOpenToClose = false;
+      constrainedPosition = {
+         x: __lastLocation.x - __spacing,
+         y: __lastLocation.y,
+      };
+   }
 
    __pointerOffset.x = constrainedPosition.x + __spacing;
    __pointerOffset.y = constrainedPosition.y;
