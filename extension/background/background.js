@@ -1,5 +1,4 @@
 importScripts("./../utils.js", "./bgUtils.js", "./requestAi.js");
-
 console.log("background script loaded");
 
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
@@ -57,7 +56,6 @@ runtimeOnMessage(
    }
 );
 
-
 runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
    // console.log("Received request for answer:", data);
    const provider = data.provider || "google";
@@ -84,6 +82,7 @@ runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
    }
    sendResponse({ status: "success", answer, provider });
 });
+
 
 // google https://www.google.com/search?q=what+is+java&sa=X&udm=50
 // bing: https://www.bing.com/copilotsearch?q=what+is+java&FORM=CSSCOP

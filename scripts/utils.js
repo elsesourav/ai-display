@@ -2,6 +2,7 @@
 
 const KEYS = {
    SETTINGS: "Ai-Display-Settings",
+   CONTROLS: "Ai-Display-Controls",
 };
 
 function setDataFromLocalStorage(key, object) {

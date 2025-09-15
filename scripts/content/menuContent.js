@@ -116,8 +116,9 @@ function __firstSetup() {
 }
 
 /* -------- Message Passing Section --------- */
-pageOnMessage("IF_C_MENU_WINDOW_RESIZE", (data) => {
+pageOnMessage("IF_C_MENU_WINDOW_RESIZE", async (data) => {
    const { width, height, isOpen } = data;
+
    __menu_back__ = document.getElementById("__menuWindowBack");
    __main_menu__ = document.getElementById("__menuWindowIframe");
 
@@ -231,7 +232,7 @@ runtimeOnMessage("B_C_CLOSE_MENU", async (_, __, sendResponse) => {
    }
 });
 
-window.addEventListener("message", (event) => {
+window.addEventListener("message", async (event) => {
    if (event?.data?.type?.includes("IF_B_")) {
       // console.log("Received message from background:", event.data);
 
@@ -239,5 +240,22 @@ window.addEventListener("message", (event) => {
          const iframe = document.getElementById("__menuWindowIframe");
          pagePostMessage(event.data.type, res, iframe?.contentWindow);
       });
+
+   } else if (event?.data?.type === "IF_C_GET_CURRENT_CONTROLS") {
+      const iframe = document.getElementById("__menuWindowIframe");
+      try {
+         const getControlsSettings = await chromeStorageGetLocal(KEYS.CONTROLS);
+         pagePostMessage(
+            event.data.type,
+            { success: true, controls: getControlsSettings },
+            iframe?.contentWindow
+         );
+      } catch (error) {
+         pagePostMessage(
+            event.data.type,
+            { success: false, message: error.message },
+            iframe?.contentWindow
+         );
+      }
    }
 });

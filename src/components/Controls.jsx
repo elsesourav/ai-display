@@ -30,7 +30,7 @@ const AI_OPTIONS = [
    {
       id: "grok",
       name: "Grok AI",
-      enabled: false,
+      enabled: true,
       gradient: "from-pink-500 to-purple-600",
    },
 ];
@@ -278,15 +278,15 @@ export default function Controls() {
          className={`relative w-full h-auto p-2 flex flex-col justify-center items-center transition-all duration-500 ease-in-out ${
             mainToggleEnabled
                ? "opacity-100 transform translate-y-0"
-               : "opacity-50 transform translate-y-1 pointer-events-none"
+               : "opacity-50 transform translate-y-1"
          }`}
       >
          {/* Concurrent Requests Section */}
          <div
-            className={`relative w-full flex flex-col gap-1 transition-all duration-700 ease-in-out ${
+            className={`relative z-50 w-full flex flex-col gap-1 transition-all duration-700 ease-in-out ${
                mainToggleEnabled
                   ? "opacity-100 transform translate-y-0"
-                  : "opacity-30 transform translate-y-2 pointer-events-none"
+                  : "opacity-50 transform translate-y-2"
             }`}
          >
             <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex gap-2 items-center">
@@ -305,21 +305,29 @@ export default function Controls() {
             </p>
 
             <div className="relative" ref={dropdownRef}>
-               <button
-                  className={`w-full flex items-center justify-between p-3 rounded-lg border bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 ${
-                     mainToggleEnabled ? "cursor-pointer" : "cursor-not-allowed"
-                  }`}
-                  onClick={() =>
-                     mainToggleEnabled && setDropdownOpen(!dropdownOpen)
-                  }
-                  disabled={!mainToggleEnabled}
-               >
-                  <div className="relative w-full flex items-center justify-between">
-                     <span className="font-medium text-gray-900 dark:text-gray-50">
-                        {concurrentRequests} Request
-                        {concurrentRequests > 1 ? "s" : ""} Simultaneously
-                     </span>
-                     <span className="text-xs mr-1 text-gray-600 dark:text-gray-400 flex gap-2 items-center">
+               {/* Selected Option Display (Collapsed State) */}
+               {!dropdownOpen && (
+                  <button
+                     className={`w-full flex items-center justify-between p-3 cursor-pointer rounded-lg border transition-all duration-300 ease-out hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:shadow-md ${
+                        concurrentRequests ===
+                        concurrentOptions.find(
+                           (opt) => opt.value === concurrentRequests
+                        )?.value
+                           ? "bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                           : "bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-50"
+                     } ${
+                        !mainToggleEnabled
+                           ? "opacity-50 cursor-not-allowed"
+                           : ""
+                     }`}
+                     onClick={() => {
+                        if (mainToggleEnabled) {
+                           setDropdownOpen(true);
+                        }
+                     }}
+                     disabled={!mainToggleEnabled}
+                  >
+                     <div className="flex items-center gap-3">
                         {(() => {
                            const option = concurrentOptions.find(
                               (opt) => opt.value === concurrentRequests
@@ -327,63 +335,116 @@ export default function Controls() {
                            return option ? (
                               <>
                                  <i
-                                    className={`${option.icon} ${option.color}`}
-                                 />{" "}
-                                 {option.label}
+                                    className={`${option.icon} ${option.color} text-lg transition-transform duration-200`}
+                                 />
+                                 <span className="font-medium transition-colors duration-200">
+                                    {option.value} Request
+                                    {option.value > 1 ? "s" : ""} -{" "}
+                                    {option.label}
+                                 </span>
                               </>
                            ) : null;
                         })()}
-                     </span>
-                  </div>
-                  <svg
-                     className={`w-4 h-4 transition-transform duration-200 ${
-                        dropdownOpen ? "transform rotate-180" : ""
-                     }`}
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                     />
-                  </svg>
-               </button>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <svg
+                           className="w-5 h-5 text-blue-600 dark:text-blue-400 transition-all duration-200"
+                           fill="currentColor"
+                           viewBox="0 0 20 20"
+                        >
+                           <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                           />
+                        </svg>
+                        <svg
+                           className="w-4 h-4 text-gray-400 transition-transform duration-300 ease-out"
+                           fill="none"
+                           stroke="currentColor"
+                           viewBox="0 0 24 24"
+                        >
+                           <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                           />
+                        </svg>
+                     </div>
+                  </button>
+               )}
 
-               {dropdownOpen && mainToggleEnabled && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                     {concurrentOptions.map((option) => (
+               {/* All Options Display (Expanded State) */}
+               <div
+                  className={`overflow-hidden transition-all duration-500 ease-out ${
+                     dropdownOpen && mainToggleEnabled
+                        ? "max-h-96 opacity-100 mt-2"
+                        : "max-h-0 opacity-0 mt-0"
+                  }`}
+               >
+                  <div
+                     className={`bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-lg transition-all duration-300 ease-out ${
+                        dropdownOpen && mainToggleEnabled
+                           ? "transform translate-y-0 scale-100"
+                           : "transform -translate-y-4 scale-95"
+                     }`}
+                  >
+                     {concurrentOptions.map((option, index) => (
                         <button
                            key={option.value}
-                           className={`w-full flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 first:rounded-t-lg last:rounded-b-lg ${
+                           className={`w-full flex items-center justify-between p-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gray-100 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 last:border-b-0 transform ${
                               concurrentRequests === option.value
                                  ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
-                                 : "text-gray-900 dark:text-gray-50"
+                                 : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50"
+                           } ${
+                              dropdownOpen && mainToggleEnabled
+                                 ? "translate-x-0 opacity-100"
+                                 : "translate-x-4 opacity-0"
                            }`}
+                           style={{
+                              transitionDelay: dropdownOpen
+                                 ? `${index * 50}ms`
+                                 : "0ms",
+                              transitionDuration: "300ms",
+                           }}
                            onClick={() => {
                               setConcurrentRequests(option.value);
                               setDropdownOpen(false);
                            }}
                         >
-                           <div className="flex flex-col items-start">
-                              <span className="font-medium">
-                                 {option.value} Request
-                                 {option.value > 1 ? "s" : ""}
-                              </span>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">
-                                 {option.description}
-                              </span>
+                           <div className="flex items-center gap-3">
+                              <i
+                                 className={`${option.icon} ${option.color} text-lg transition-transform duration-200 hover:scale-110`}
+                              />
+                              <div className="flex flex-col items-start">
+                                 <span className="font-medium text-sm transition-colors duration-200">
+                                    {option.value} Request
+                                    {option.value > 1 ? "s" : ""} -{" "}
+                                    {option.label}
+                                 </span>
+                                 <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">
+                                    {option.description}
+                                 </span>
+                              </div>
                            </div>
-                           <span className="text-xs font-medium flex gap-2 items-center">
-                              <i className={`${option.icon} ${option.color}`} />
-                              <p>{option.label}</p>
-                           </span>
+                           {concurrentRequests === option.value && (
+                              <svg
+                                 className="w-5 h-5 text-blue-600 dark:text-blue-400 transition-all duration-300 animate-pulse"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20"
+                              >
+                                 <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                 />
+                              </svg>
+                           )}
                         </button>
                      ))}
                   </div>
-               )}
+               </div>
             </div>
          </div>
 
@@ -394,7 +455,7 @@ export default function Controls() {
             className={`relative w-full flex flex-col gap-1 transition-all duration-700 ease-in-out delay-100 ${
                mainToggleEnabled
                   ? "opacity-100 transform translate-y-0"
-                  : "opacity-30 transform translate-y-2 pointer-events-none"
+                  : "opacity-50 transform translate-y-2"
             }`}
          >
             <div className="m-0">

@@ -6,8 +6,11 @@ export default function ToggleButton() {
    const [settings, setSettings] = useState({
       enable: false,
    });
+   const [isLoading, setIsLoading] = useState(true);
 
    useEffect(() => {
+      setIsLoading(true);
+
       extensionUtils.chromeStorageGetLocal(
          extensionUtils.KEYS.SETTINGS,
          (settings) => {
@@ -15,6 +18,7 @@ export default function ToggleButton() {
                setSettings(settings);
                setChecked(settings.enable);
             }
+            setIsLoading(false);
          }
       );
    }, []);
@@ -33,6 +37,23 @@ export default function ToggleButton() {
    const handleClick = () => {
       setChecked(!checked);
    };
+
+   if (isLoading) {
+      return (
+         <div className="w-full">
+            <div className="relative w-full h-16 rounded-xl bg-gray-100 dark:bg-gray-800 grid place-items-center border border-gray-200 dark:border-gray-700">
+               <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-1">
+                     🔄 Loading Settings...
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                     Please wait
+                  </div>
+               </div>
+            </div>
+         </div>
+      );
+   }
 
    return (
       <div className="w-full">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { IoClose, IoSend } from "react-icons/io5";
 import UTILS from "./../utils/utilsModule.js";
 
@@ -11,19 +11,10 @@ export default function ChatBot({ isOpen }) {
    const [allProvidersCompleted, setAllProvidersCompleted] = useState(true);
    const currentRequestIdRef = useRef(null);
 
-   const AI_PROVIDERS = useMemo(
-      () => [
-         { id: "google", name: "Google AI", zoom: 1 },
-         { id: "perplexity", name: "Perplexity", zoom: 1 },
-         { id: "bing", name: "Bing AI", zoom: 1 },
-         { id: "gemini", name: "Gemini", zoom: 1 },
-         { id: "grok", name: "Grok AI", zoom: 1 },
-      ],
-      []
-   );
+   const [aiProviders, setAiProviders] = useState([]);
 
    // Maximum concurrent requests
-   const MAX_CONCURRENT_REQUESTS = 2;
+   const [maxConcurrentRequest, setMaxConcurrentRequest] = useState(2);
 
    const scrollContainerRef = useRef(null);
    const rootRef = useRef(null);
@@ -32,6 +23,15 @@ export default function ChatBot({ isOpen }) {
    // Clear input function
    const clearInput = useCallback(() => {
       setInput("");
+   }, []);
+
+   useEffect(() => {
+      UTILS.pageOnMessage("IF_C_GET_CURRENT_CONTROLS", (data) => {
+         const { aiProviders, concurrentRequests } = data?.controls || {};
+         const enabledProviders = (aiProviders || []).filter((p) => p.enabled);
+         setAiProviders(enabledProviders);
+         setMaxConcurrentRequest(concurrentRequests);
+      });
    }, []);
 
    // get answer from background script
@@ -46,19 +46,19 @@ export default function ChatBot({ isOpen }) {
    // Concurrent provider loading - maintains constant number of active requests
    const loadProvidersWithConcurrency = useCallback(
       async (question, requestId) => {
-         const providersToProcess = [...AI_PROVIDERS];
+         const providersToProcess = [...aiProviders];
          const activeRequests = new Map();
          let completedCount = 0;
 
          console.log(
-            `Starting concurrent loading with max ${MAX_CONCURRENT_REQUESTS} simultaneous requests`
+            `Starting concurrent loading with max ${maxConcurrentRequest} simultaneous requests`
          );
 
          // Mark that providers are not all completed
          setAllProvidersCompleted(false);
 
          const startProviderRequest = (provider) => {
-            console.log(`Starting request for ${provider.id}`);
+            // console.log(`Starting request for ${provider.id}`);
 
             getAnswerFromBackground(question, provider.id);
 
@@ -88,7 +88,7 @@ export default function ChatBot({ isOpen }) {
 
          const initialRequests = providersToProcess.splice(
             0,
-            MAX_CONCURRENT_REQUESTS
+            maxConcurrentRequest
          );
          initialRequests.forEach((provider) => startProviderRequest(provider));
 
@@ -113,9 +113,9 @@ export default function ChatBot({ isOpen }) {
 
                activeRequests.delete(providerId);
 
-               console.log(
-                  `${providerId} finished. Completed: ${completedCount}/${AI_PROVIDERS.length}`
-               );
+               // console.log(
+               //    `${providerId} finished. Completed: ${completedCount}/${aiProviders.length}`
+               // );
 
                if (providersToProcess.length > 0) {
                   const nextProvider = providersToProcess.shift();
@@ -128,7 +128,7 @@ export default function ChatBot({ isOpen }) {
          // Mark that all providers have completed
          setAllProvidersCompleted(true);
       },
-      [AI_PROVIDERS, MAX_CONCURRENT_REQUESTS]
+      [aiProviders, maxConcurrentRequest]
    );
 
    const handleSendMessage = useCallback(
@@ -190,9 +190,9 @@ export default function ChatBot({ isOpen }) {
       });
    }, [setInput]);
 
-   useEffect(() => {
-      console.log(answers);
-   }, [answers]);
+   // useEffect(() => {
+   //    console.log(answers);
+   // }, [answers]);
 
    // When closing, if focus is inside the chat, blur it to avoid aria/inert conflicts.
    useEffect(() => {
@@ -289,7 +289,7 @@ export default function ChatBot({ isOpen }) {
          {/* AI Provider Selection Buttons */}
          <div className="relative w-full px-4 py-2">
             <div className="flex flex-wrap gap-2">
-               {AI_PROVIDERS.map((provider) => (
+               {aiProviders.map((provider) => (
                   <button
                      key={provider.id}
                      onClick={() => setSelectedProvider(provider.id)}
@@ -342,19 +342,13 @@ export default function ChatBot({ isOpen }) {
                      {answers[selectedProvider] && (
                         <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-                              {AI_PROVIDERS.find(
+                              {aiProviders.find(
                                  (p) => p.id === selectedProvider
                               )?.name || selectedProvider}
                            </div>
 
                            <div
                               className="botChat whitespace-pre-wrap overflow-x-auto overflow-y-hidden"
-                              style={{
-                                 zoom:
-                                    AI_PROVIDERS.find(
-                                       (p) => p.id === selectedProvider
-                                    )?.zoom || 1,
-                              }}
                               dangerouslySetInnerHTML={{
                                  __html: answers[selectedProvider].content,
                               }}
@@ -366,7 +360,7 @@ export default function ChatBot({ isOpen }) {
                      {isLoading && !answers[selectedProvider] && (
                         <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-                              {AI_PROVIDERS.find(
+                              {aiProviders.find(
                                  (p) => p.id === selectedProvider
                               )?.name || selectedProvider}
                            </div>

@@ -42,27 +42,31 @@ export default function Menu() {
       ES.pageOnMessage("C_IF_MENU_WINDOW_DRAG_START", () => {
          setIsDragging(true);
       });
+
       ES.pageOnMessage("C_IF_MENU_WINDOW_DRAG_END", () => {
          setIsDragging(false);
       });
    }, []);
-
-   
 
    useEffect(() => {
       setSize(isChatOpen ? SIZES.max : SIZES.min);
    }, [isChatOpen, SIZES]);
 
    useEffect(() => {
+      const isOpen = parseInt(size.w) > 160;
       ES.pagePostMessage(
          "IF_C_MENU_WINDOW_RESIZE",
          {
             width: size.w,
             height: size.h,
-            isOpen: parseInt(size.w) > 160,
+            isOpen,
          },
          window.parent
       );
+
+      if (isOpen) {
+         ES.pagePostMessage("IF_C_GET_CURRENT_CONTROLS", {}, window.parent);
+      }
    }, [size]);
 
    // Prevent scroll propagation to parent document
@@ -76,9 +80,15 @@ export default function Menu() {
       window.addEventListener("touchmove", stopPropagation, { passive: false });
 
       return () => {
-         window.removeEventListener("wheel", stopPropagation, { passive: false });
-         window.removeEventListener("scroll", stopPropagation, { passive: false });
-         window.removeEventListener("touchmove", stopPropagation, { passive: false });
+         window.removeEventListener("wheel", stopPropagation, {
+            passive: false,
+         });
+         window.removeEventListener("scroll", stopPropagation, {
+            passive: false,
+         });
+         window.removeEventListener("touchmove", stopPropagation, {
+            passive: false,
+         });
       };
    }, []);
 
