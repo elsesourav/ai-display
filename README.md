@@ -90,24 +90,7 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
   </tr>
 </table>
 
-## How to Use
-
-### Installation
-
-**Option 1: From Zip File**
-
-1. Download the `ai-display-extension.zip` file
-2. Extract the zip file to a folder on your computer
-3. Open your browser and go to the extensions page:
-   -  **Chrome**: `chrome://extensions/`
-   -  **Edge**: `edge://extensions/`
-   -  **Opera**: `opera://extensions/`
-4. Enable "Developer mode" (toggle in top-right corner)
-5. Click "Load unpacked" button (or "Load extension" in some browsers)
-6. Select the extracted folder containing the extension files
-7. The extension will be installed and ready to use
-
-**Option 2: From Source Code**
+### Installation From Source Code
 
 1. Clone this repository
 2. Run `npm install` to install dependencies
@@ -164,7 +147,7 @@ src/
 └── hooks/              # Custom React hooks
 
 extension/              # Built extension files
-scripts/                # Background scripts
+scripts/                # All scripts flies
 ```
 
 ## Development
@@ -191,7 +174,7 @@ npm run build:zip
 
 ### Creating Extension Package
 
-To package your extension for Chrome Web Store distribution:
+To package your extension for distribution:
 
 1. **Build the extension**:
 
@@ -211,10 +194,10 @@ To package your extension for Chrome Web Store distribution:
    npm run build:zip
    ```
 
-3. **Upload to Chrome Web Store**:
+3. **Package created**:
    -  The script creates `ai-display-extension.zip` in the project root
-   -  Upload this file directly to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/developer/dashboard)
-   -  The zip file contains all necessary extension files and assets
+   -  This zip file contains all necessary extension files and assets
+   -  Ready for sharing or distribution
 
 **Note**: Make sure to run `npm install` first to install the required `archiver` dependency for zip creation.
 
