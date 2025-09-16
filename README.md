@@ -1,10 +1,31 @@
 # AI Display Chrome Extension
 
-<center><img src="src/assets/icons/icon.png" width="128" height="128" alt="AI Display Icon"></center>
+<img src="src/assets/icons/icon.png" width="32" height="32" alt="AI Display Icon">
 
 A powerful Chrome extension that brings multiple AI assistants together in one convenient interface. Get answers from Google Gemini, Bing AI, Perplexity, Grok, and more - all at once!
 
 **No API keys required** - Works directly with AI provider websites.
+
+## Quick Start
+
+### Download & Install
+
+**[⬇️ Download Here](https://github.com/elsesourav/ai-display/raw/main/ai-display-extension.zip)**
+
+**Installation Steps:**
+
+1. **Download** the extension zip file using the button above
+2. **Extract** the zip file to any folder on your computer
+3. **Open your browser** and navigate to the extensions page:
+   -  **Chrome**: `chrome://extensions/`
+   -  **Edge**: `edge://extensions/`
+   -  **Opera**: `opera://extensions/`
+4. **Enable Developer Mode** - Toggle the switch in the top-right corner
+5. **Click "Load unpacked"** button (or "Load extension" in some browsers)
+6. **Select the extracted folder** containing the extension files
+7. **Done!** The extension icon will appear in your browser toolbar
+
+**Need help?** See the detailed installation guide below.
 
 ## Features
 
@@ -44,9 +65,49 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 -  **Persistent Settings** - Remember your configurations
 -  **Keyboard Shortcuts** - Quick access with hotkeys
 
+## Highlights
+
+<table>
+  <tr>
+    <td>
+      <h4>Extension Popup</h4>
+      <img src="./src/assets/gif/popup-overview.gif">
+    </td>
+    <td>
+      <h4>Multi-AI Chat</h4>
+      <img src="./src/assets/gif/chat-interface.gif">
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>Floating Menu</h4>
+      <img src="./src/assets/gif/floating-menu.gif">
+    </td>
+    <td>
+      <h4>Screen Selection OCR</h4>
+      <img src="./src/assets/gif/screen-selection.gif">
+    </td>
+  </tr>
+</table>
+
 ## How to Use
 
 ### Installation
+
+**Option 1: From Zip File**
+
+1. Download the `ai-display-extension.zip` file
+2. Extract the zip file to a folder on your computer
+3. Open your browser and go to the extensions page:
+   -  **Chrome**: `chrome://extensions/`
+   -  **Edge**: `edge://extensions/`
+   -  **Opera**: `opera://extensions/`
+4. Enable "Developer mode" (toggle in top-right corner)
+5. Click "Load unpacked" button (or "Load extension" in some browsers)
+6. Select the extracted folder containing the extension files
+7. The extension will be installed and ready to use
+
+**Option 2: From Source Code**
 
 1. Clone this repository
 2. Run `npm install` to install dependencies
@@ -69,31 +130,6 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 -  **Menu Positioning**: Drag the floating menu anywhere on the page
 -  **Provider Settings**: Configure which AI services to use
 -  **Keyboard Shortcuts**: Press Escape to close, Enter to send
-
-## Screenshot
-
-<table>
-  <tr>
-    <td>
-      <h4>Extension Popup</h4>
-      <img src="./src/assets/screenshots/popup-overview.png">
-    </td>
-    <td>
-      <h4>Multi-AI Chat</h4>
-      <img src="./src/assets/screenshots/chat-interface.png">
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <h4>Floating Menu</h4>
-      <img src="./src/assets/screenshots/floating-menu.png">
-    </td>
-    <td>
-      <h4>Screen Selection OCR</h4>
-      <img src="./src/assets/screenshots/screen-selection.png">
-    </td>
-  </tr>
-</table>
 
 ## Important Note
 
@@ -145,7 +181,42 @@ npm run build
 
 # Build and watch for changes
 npm run build:watch
+
+# Create extension zip file
+npm run zip
+
+# Build and zip in one command (recommended)
+npm run build:zip
 ```
+
+### Creating Extension Package
+
+To package your extension for Chrome Web Store distribution:
+
+1. **Build the extension**:
+
+   ```bash
+   npm run build
+   ```
+
+2. **Create zip file**:
+
+   ```bash
+   npm run zip
+   ```
+
+   Or build and zip in one command:
+
+   ```bash
+   npm run build:zip
+   ```
+
+3. **Upload to Chrome Web Store**:
+   -  The script creates `ai-display-extension.zip` in the project root
+   -  Upload this file directly to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/developer/dashboard)
+   -  The zip file contains all necessary extension files and assets
+
+**Note**: Make sure to run `npm install` first to install the required `archiver` dependency for zip creation.
 
 ## License
 
