@@ -71,21 +71,21 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
   <tr>
     <td>
       <h4>Extension Popup</h4>
-      <img height="200" src="./src/assets/gif/popup-overview.gif">
+      <img height="400" src="./src/assets/gif/popup-overview.gif">
     </td>
     <td>
       <h4>Multi-AI Chat</h4>
-      <img height="200" src="./src/assets/gif/chat-interface.gif">
+      <img height="400" src="./src/assets/gif/chat-interface.gif">
     </td>
   </tr>
   <tr>
     <td>
       <h4>Floating Menu</h4>
-      <img height="200" src="./src/assets/gif/floating-menu.gif">
+      <img height="400" src="./src/assets/gif/floating-menu.gif">
     </td>
     <td>
       <h4>Screen Selection OCR</h4>
-      <img height="200" src="./src/assets/gif/screen-selection.gif">
+      <img height="400" src="./src/assets/gif/screen-selection.gif">
     </td>
   </tr>
 </table>
