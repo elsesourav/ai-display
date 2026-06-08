@@ -1,288 +1,300 @@
 console.log("content script loaded");
 
 function removeElementBySelector(container, selector) {
-   container.querySelector(selector)?.remove();
+  container.querySelector(selector)?.remove();
 }
 function removeElementsBySelector(container, selector) {
-   container.querySelectorAll(selector)?.forEach((el) => el.remove());
+  container.querySelectorAll(selector)?.forEach((el) => el.remove());
 }
 
 function removeAllAttributes(container) {
-   // Remove all attributes from the container itself
-   if (container.attributes) {
-      Array.from(container.attributes).forEach((attr) => {
-         container.removeAttribute(attr.name);
-      });
-   }
+  // Remove all attributes from the container itself
+  if (container.attributes) {
+    Array.from(container.attributes).forEach((attr) => {
+      container.removeAttribute(attr.name);
+    });
+  }
 
-   // Remove all attributes from all child elements recursively
-   container.querySelectorAll("*").forEach((element) => {
-      if (element.attributes) {
-         Array.from(element.attributes).forEach((attr) => {
-            element.removeAttribute(attr.name);
-         });
-      }
-   });
+  // Remove all attributes from all child elements recursively
+  container.querySelectorAll("*").forEach((element) => {
+    if (element.attributes) {
+      Array.from(element.attributes).forEach((attr) => {
+        element.removeAttribute(attr.name);
+      });
+    }
+  });
 }
 
 const CONTENT_STABLE_WAIT_TIME = 1500; // ms - wait time for content to be stable
 
 function ___getHTMLCodeWithCss(container, provider) {
-   return new Promise((resolve) => {
-      // Validation
-      const isMinTextComplete = container?.textContent?.trim()?.length < 10;
-      if (isMinTextComplete) {
-         resolve(null);
-         return;
+  return new Promise((resolve) => {
+    // Validation
+    const isMinTextComplete = container?.textContent?.trim()?.length < 10;
+    if (isMinTextComplete) {
+      resolve(null);
+      return;
+    }
+
+    // Content monitoring variables
+    let lastContent = container.innerHTML;
+    let intervalId;
+
+    // Helper function to get user-applied styles
+    function getUserAppliedStyles(el) {
+      const computed = getComputedStyle(el);
+      const fresh = document.createElement(el.tagName);
+      document.body.appendChild(fresh);
+      const defaultStyles = getComputedStyle(fresh);
+
+      let applied = {};
+      for (let prop of computed) {
+        if (computed[prop] !== defaultStyles[prop]) {
+          applied[prop] = computed[prop];
+        }
       }
 
-      // Content monitoring variables
-      let lastContent = container.innerHTML;
-      let intervalId;
+      fresh.remove();
+      return applied;
+    }
 
-      // Helper function to get user-applied styles
-      function getUserAppliedStyles(el) {
-         const computed = getComputedStyle(el);
-         const fresh = document.createElement(el.tagName);
-         document.body.appendChild(fresh);
-         const defaultStyles = getComputedStyle(fresh);
+    // Apply filtered styles to cloned elements
+    function applyStyles(src, dst) {
+      if (!src || !dst) return;
+      const maxWidth = "400px";
 
-         let applied = {};
-         for (let prop of computed) {
-            if (computed[prop] !== defaultStyles[prop]) {
-               applied[prop] = computed[prop];
-            }
-         }
-
-         fresh.remove();
-         return applied;
+      if (src.nodeType === Node.COMMENT_NODE) {
+        dst.remove();
+        return;
       }
 
-      // Apply filtered styles to cloned elements
-      function applyStyles(src, dst) {
-         if (!src || !dst) return;
-         const maxWidth = "400px";
+      if (
+        src.nodeType === Node.ELEMENT_NODE &&
+        dst.nodeType === Node.ELEMENT_NODE
+      ) {
+        const appliedStyles = getUserAppliedStyles(src);
+        let styleStr = "";
 
-         if (src.nodeType === Node.COMMENT_NODE) {
-            dst.remove();
-            return;
-         }
+        const allowedStyles = [
+          "margin",
+          "margin-top",
+          "margin-right",
+          "margin-bottom",
+          "margin-left",
+          "padding",
+          "padding-top",
+          "padding-right",
+          "padding-bottom",
+          "padding-left",
+          "border-radius",
+          "font-weight",
+          "font-size",
+        ];
 
-         if (
-            src.nodeType === Node.ELEMENT_NODE &&
-            dst.nodeType === Node.ELEMENT_NODE
-         ) {
-            const appliedStyles = getUserAppliedStyles(src);
-            let styleStr = "";
+        Object.entries(appliedStyles).forEach(([prop, val]) => {
+          if (prop === "width" || prop === "max-width") {
+            styleStr += `${prop}:min(${val}, ${maxWidth});`;
+          } else if (
+            prop === "height" ||
+            prop === "max-height" ||
+            prop === "min-height"
+          ) {
+            styleStr += `${prop}:auto;`;
+          } else if (
+            allowedStyles.includes(prop) &&
+            val &&
+            val !== "auto" &&
+            val !== "normal" &&
+            val !== "none" &&
+            val !== "rgba(0, 0, 0, 0)"
+          ) {
+            styleStr += `${prop}:${val};`;
+          }
+        });
 
-            const allowedStyles = [
-               "margin",
-               "margin-top",
-               "margin-right",
-               "margin-bottom",
-               "margin-left",
-               "padding",
-               "padding-top",
-               "padding-right",
-               "padding-bottom",
-               "padding-left",
-               "border-radius",
-               "font-weight",
-               "font-size",
-            ];
-
-            Object.entries(appliedStyles).forEach(([prop, val]) => {
-               if (prop === "width" || prop === "max-width") {
-                  styleStr += `${prop}:min(${val}, ${maxWidth});`;
-               } else if (
-                  prop === "height" ||
-                  prop === "max-height" ||
-                  prop === "min-height"
-               ) {
-                  styleStr += `${prop}:auto;`;
-               } else if (
-                  allowedStyles.includes(prop) &&
-                  val &&
-                  val !== "auto" &&
-                  val !== "normal" &&
-                  val !== "none" &&
-                  val !== "rgba(0, 0, 0, 0)"
-               ) {
-                  styleStr += `${prop}:${val};`;
-               }
-            });
-
-            if (styleStr) {
-               dst.setAttribute("style", styleStr);
-            }
-         }
-
-         // Recursively apply styles to children
-         const srcChildren = src.childNodes;
-         const dstChildren = dst.childNodes;
-         for (let i = 0; i < srcChildren.length; i++) {
-            applyStyles(srcChildren[i], dstChildren[i]);
-         }
+        if (styleStr) {
+          dst.setAttribute("style", styleStr);
+        }
       }
 
-      // Clean provider-specific elements
-      function cleanProviderSpecificElements(container, provider) {
-         removeElementsBySelector(container, "* > button:has(svg)");
-         removeElementsBySelector(container, "* > a:has(svg)");
-
-         switch (provider) {
-            case "google":
-               removeElementBySelector(document, ".DBd2Wb");
-               removeElementsBySelector(container, "img");
-               removeElementsBySelector(container, "svg");
-               removeElementsBySelector(
-                  document,
-                  `div[data-container-id="main-col"] > div > div:has(img)`
-               );
-               removeElementBySelector(container, "[jsmodel]");
-               break;
-
-            case "bing":
-               removeElementsBySelector(container, "* > a");
-               removeElementBySelector(container, ".gs_ans_head_group");
-               break;
-
-            case "perplexity":
-               removeElementBySelector(container, "div:first-child:has(img)");
-               removeElementsBySelector(container, " button:has(img)");
-               removeElementsBySelector(container, "* > [rel='noopener']");
-               break;
-
-            case "grok":
-               break;
-
-            case "gemini":
-               removeElementsBySelector(container, "* > button:has(mat-icon)");
-               removeElementsBySelector(container, "response-element");
-               break;
-         }
+      // Recursively apply styles to children
+      const srcChildren = Array.from(src.childNodes);
+      const dstChildren = Array.from(dst.childNodes);
+      for (let i = 0; i < srcChildren.length; i++) {
+        applyStyles(srcChildren[i], dstChildren[i]);
       }
+    }
 
-      // Generate final HTML with all processing
-      function generateHTMLCode() {
-         cleanProviderSpecificElements(container, provider);
-         const clone = container.cloneNode(true);
-         applyStyles(container, clone);
-         removeAllAttributes(clone);
-         return clone.outerHTML;
+    // Clean provider-specific elements
+    function cleanProviderSpecificElements(container, provider) {
+      removeElementsBySelector(container, "button");
+      removeElementsBySelector(container, "* > a:has(svg)");
+
+      switch (provider) {
+        case "google":
+          removeElementsBySelector(container, ".DBd2Wb");
+          removeElementsBySelector(container, "img");
+          removeElementsBySelector(container, "svg");
+          removeElementsBySelector(
+            container,
+            `div[data-container-id="main-col"] > div > div:has(img)`,
+          );
+          removeElementsBySelector(
+            container,
+            '[style*="display:none"], [style*="display: none"]',
+          );
+          removeElementsBySelector(
+            container,
+            "[jsmodel]:not(:has(strong)):not(:has(b))",
+          );
+          break;
+
+        case "bing":
+          removeElementsBySelector(container, "* > a");
+          removeElementBySelector(container, ".gs_ans_head_group");
+          break;
+
+        case "perplexity":
+          removeElementBySelector(container, "div:first-child:has(img)");
+          removeElementsBySelector(container, " button:has(img)");
+          removeElementsBySelector(container, "* > [rel='noopener']");
+          break;
+
+        case "grok":
+          break;
+
+        case "gemini":
+          removeElementsBySelector(container, "* > button:has(mat-icon)");
+          removeElementsBySelector(container, "response-element");
+          break;
       }
+    }
 
-      // Monitor content changes
-      function checkForUpdates() {
-         const currentContent = container.textContent.length;
+    // Generate final HTML with all processing
+    function generateHTMLCode() {
+      cleanProviderSpecificElements(container, provider);
+      const clone = container.cloneNode(true);
+      applyStyles(container, clone);
+      removeAllAttributes(clone);
+      const finalHTML = clone.outerHTML;
+      return finalHTML;
+    }
 
-         if (currentContent !== lastContent) {
-            lastContent = currentContent;
-         } else {
-            clearInterval(intervalId);
-            const htmlCode = generateHTMLCode();
-            resolve(htmlCode);
-         }
+    // Monitor content changes
+    function checkForUpdates() {
+      const currentContent = container.textContent.length;
+
+      if (currentContent !== lastContent) {
+        lastContent = currentContent;
+      } else {
+        clearInterval(intervalId);
+        const htmlCode = generateHTMLCode();
+        resolve(htmlCode);
       }
+    }
 
-      // Start monitoring
-      checkForUpdates();
-      intervalId = setInterval(checkForUpdates, CONTENT_STABLE_WAIT_TIME);
-   });
+    // Start monitoring
+    checkForUpdates();
+    intervalId = setInterval(checkForUpdates, CONTENT_STABLE_WAIT_TIME);
+  });
 }
 
 function ___pollForContent(cleanFunction) {
-   const maxLimit = 40;
-   const checkDelay = 500; // ms
-   return new Promise(async (resolve) => {
-      for (let i = 0; i < maxLimit; i++) {
-         let html = await cleanFunction();
+  const maxLimit = 40;
+  const checkDelay = 500; // ms
+  return new Promise(async (resolve) => {
+    for (let i = 0; i < maxLimit; i++) {
+      let html = await cleanFunction();
 
-         if (html === false) {
-            resolve(
-               "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>"
-            );
-         } else if (html) {
-            resolve(html);
-            return;
-         } else await new Promise((r) => setTimeout(r, checkDelay));
-      }
-      resolve(
-         "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>"
-      );
-   });
+      if (html === false) {
+        resolve(
+          "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>",
+        );
+      } else if (html) {
+        resolve(html);
+        return;
+      } else await new Promise((r) => setTimeout(r, checkDelay));
+    }
+    resolve(
+      "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>",
+    );
+  });
 }
 
 async function ___askGPT(prompt) {
-   const editor = document.querySelector("div.ProseMirror");
+  const editor = document.querySelector("div.ProseMirror");
 
-   if (editor) {
-      editor.textContent = prompt;
-      editor.dispatchEvent(
-         new InputEvent("input", {
-            bubbles: true,
-            cancelable: true,
-            inputType: "insertText",
-            data: prompt,
-         })
-      );
+  if (editor) {
+    editor.textContent = prompt;
+    editor.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        inputType: "insertText",
+        data: prompt,
+      }),
+    );
 
-      await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
-      editor.dispatchEvent(
-         new KeyboardEvent("keydown", {
-            bubbles: true,
-            cancelable: true,
-            key: "Enter",
-            code: "Enter",
-            which: 13,
-            keyCode: 13,
-         })
-      );
-   } else {
-      console.error("ChatGPT input box not found.");
-   }
+    editor.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        bubbles: true,
+        cancelable: true,
+        key: "Enter",
+        code: "Enter",
+        which: 13,
+        keyCode: 13,
+      }),
+    );
+  } else {
+    console.error("ChatGPT input box not found.");
+  }
 }
 
 async function ___askGemini(prompt) {
-   // Find Gemini’s rich-text editor
-   const editor = document.querySelector("div.ql-editor.textarea.new-input-ui");
-   console.log(editor);
+  // Find Gemini’s rich-text editor
+  const editor = document.querySelector(
+    "div.ql-editor.textarea, rich-textarea > div, div[contenteditable='true']",
+  );
+  console.log(editor);
 
-   if (editor) {
-      // Clear any existing text
-      editor.textContent = "";
-      editor.textContent = prompt;
+  if (editor) {
+    // Clear any existing text
+    editor.textContent = "";
+    editor.textContent = prompt;
 
-      editor.dispatchEvent(
-         new InputEvent("input", {
-            bubbles: true,
-            cancelable: true,
-            inputType: "insertText",
-            data: prompt,
-         })
-      );
+    editor.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        inputType: "insertText",
+        data: prompt,
+      }),
+    );
 
-      await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 200));
 
-      const sendBtn = document.querySelector("button.send-button");
-      if (sendBtn) {
-         sendBtn.click();
-      } else {
-         console.error("Send button not found.");
-      }
-   } else {
-      console.error("Gemini input box not found.");
-   }
+    const sendBtn = document.querySelector(
+      "button.send-button, button[aria-label*='Send'], button[aria-label*='Submit'], .send-button",
+    );
+    if (sendBtn) {
+      sendBtn.click();
+    } else {
+      console.error("Send button not found.");
+    }
+  } else {
+    console.error("Gemini input box not found.");
+  }
 }
 
 onload = () => {
-   const style = document.createElement("style");
-   style.innerHTML = `
+  const style = document.createElement("style");
+  style.innerHTML = `
       iframe {
          overflow: hidden !important;
          overscroll-behavior: contain;
       }
    `;
-   document.head.appendChild(style);
+  document.head.appendChild(style);
 };
