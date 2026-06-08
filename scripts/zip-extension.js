@@ -84,10 +84,24 @@ async function zipExtension() {
    // Add the entire extension directory
    archive.directory(extensionDir, false);
 
-   // Add README and License to the root of the zip
-   if (existsSync("./README.md")) {
-      archive.file("./README.md", { name: "README.md" });
-   }
+   // Create a simple text readme for the zip
+   const simpleReadme = `AI Display Chrome Extension
+===========================
+
+About
+-----
+A powerful Chrome extension that brings multiple AI assistants together in one convenient interface. Get answers from Google Gemini, Bing AI, Perplexity, Grok, and more - all at once!
+
+Setup Instructions
+------------------
+1. Extract this zip file to any folder on your computer.
+2. Open your browser (Chrome/Edge/Opera) and go to the extensions page (e.g., chrome://extensions/).
+3. Turn on "Developer Mode" in the top right corner.
+4. Click "Load unpacked" and select the folder you just extracted.
+5. You're done! The extension icon will appear in your browser toolbar.
+`;
+   archive.append(simpleReadme, { name: "readme.txt" });
+
    if (existsSync("./MIT-LICENSE.txt")) {
       archive.file("./MIT-LICENSE.txt", { name: "MIT-LICENSE.txt" });
    }
