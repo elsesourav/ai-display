@@ -17,9 +17,9 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 1. **Download** the extension zip file using the button above
 2. **Extract** the zip file to any folder on your computer
 3. **Open your browser** and navigate to the extensions page:
-   -  **Chrome**: `chrome://extensions/`
-   -  **Edge**: `edge://extensions/`
-   -  **Opera**: `opera://extensions/`
+   - **Chrome**: `chrome://extensions/`
+   - **Edge**: `edge://extensions/`
+   - **Opera**: `opera://extensions/`
 4. **Enable Developer Mode** - Toggle the switch in the top-right corner
 5. **Click "Load unpacked"** button (or "Load extension" in some browsers)
 6. **Select the extracted folder** containing the extension files
@@ -31,40 +31,40 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 ### Multi-AI Support
 
--  **Google Gemini** - Google's advanced AI model
--  **Bing AI** - Microsoft's AI-powered search
--  **Perplexity** - AI-powered research assistant
--  **Grok** - Real-time AI responses
--  **More providers** - Additional AI services coming soon
+- **Google Gemini** - Google's advanced AI model
+- **Bing AI** - Microsoft's AI-powered search
+- **Perplexity** - AI-powered research assistant
+- **Grok** - Real-time AI responses
+- **More providers** - Additional AI services coming soon
 
 ### Concurrent Requests
 
--  Ask all AI providers simultaneously
--  Compare responses side-by-side
--  Switch between answers instantly
--  Smart loading states for each provider
+- Ask all AI providers simultaneously
+- Compare responses side-by-side
+- Switch between answers instantly
+- Smart loading states for each provider
 
 ### Flexible Interface
 
--  **Popup Mode** - Quick access from browser toolbar
--  **Floating Menu** - Draggable overlay on any webpage
--  **Screen Selection** - OCR text from images and screenshots
--  **Theme Support** - Automatic dark/light mode detection
+- **Popup Mode** - Quick access from browser toolbar
+- **Floating Menu** - Draggable overlay on any webpage
+- **Screen Selection** - OCR text from images and screenshots
+- **Theme Support** - Automatic dark/light mode detection
 
 ### Advanced UI
 
--  **Custom Icon System** - Beautiful SVG icon library with 50+ icons
--  **Smooth Animations** - Polished transitions and effects
--  **Responsive Design** - Works on all screen sizes
--  **Tailwind CSS** - Modern styling framework
+- **Custom Icon System** - Beautiful SVG icon library with 50+ icons
+- **Smooth Animations** - Polished transitions and effects
+- **Responsive Design** - Works on all screen sizes
+- **Tailwind CSS** - Modern styling framework
 
 ### Smart Features
 
--  **Top Active Window** - Keep websites actively running even when you switch tabs or windows by spoofing visibility events
--  **OCR Integration** - Extract text from images using Tesseract.js
--  **Drag & Drop** - Reorder AI providers by preference
--  **Persistent Settings** - Remember your configurations
--  **Keyboard Shortcuts** - Quick access with hotkeys
+- **Top Active Window** - Keep websites actively running even when you switch tabs or windows by spoofing visibility events
+- **OCR Integration** - Extract text from images using Tesseract.js
+- **Drag & Drop** - Reorder AI providers by preference
+- **Persistent Settings** - Remember your configurations
+- **Keyboard Shortcuts** - Quick access with hotkeys
 
 ## Highlights
 
@@ -91,7 +91,6 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
   </tr>
 </table>
 
-
 ### Basic Usage
 
 1. **Click the extension icon** in your browser toolbar
@@ -102,23 +101,22 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 ### Advanced Features
 
--  **Screen Selection**: Right-click → AI Display → Select area to OCR text
--  **Menu Positioning**: Drag the floating menu anywhere on the page
--  **Provider Settings**: Configure which AI services to use
--  **Keyboard Shortcuts**: Press Escape to close, Enter to send
+- **Screen Selection**: Right-click → AI Display → Select area to OCR text
+- **Menu Positioning**: Drag the floating menu anywhere on the page
+- **Provider Settings**: Configure which AI services to use
+- **Keyboard Shortcuts**: Press Escape to close, Enter to send
 
 ## Important Note
 
 **This is NOT a data collection app.** The extension:
 
--  Does not store your conversations
--  Does not track your browsing
--  Does not send data to third parties
--  Only communicates with AI providers you choose
--  Keeps all settings locally in your browser
+- Does not store your conversations
+- Does not track your browsing
+- Does not send data to third parties
+- Only communicates with AI providers you choose
+- Keeps all settings locally in your browser
 
 Your privacy and data security are our top priorities.
-
 
 ## License
 
@@ -128,25 +126,25 @@ This project is licensed under the [MIT License](MIT-LICENSE.txt).
 
 Feel free to share this project! Here are some key highlights to mention:
 
--  **No API Keys Required** - Works directly with AI provider websites
--  **Multiple AI Providers** - Google Gemini, Bing AI, Perplexity, Grok and more
--  **Privacy Focused** - No data collection, everything stays local
--  **OCR Integration** - Extract text from images and screenshots
--  **React + Vite** - Modern development stack with Tailwind CSS
+- **No API Keys Required** - Works directly with AI provider websites
+- **Multiple AI Providers** - Google Gemini, Bing AI, Perplexity, Grok and more
+- **Privacy Focused** - No data collection, everything stays local
+- **OCR Integration** - Extract text from images and screenshots
+- **React + Vite** - Modern development stack with Tailwind CSS
 
 ## Contact
 
 For questions, feedback, or contributions, please contact me:
 
--  [Email](mailto:elsesourav@gmail.com)
--  [Twitter](https://twitter.com/elsesourav)
--  [LinkedIn](https://linkedin.com/in/elsesourav)
--  [Facebook](https://fb.com/elsesourav)
--  [Instagram](https://instagram.com/elsesourav)
+- [Email](mailto:elsesourav@gmail.com)
+- [Twitter](https://twitter.com/elsesourav)
+- [LinkedIn](https://linkedin.com/in/elsesourav)
+- [Facebook](https://fb.com/elsesourav)
+- [Instagram](https://instagram.com/elsesourav)
 
 ## Copyright
 
-Copyright (c) 2025 Sourav Barui. All rights reserved.
+Copyright (c) 2026 Sourav Barui. All rights reserved.
 
 ---
 
