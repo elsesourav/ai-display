@@ -5,11 +5,11 @@
    "type": "module",
    "scripts": {
       "dev": "vite",
-      "build": "vite build",
+      "build": "vite build && npm run zip",
       "lint": "eslint .",
       "preview": "vite preview",
       "zip": "node scripts/zip-extension.js",
-      "build:zip": "npm run build && npm run zip"
+      "build:zip": "npm run build"
    },
    "dependencies": {
       "@tailwindcss/vite": "^4.1.13",

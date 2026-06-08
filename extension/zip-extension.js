@@ -31,6 +31,29 @@ async function zipExtension() {
       console.log(`📁 File: ${outputPath}`);
       console.log(`📊 Size: ${sizeInMB} MB (${archive.pointer()} bytes)`);
       console.log(`🚀 Ready to upload to Chrome Web Store!`);
+
+      // Update README.md with the latest size and date
+      try {
+         const fs = require("fs");
+         const readmePath = "./README.md";
+         if (fs.existsSync(readmePath)) {
+            let readmeContent = fs.readFileSync(readmePath, "utf8");
+            
+            const dateStr = new Date().toISOString().split("T")[0];
+            const downloadLinkRegex = /\*\*\[⬇️ Download Here\]\([^)]+\)\*\*.*$/m;
+            
+            if (downloadLinkRegex.test(readmeContent)) {
+               readmeContent = readmeContent.replace(
+                  downloadLinkRegex,
+                  `**[⬇️ Download Here](https://github.com/elsesourav/ai-display/raw/main/ai-display-extension.zip)** *(Size: ${sizeInMB} MB, Updated: ${dateStr})*`
+               );
+               fs.writeFileSync(readmePath, readmeContent, "utf8");
+               console.log("📝 README.md updated with latest download info.");
+            }
+         }
+      } catch (err) {
+         console.error("❌ Failed to update README.md:", err.message);
+      }
    });
 
    // Handle warnings

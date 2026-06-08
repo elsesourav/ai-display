@@ -1,6 +1,153 @@
 importScripts("./../utils.js", "./bgUtils.js", "./requestAi.js");
 console.log("background script loaded");
 
+const validateAlwaysActive = async (hosts) => {
+  if (hosts.length === 0) return '';
+  let message = '';
+  try {
+    await chrome.scripting.registerContentScripts([{
+      matches: hosts.map(h => '*://' + h + '/*'),
+      allFrames: true,
+      matchOriginAsFallback: true,
+      runAt: 'document_start',
+      id: 'alwaysActiveTest',
+      js: ['utils.js'] // Just use an existing file to test
+    }]);
+  } catch (e) {
+    message = e.message;
+  }
+  try {
+    await chrome.scripting.unregisterContentScripts({ ids: ['alwaysActiveTest'] });
+  } catch (e) {}
+  return message;
+};
+
+const activateAlwaysActive = () => {
+  return new Promise((resolve) => {
+    if (activateAlwaysActive.busy) return resolve();
+    activateAlwaysActive.busy = true;
+
+    chromeStorageGetLocal("alwaysActiveHosts", async (hosts) => {
+      hosts = hosts || [];
+      try {
+        try {
+          await chrome.scripting.unregisterContentScripts({ ids: ["alwaysActiveMain", "alwaysActiveIsolated"] });
+        } catch (e) {}
+
+        if (hosts.length > 0) {
+          const props = {
+            allFrames: true,
+            matchOriginAsFallback: true,
+            runAt: "document_start"
+          };
+          if (hosts.includes('*')) {
+            props.matches = ['*://*/*'];
+          } else {
+            props.matches = hosts.map(h => '*://' + h + '/*');
+          }
+
+          await chrome.scripting.registerContentScripts([
+            {
+              ...props,
+              id: "alwaysActiveMain",
+              js: ["inject/alwaysActiveMain.js"],
+              world: "MAIN"
+            },
+            {
+              ...props,
+              id: "alwaysActiveIsolated",
+              js: ["inject/alwaysActiveIsolated.js"],
+              world: "ISOLATED"
+            }
+          ]);
+          console.log("Top Active Window scripts registered for:", hosts);
+        } else {
+          console.log("Top Active Window scripts unregistered (no hosts).");
+        }
+      } catch (e) {
+        console.error("Top Active Window Registration Failed:", e);
+      }
+
+      activateAlwaysActive.busy = false;
+      resolve();
+    });
+  });
+};
+
+chrome.runtime.onStartup.addListener(activateAlwaysActive);
+chrome.runtime.onInstalled.addListener(activateAlwaysActive);
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.alwaysActiveHosts) {
+    activateAlwaysActive();
+  }
+});
+
+runtimeOnMessage("P_B_TOGGLE_ALWAYS_ACTIVE", async (_, __, sendResponse) => {
+   const tab = await getActiveTab();
+   if (!tab || !tab.url?.startsWith('http')) {
+      sendResponse("error: not a valid tab");
+      return;
+   }
+
+   chromeStorageGetLocal("alwaysActiveHosts", async (storedHosts) => {
+      let hosts = storedHosts || [];
+
+      const a = await chrome.scripting.executeScript({
+         target: { tabId: tab.id, allFrames: true },
+         func: () => location.hostname,
+         injectImmediately: true
+      }).catch(() => [{ result: new URL(tab.url).hostname, frameId: 0 }]);
+
+      const hostnames = (a || []).map(o => o.result).filter((s, i, l) => s && l.indexOf(s) === i);
+      const top = a.find(o => o.frameId === 0)?.result;
+
+      if (top) {
+         const n = hosts.indexOf(top);
+         if (n >= 0) {
+            // Remove
+            for (const hostname of hostnames) {
+               const idx = hosts.indexOf(hostname);
+               if (idx >= 0) hosts.splice(idx, 1);
+            }
+         } else {
+            // Add
+            for (const hostname of hostnames) {
+               if (hosts.indexOf(hostname) < 0) hosts.push(hostname);
+            }
+         }
+
+         const error = await validateAlwaysActive(hosts);
+         if (error) {
+            console.error(error);
+         } else {
+            chromeStorageSetLocal("alwaysActiveHosts", hosts, async () => {
+               await activateAlwaysActive();
+               chrome.tabs.reload(tab.id);
+            });
+         }
+      }
+   });
+   sendResponse("ok");
+});
+
+runtimeOnMessage("P_B_SET_ALWAYS_ACTIVE_ICON", (_, { tab }, sendResponse) => {
+   if (tab && tab.id) {
+      chrome.action.setIcon({
+         tabId: tab.id,
+         path: {
+            "16": "assets/icons/active/16.png",
+            "24": "assets/icons/active/24.png",
+            "32": "assets/icons/active/32.png",
+            "48": "assets/icons/active/48.png",
+            "128": "assets/icons/active/128.png"
+         }
+      });
+      // Clear the text badge in case it was previously set
+      chrome.action.setBadgeText({ text: "", tabId: tab.id });
+   }
+   sendResponse("ok");
+});
+
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
    chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
       const tab = await getActiveTab();

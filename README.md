@@ -10,7 +10,7 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 ### Download & Install
 
-**[⬇️ Download Here](https://github.com/elsesourav/ai-display/raw/main/ai-display-extension.zip)**
+**[⬇️ Download Here](https://github.com/elsesourav/ai-display/raw/main/ai-display-extension.zip)** *(Size: 20.05 MB, Updated: 2026-06-08)*
 
 **Installation Steps:**
 
@@ -60,6 +60,7 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 ### Smart Features
 
+-  **Top Active Window** - Keep websites actively running even when you switch tabs or windows by spoofing visibility events
 -  **OCR Integration** - Extract text from images using Tesseract.js
 -  **Drag & Drop** - Reorder AI providers by preference
 -  **Persistent Settings** - Remember your configurations
@@ -90,14 +91,6 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
   </tr>
 </table>
 
-### Installation From Source Code
-
-1. Clone this repository
-2. Run `npm install` to install dependencies
-3. Run `npm run build` to build the extension
-4. Open Chrome and go to `chrome://extensions/`
-5. Enable "Developer mode"
-6. Click "Load unpacked" and select the `extension` folder
 
 ### Basic Usage
 
@@ -126,80 +119,6 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 Your privacy and data security are our top priorities.
 
-## Technical Stack
-
--  **React 18** - Modern UI framework
--  **Vite** - Fast build tool and development server
--  **Tailwind CSS** - Utility-first CSS framework
--  **Chrome Extension APIs** - Native browser integration
--  **Tesseract.js** - OCR text recognition
--  **React Icons** - Additional icon library
-
-## Project Structure
-
-```
-src/
-├── components/          # React components
-├── inject/             # Content script injections
-├── popup/              # Extension popup interface
-├── assets/             # Icons, images, fonts
-├── utils/              # Utility functions
-└── hooks/              # Custom React hooks
-
-extension/              # Built extension files
-scripts/                # All scripts flies
-```
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Build and watch for changes
-npm run build:watch
-
-# Create extension zip file
-npm run zip
-
-# Build and zip in one command (recommended)
-npm run build:zip
-```
-
-### Creating Extension Package
-
-To package your extension for distribution:
-
-1. **Build the extension**:
-
-   ```bash
-   npm run build
-   ```
-
-2. **Create zip file**:
-
-   ```bash
-   npm run zip
-   ```
-
-   Or build and zip in one command:
-
-   ```bash
-   npm run build:zip
-   ```
-
-3. **Package created**:
-   -  The script creates `ai-display-extension.zip` in the project root
-   -  This zip file contains all necessary extension files and assets
-   -  Ready for sharing or distribution
-
-**Note**: Make sure to run `npm install` first to install the required `archiver` dependency for zip creation.
 
 ## License
 
