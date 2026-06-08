@@ -2,22 +2,26 @@ importScripts("./../utils.js", "./bgUtils.js", "./requestAi.js");
 console.log("background script loaded");
 
 const validateAlwaysActive = async (hosts) => {
-  if (hosts.length === 0) return '';
-  let message = '';
+  if (hosts.length === 0) return "";
+  let message = "";
   try {
-    await chrome.scripting.registerContentScripts([{
-      matches: hosts.map(h => '*://' + h + '/*'),
-      allFrames: true,
-      matchOriginAsFallback: true,
-      runAt: 'document_start',
-      id: 'alwaysActiveTest',
-      js: ['utils.js'] // Just use an existing file to test
-    }]);
+    await chrome.scripting.registerContentScripts([
+      {
+        matches: hosts.map((h) => "*://" + h + "/*"),
+        allFrames: true,
+        matchOriginAsFallback: true,
+        runAt: "document_start",
+        id: "alwaysActiveTest",
+        js: ["utils.js"], // Just use an existing file to test
+      },
+    ]);
   } catch (e) {
     message = e.message;
   }
   try {
-    await chrome.scripting.unregisterContentScripts({ ids: ['alwaysActiveTest'] });
+    await chrome.scripting.unregisterContentScripts({
+      ids: ["alwaysActiveTest"],
+    });
   } catch (e) {}
   return message;
 };
@@ -31,19 +35,21 @@ const activateAlwaysActive = () => {
       hosts = hosts || [];
       try {
         try {
-          await chrome.scripting.unregisterContentScripts({ ids: ["alwaysActiveMain", "alwaysActiveIsolated"] });
+          await chrome.scripting.unregisterContentScripts({
+            ids: ["alwaysActiveMain", "alwaysActiveIsolated"],
+          });
         } catch (e) {}
 
         if (hosts.length > 0) {
           const props = {
             allFrames: true,
             matchOriginAsFallback: true,
-            runAt: "document_start"
+            runAt: "document_start",
           };
-          if (hosts.includes('*')) {
-            props.matches = ['*://*/*'];
+          if (hosts.includes("*")) {
+            props.matches = ["*://*/*"];
           } else {
-            props.matches = hosts.map(h => '*://' + h + '/*');
+            props.matches = hosts.map((h) => "*://" + h + "/*");
           }
 
           await chrome.scripting.registerContentScripts([
@@ -51,14 +57,14 @@ const activateAlwaysActive = () => {
               ...props,
               id: "alwaysActiveMain",
               js: ["inject/alwaysActiveMain.js"],
-              world: "MAIN"
+              world: "MAIN",
             },
             {
               ...props,
               id: "alwaysActiveIsolated",
               js: ["inject/alwaysActiveIsolated.js"],
-              world: "ISOLATED"
-            }
+              world: "ISOLATED",
+            },
           ]);
           console.log("Top Active Window scripts registered for:", hosts);
         } else {
@@ -82,154 +88,183 @@ chrome.storage.onChanged.addListener((changes) => {
   }
 });
 
-runtimeOnMessage("P_B_TOGGLE_ALWAYS_ACTIVE", async (_, __, sendResponse) => {
-   const tab = await getActiveTab();
-   if (!tab || !tab.url?.startsWith('http')) {
-      sendResponse("error: not a valid tab");
-      return;
-   }
+const cleanupAlwaysActiveHosts = () => {
+  chromeStorageGetLocal("alwaysActiveHosts", (storedHosts) => {
+    let hosts = storedHosts || [];
+    if (hosts.length === 0) return;
 
-   chromeStorageGetLocal("alwaysActiveHosts", async (storedHosts) => {
-      let hosts = storedHosts || [];
-
-      const a = await chrome.scripting.executeScript({
-         target: { tabId: tab.id, allFrames: true },
-         func: () => location.hostname,
-         injectImmediately: true
-      }).catch(() => [{ result: new URL(tab.url).hostname, frameId: 0 }]);
-
-      const hostnames = (a || []).map(o => o.result).filter((s, i, l) => s && l.indexOf(s) === i);
-      const top = a.find(o => o.frameId === 0)?.result;
-
-      if (top) {
-         const n = hosts.indexOf(top);
-         if (n >= 0) {
-            // Remove
-            for (const hostname of hostnames) {
-               const idx = hosts.indexOf(hostname);
-               if (idx >= 0) hosts.splice(idx, 1);
-            }
-         } else {
-            // Add
-            for (const hostname of hostnames) {
-               if (hosts.indexOf(hostname) < 0) hosts.push(hostname);
-            }
-         }
-
-         const error = await validateAlwaysActive(hosts);
-         if (error) {
-            console.error(error);
-         } else {
-            chromeStorageSetLocal("alwaysActiveHosts", hosts, async () => {
-               await activateAlwaysActive();
-               chrome.tabs.reload(tab.id);
-            });
-         }
+    chrome.tabs.query({}, (tabs) => {
+      const activeTabHostnames = new Set();
+      for (const tab of tabs) {
+        if (tab.url && tab.url.startsWith("http")) {
+          try {
+            activeTabHostnames.add(new URL(tab.url).hostname);
+          } catch (e) {}
+        }
       }
-   });
-   sendResponse("ok");
+
+      const newHosts = hosts.filter((h) => activeTabHostnames.has(h));
+      if (newHosts.length !== hosts.length) {
+        chromeStorageSetLocal("alwaysActiveHosts", newHosts, () => {
+          console.log("Top Active Window: Cleaned up unused hosts");
+        });
+      }
+    });
+  });
+};
+
+chrome.tabs.onRemoved.addListener(() => cleanupAlwaysActiveHosts());
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) {
+    cleanupAlwaysActiveHosts();
+  }
+});
+
+runtimeOnMessage("P_B_TOGGLE_ALWAYS_ACTIVE", async (_, __, sendResponse) => {
+  const tab = await getActiveTab();
+  if (!tab || !tab.url?.startsWith("http")) {
+    sendResponse("error: not a valid tab");
+    return;
+  }
+
+  chromeStorageGetLocal("alwaysActiveHosts", async (storedHosts) => {
+    let hosts = storedHosts || [];
+
+    const a = await chrome.scripting
+      .executeScript({
+        target: { tabId: tab.id, allFrames: true },
+        func: () => location.hostname,
+        injectImmediately: true,
+      })
+      .catch(() => [{ result: new URL(tab.url).hostname, frameId: 0 }]);
+
+    const hostnames = (a || [])
+      .map((o) => o.result)
+      .filter((s, i, l) => s && l.indexOf(s) === i);
+    const top = a.find((o) => o.frameId === 0)?.result;
+
+    if (top) {
+      const n = hosts.indexOf(top);
+      if (n >= 0) {
+        // Remove
+        for (const hostname of hostnames) {
+          const idx = hosts.indexOf(hostname);
+          if (idx >= 0) hosts.splice(idx, 1);
+        }
+      } else {
+        // Add
+        for (const hostname of hostnames) {
+          if (hosts.indexOf(hostname) < 0) hosts.push(hostname);
+        }
+      }
+
+      const error = await validateAlwaysActive(hosts);
+      if (error) {
+        console.error(error);
+      } else {
+        chromeStorageSetLocal("alwaysActiveHosts", hosts, async () => {
+          await activateAlwaysActive();
+          chrome.tabs.reload(tab.id);
+        });
+      }
+    }
+  });
+  sendResponse("ok");
 });
 
 runtimeOnMessage("P_B_SET_ALWAYS_ACTIVE_ICON", (_, { tab }, sendResponse) => {
-   if (tab && tab.id) {
-      chrome.action.setIcon({
-         tabId: tab.id,
-         path: {
-            "16": "assets/icons/active/16.png",
-            "24": "assets/icons/active/24.png",
-            "32": "assets/icons/active/32.png",
-            "48": "assets/icons/active/48.png",
-            "128": "assets/icons/active/128.png"
-         }
-      });
-      // Clear the text badge in case it was previously set
-      chrome.action.setBadgeText({ text: "", tabId: tab.id });
-   }
-   sendResponse("ok");
+  if (tab && tab.id) {
+    chrome.action.setIcon({
+      tabId: tab.id,
+      path: {
+        16: "/assets/icons/active/16.png",
+        24: "/assets/icons/active/24.png",
+        32: "/assets/icons/active/32.png",
+        48: "/assets/icons/active/48.png",
+        128: "/assets/icons/active/128.png",
+      },
+    });
+  }
+  sendResponse("ok");
 });
 
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
-   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-      const tab = await getActiveTab();
-      if (isInternalPage(tab)) return;
-      if (settings.enable) {
-         __PUSH_MENU__(tab.id);
-      } else {
-         tabSendMessage(tab.id, "B_C_CLOSE_MENU");
-      }
-   });
-   return sendResponse("ok");
+  chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
+    const tab = await getActiveTab();
+    if (isInternalPage(tab)) return;
+    if (settings.enable) {
+      __PUSH_MENU__(tab.id);
+    } else {
+      tabSendMessage(tab.id, "B_C_CLOSE_MENU");
+    }
+  });
+  return sendResponse("ok");
 });
 
 runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
-   sendResponse("ok");
-   if (isInternalPage(tab)) return;
+  sendResponse("ok");
+  if (isInternalPage(tab)) return;
 
-   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-      if (settings.enable) {
-         __PUSH_MENU__(tab.id);
-      }
-   });
+  chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
+    if (settings.enable) {
+      __PUSH_MENU__(tab.id);
+    }
+  });
 });
 
 runtimeOnMessage("C_B_SELECT_TEXT", (_, { tab }, sendResponse) => {
-   __SELECT__(tab.id);
-   sendResponse("ok");
+  __SELECT__(tab.id);
+  sendResponse("ok");
 });
 
 runtimeOnMessage(
-   "C_B_CAPTURE_DOM",
-   ({ coordinates, devicePixelRatio }, { tab }, sendResponse) => {
-      const { id, windowId } = tab;
-      const rect = {
-         top: coordinates.y,
-         left: coordinates.x,
-         width: coordinates.width,
-         height: coordinates.height,
-         devicePixelRatio,
-      };
+  "C_B_CAPTURE_DOM",
+  ({ coordinates, devicePixelRatio }, { tab }, sendResponse) => {
+    const { id, windowId } = tab;
+    const rect = {
+      top: coordinates.y,
+      left: coordinates.x,
+      width: coordinates.width,
+      height: coordinates.height,
+      devicePixelRatio,
+    };
 
-      chrome.tabs.captureVisibleTab(
-         windowId,
-         { format: "png" },
-         async (img) => {
-            const data = await __OCR__(img, rect);
-            if (data.success && data?.result) {
-               tabSendMessage(id, "B_C_OCR_RESULT", data.result);
-            }
-         }
-      );
-      sendResponse("ok");
-   }
+    chrome.tabs.captureVisibleTab(windowId, { format: "png" }, async (img) => {
+      const data = await __OCR__(img, rect);
+      if (data.success && data?.result) {
+        tabSendMessage(id, "B_C_OCR_RESULT", data.result);
+      }
+    });
+    sendResponse("ok");
+  },
 );
 
 runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
-   // console.log("Received request for answer:", data);
-   const provider = data.provider || "google";
+  // console.log("Received request for answer:", data);
+  const provider = data.provider || "google";
 
-   let answer;
-   switch (provider) {
-      case "google":
-         answer = await getGoogleAiAnswer(data.question);
-         break;
-      case "bing":
-         answer = await getBingAiAnswer(data.question);
-         break;
-      case "perplexity":
-         answer = await getPerplexityAnswer(data.question);
-         break;
-      case "grok":
-         answer = await getGrokAnswer(data.question);
-         break;
-      case "gemini":
-         answer = await getGeminiAnswer(data.question);
-         break;
-      default:
-         answer = await getGoogleAiAnswer(data.question);
-   }
-   sendResponse({ status: "success", answer, provider });
+  let answer;
+  switch (provider) {
+    case "google":
+      answer = await getGoogleAiAnswer(data.question);
+      break;
+    case "bing":
+      answer = await getBingAiAnswer(data.question);
+      break;
+    case "perplexity":
+      answer = await getPerplexityAnswer(data.question);
+      break;
+    case "grok":
+      answer = await getGrokAnswer(data.question);
+      break;
+    case "gemini":
+      answer = await getGeminiAnswer(data.question);
+      break;
+    default:
+      answer = await getGoogleAiAnswer(data.question);
+  }
+  sendResponse({ status: "success", answer, provider });
 });
-
 
 // google https://www.google.com/search?q=what+is+java&sa=X&udm=50
 // bing: https://www.bing.com/copilotsearch?q=what+is+java&FORM=CSSCOP
