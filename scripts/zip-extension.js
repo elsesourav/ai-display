@@ -1,5 +1,6 @@
 import archiver from "archiver";
-import { createWriteStream, existsSync } from "fs";
+import { createWriteStream, existsSync, unlinkSync } from "fs";
+import path from "path";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -74,8 +75,22 @@ async function zipExtension() {
    // Pipe archive data to the file
    archive.pipe(output);
 
+   // Remove the zip script from the extension folder if it was copied there
+   const zipScriptPath = path.join(extensionDir, "zip-extension.js");
+   if (existsSync(zipScriptPath)) {
+      unlinkSync(zipScriptPath);
+   }
+
    // Add the entire extension directory
    archive.directory(extensionDir, false);
+
+   // Add README and License to the root of the zip
+   if (existsSync("./README.md")) {
+      archive.file("./README.md", { name: "README.md" });
+   }
+   if (existsSync("./MIT-LICENSE.txt")) {
+      archive.file("./MIT-LICENSE.txt", { name: "MIT-LICENSE.txt" });
+   }
 
    // Finalize the archive
    await archive.finalize();
