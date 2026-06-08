@@ -6,6 +6,10 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 **No API keys required** - Works directly with AI provider websites.
 
+## 🎥 How to Use (Video Tutorial)
+
+[![AI Display Extension Tutorial](https://img.youtube.com/vi/KsRN0qGqnlY/maxresdefault.jpg)](https://youtu.be/KsRN0qGqnlY)
+
 ## Quick Start
 
 ### Download & Install

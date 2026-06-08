@@ -92,6 +92,10 @@ About
 -----
 A powerful Chrome extension that brings multiple AI assistants together in one convenient interface. Get answers from Google Gemini, Bing AI, Perplexity, Grok, and more - all at once!
 
+How to Use (Video Tutorial)
+---------------------------
+Watch the video guide here: https://youtu.be/KsRN0qGqnlY
+
 Setup Instructions
 ------------------
 1. Extract this zip file to any folder on your computer.
