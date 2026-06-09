@@ -197,15 +197,17 @@ function runtimeSendMessage(type, message, callback) {
    }
    if (typeof message === "function") {
       chrome.runtime.sendMessage({ type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          message(response);
       });
    } else {
       chrome.runtime.sendMessage({ ...message, type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          callback && callback(response);
       });
@@ -232,15 +234,17 @@ function tabSendMessage(tabId, type, message, callback) {
    }
    if (typeof message === "function") {
       chrome.tabs.sendMessage(tabId, { type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          message(response);
       });
    } else {
       chrome.tabs.sendMessage(tabId, { ...message, type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          callback && callback(response);
       });

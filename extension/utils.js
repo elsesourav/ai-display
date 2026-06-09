@@ -57,15 +57,17 @@ function getActiveTab() {
 function runtimeSendMessage(type, message, callback) {
    if (typeof message === "function") {
       chrome.runtime.sendMessage({ type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          message(response);
       });
    } else {
       chrome.runtime.sendMessage({ ...message, type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          callback && callback(response);
       });
@@ -86,15 +88,17 @@ function runtimeOnMessage(type, callback) {
 function tabSendMessage(tabId, type, message, callback) {
    if (typeof message === "function") {
       chrome.tabs.sendMessage(tabId, { type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          message(response);
       });
    } else {
       chrome.tabs.sendMessage(tabId, { ...message, type }, (response) => {
-         if (chrome.runtime.lastError && __isDevMode) {
-            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         const err = chrome.runtime.lastError;
+         if (err && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", err.message);
          }
          callback && callback(response);
       });
@@ -219,14 +223,19 @@ function injectCSSFile(
 
 /** Execute a function in a tab's context */
 function executeScript(tabId, func, ...args) {
-   chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] });
+   chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] }, () => {
+      void chrome.runtime.lastError;
+   });
 }
 
 /** Execute a function in a tab's context and return the result */
 function executeScriptReturn(tabId, func, _return = (r) => r, args = []) {
    chrome.scripting.executeScript(
       { target: { tabId }, func, args },
-      _return
+      (results) => {
+         void chrome.runtime.lastError;
+         if (_return) _return(results);
+      }
    );
 }
 
