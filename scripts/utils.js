@@ -55,6 +55,14 @@ function getActiveTab() {
 
 /** Send a message via chrome.runtime to the background/service worker */
 function runtimeSendMessage(type, message, callback) {
+   if (!chrome.runtime?.id) {
+      if (__isDevMode) {
+         originalConsoleError.call(console, "Message Error: Extension context invalidated.");
+      }
+      if (typeof message === "function") message(undefined);
+      else callback && callback(undefined);
+      return;
+   }
    if (typeof message === "function") {
       chrome.runtime.sendMessage({ type }, (response) => {
          const err = chrome.runtime.lastError;
@@ -76,6 +84,12 @@ function runtimeSendMessage(type, message, callback) {
 
 /** Listen for a specific message type via chrome.runtime */
 function runtimeOnMessage(type, callback) {
+   if (!chrome.runtime?.id) {
+      if (__isDevMode) {
+         originalConsoleError.call(console, "Message Error: Extension context invalidated.");
+      }
+      return;
+   }
    chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (type === message.type) {
          callback(message, sender, response);
@@ -86,6 +100,14 @@ function runtimeOnMessage(type, callback) {
 
 /** Send a message to a specific tab */
 function tabSendMessage(tabId, type, message, callback) {
+   if (!chrome.runtime?.id) {
+      if (__isDevMode) {
+         originalConsoleError.call(console, "Message Error: Extension context invalidated.");
+      }
+      if (typeof message === "function") message(undefined);
+      else callback && callback(undefined);
+      return;
+   }
    if (typeof message === "function") {
       chrome.tabs.sendMessage(tabId, { type }, (response) => {
          const err = chrome.runtime.lastError;
@@ -223,6 +245,12 @@ function injectCSSFile(
 
 /** Execute a function in a tab's context */
 function executeScript(tabId, func, ...args) {
+   if (!chrome.runtime?.id) {
+      if (__isDevMode) {
+         originalConsoleError.call(console, "Script Error: Extension context invalidated.");
+      }
+      return;
+   }
    chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] }, () => {
       void chrome.runtime.lastError;
    });
@@ -230,6 +258,13 @@ function executeScript(tabId, func, ...args) {
 
 /** Execute a function in a tab's context and return the result */
 function executeScriptReturn(tabId, func, _return = (r) => r, args = []) {
+   if (!chrome.runtime?.id) {
+      if (__isDevMode) {
+         originalConsoleError.call(console, "Script Error: Extension context invalidated.");
+      }
+      if (_return) _return(undefined);
+      return;
+   }
    chrome.scripting.executeScript(
       { target: { tabId }, func, args },
       (results) => {

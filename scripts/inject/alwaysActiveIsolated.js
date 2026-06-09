@@ -67,10 +67,12 @@ update();
 chrome.storage.onChanged.addListener(update);
 
 if (window.top === window) {
-  chrome.runtime.sendMessage({
-    type: "P_B_SET_ALWAYS_ACTIVE_ICON",
-  }, () => {
-    // Suppress unchecked runtime.lastError if background isn't ready
-    void chrome.runtime.lastError;
-  });
+  if (chrome.runtime?.id) {
+    chrome.runtime.sendMessage({
+      type: "P_B_SET_ALWAYS_ACTIVE_ICON",
+    }, () => {
+      // Suppress unchecked runtime.lastError if background isn't ready
+      void chrome.runtime.lastError;
+    });
+  }
 }

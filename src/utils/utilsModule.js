@@ -190,7 +190,10 @@ function chromeStorageRemoveLocal(key) {
 
 /** Send a message via chrome.runtime to the background/service worker */
 function runtimeSendMessage(type, message, callback) {
-   if (!hasChrome || !chrome.runtime?.sendMessage) {
+   if (!hasChrome || !chrome.runtime?.sendMessage || !chrome.runtime?.id) {
+      if (!chrome.runtime?.id && __isDevMode) {
+         originalConsoleError.call(console, "Message Error: Extension context invalidated.");
+      }
       if (typeof message === "function") message(undefined);
       else callback && callback(undefined);
       return;
@@ -216,7 +219,12 @@ function runtimeSendMessage(type, message, callback) {
 
 /** Listen for a specific message type via chrome.runtime */
 function runtimeOnMessage(type, callback) {
-   if (!hasChrome || !chrome.runtime?.onMessage?.addListener) return;
+   if (!hasChrome || !chrome.runtime?.onMessage?.addListener || !chrome.runtime?.id) {
+      if (!chrome.runtime?.id && __isDevMode) {
+         originalConsoleError.call(console, "Message Error: Extension context invalidated.");
+      }
+      return;
+   }
    chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (type === message.type) {
          callback(message, sender, response);
@@ -227,7 +235,10 @@ function runtimeOnMessage(type, callback) {
 
 /** Send a message to a specific tab */
 function tabSendMessage(tabId, type, message, callback) {
-   if (!hasChrome || !chrome.tabs?.sendMessage) {
+   if (!hasChrome || !chrome.tabs?.sendMessage || !chrome.runtime?.id) {
+      if (!chrome.runtime?.id && __isDevMode) {
+         originalConsoleError.call(console, "Message Error: Extension context invalidated.");
+      }
       if (typeof message === "function") message(undefined);
       else callback && callback(undefined);
       return;
