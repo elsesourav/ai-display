@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   IoClose,
   IoSend,
@@ -173,6 +173,25 @@ export default function ChatBot({ isOpen }) {
     [aiProviders, maxConcurrentRequest],
   );
 
+  // Combine currently active providers with any providers present in the loaded answers
+  const displayedProviders = useMemo(() => {
+    const combined = [...aiProviders];
+    const existingIds = new Set(aiProviders.map(p => p.id));
+    
+    // Add any providers from answers that aren't in the active list (for old chat history)
+    Object.keys(answers).forEach(providerId => {
+       if (!existingIds.has(providerId)) {
+          combined.push({
+             id: providerId,
+             // Capitalize the first letter as a fallback name
+             name: providerId.charAt(0).toUpperCase() + providerId.slice(1),
+             enabled: false // but we show it anyway because it has historical answers
+          });
+       }
+    });
+    return combined;
+  }, [aiProviders, answers]);
+
   // Effect to update history when all providers complete for the current question
   useEffect(() => {
     if (
@@ -181,22 +200,22 @@ export default function ChatBot({ isOpen }) {
       Object.keys(answers).length > 0
     ) {
       setHistory((prevHistory) => {
-        // Check if this question is already the latest in history
-        const isAlreadyLatest =
-          prevHistory.length > 0 &&
-          prevHistory[0].id === currentRequestIdRef.current;
+        // Find if this question is already in history anywhere
+        const existingIndex = prevHistory.findIndex(
+          (item) => item.id === currentRequestIdRef.current
+        );
 
-        if (isAlreadyLatest) {
-          // Update existing entry with new answers
+        if (existingIndex >= 0) {
+          // Update existing entry with new answers, keep its position
           const updatedHistory = [...prevHistory];
-          updatedHistory[0] = {
-            ...updatedHistory[0],
+          updatedHistory[existingIndex] = {
+            ...updatedHistory[existingIndex],
             answers: { ...answers },
           };
           UTILS.chromeStorageSetLocal(UTILS.KEYS.HISTORY, updatedHistory);
           return updatedHistory;
         } else {
-          // Add new entry
+          // Add new entry to the top
           const newEntry = {
             id: currentRequestIdRef.current,
             question: lastQuestion,
@@ -372,7 +391,7 @@ export default function ChatBot({ isOpen }) {
            className="flex-1 flex flex-nowrap gap-2 items-center overflow-x-auto scrollbar-hide py-1.5 px-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 shadow-inner"
            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {aiProviders.map((provider) => (
+          {displayedProviders.map((provider) => (
             <button
               key={provider.id}
               onClick={() => setSelectedProvider(provider.id)}
@@ -425,7 +444,7 @@ export default function ChatBot({ isOpen }) {
               {answers[selectedProvider] && (
                 <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-                    {aiProviders.find((p) => p.id === selectedProvider)?.name ||
+                    {displayedProviders.find((p) => p.id === selectedProvider)?.name ||
                       selectedProvider}
                   </div>
 
@@ -442,7 +461,7 @@ export default function ChatBot({ isOpen }) {
               {isLoading && !answers[selectedProvider] && (
                 <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-                    {aiProviders.find((p) => p.id === selectedProvider)?.name ||
+                    {displayedProviders.find((p) => p.id === selectedProvider)?.name ||
                       selectedProvider}
                   </div>
                   <div className="flex space-x-2 mt-2">
