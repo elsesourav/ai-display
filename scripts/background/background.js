@@ -242,28 +242,29 @@ runtimeOnMessage(
 runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
   // console.log("Received request for answer:", data);
   const provider = data.provider || "google";
+  const requestId = data.requestId;
 
   let answer;
   switch (provider) {
     case "google":
-      answer = await getGoogleAiAnswer(data.question);
+      answer = await getGoogleAiAnswer(data.question, requestId);
       break;
     case "bing":
-      answer = await getBingAiAnswer(data.question);
+      answer = await getBingAiAnswer(data.question, requestId);
       break;
     case "perplexity":
-      answer = await getPerplexityAnswer(data.question);
+      answer = await getPerplexityAnswer(data.question, requestId);
       break;
     case "grok":
-      answer = await getGrokAnswer(data.question);
+      answer = await getGrokAnswer(data.question, requestId);
       break;
     case "gemini":
-      answer = await getGeminiAnswer(data.question);
+      answer = await getGeminiAnswer(data.question, requestId);
       break;
     default:
-      answer = await getGoogleAiAnswer(data.question);
+      answer = await getGoogleAiAnswer(data.question, requestId);
   }
-  sendResponse({ status: "success", answer, provider });
+  sendResponse({ status: "success", answer, provider, requestId });
 });
 
 // google https://www.google.com/search?q=what+is+java&sa=X&udm=50

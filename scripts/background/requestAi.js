@@ -1,3 +1,7 @@
+/* --- Request Cancellation State --- */
+let currentRequestId = null;
+let activeAiTabs = [];
+
 /* --- Shared Helper --- */
 
 /**
@@ -7,13 +11,30 @@
  * @param {string} url - The URL to open
  * @param {Function} extractFn - Function to run inside the tab (must return a Promise<string>)
  * @param {Array} [extractArgs=[]] - Arguments to pass to extractFn
+ * @param {string} [requestId=null] - The unique ID for the current batch of requests
  * @returns {Promise<string>} The cleaned HTML result
  */
-function fetchAiAnswer(url, extractFn, extractArgs = []) {
+function fetchAiAnswer(url, extractFn, extractArgs = [], requestId = null) {
   return new Promise((resolve) => {
+    // If we have a new requestId, cancel all existing fetching tabs
+    if (requestId && currentRequestId !== requestId) {
+      activeAiTabs.forEach((id) => {
+        chrome.tabs.remove(id).catch(() => {});
+      });
+      activeAiTabs = [];
+      currentRequestId = requestId;
+    }
+
     chrome.tabs.create({ url, active: false }, (tab) => {
       const tabId = tab.id;
+      activeAiTabs.push(tabId);
       chromeTabMediaAccess(tabId, true);
+
+      function cleanup() {
+        chromeTabMediaAccess(tabId, false);
+        chrome.tabs.remove(tabId).catch(() => {});
+        activeAiTabs = activeAiTabs.filter((id) => id !== tabId);
+      }
 
       function listener(updatedTabId, info) {
         if (updatedTabId === tabId && info.status === "complete") {
@@ -25,8 +46,7 @@ function fetchAiAnswer(url, extractFn, extractArgs = []) {
             (injectResult) => {
               const cleanedHtml = injectResult?.[0]?.result || "";
               resolve(cleanedHtml);
-              chromeTabMediaAccess(tabId, false);
-              chrome.tabs.remove(tabId);
+              cleanup();
             },
             extractArgs,
           );
@@ -34,93 +54,122 @@ function fetchAiAnswer(url, extractFn, extractArgs = []) {
       }
 
       chrome.tabs.onUpdated.addListener(listener);
+
+      // Handle cases where the tab is closed before it finishes (e.g. by cancellation)
+      function onRemoved(removedTabId) {
+        if (removedTabId === tabId) {
+          chrome.tabs.onRemoved.removeListener(onRemoved);
+          chrome.tabs.onUpdated.removeListener(listener);
+          activeAiTabs = activeAiTabs.filter((id) => id !== tabId);
+          resolve(""); // Resolve empty to let the UI discard it
+        }
+      }
+      chrome.tabs.onRemoved.addListener(onRemoved);
     });
   });
 }
 
 /* --- Provider Functions --- */
 
-async function getGoogleAiAnswer(q) {
+async function getGoogleAiAnswer(q, requestId) {
   const url = `https://www.google.com/search?q=${encodeURIComponent(q)}&sa=X&udm=50&hl=en`;
 
-  return fetchAiAnswer(url, () => {
-    return new Promise(async (resolve) => {
-      async function findContent() {
-        const container = document.querySelector(
-          'div[data-container-id="main-col"]',
-        );
-        if (!container) return null;
-        return await getProcessedHTML(container, "google");
-      }
-      resolve(await pollForContent(findContent));
-    });
-  });
+  return fetchAiAnswer(
+    url,
+    () => {
+      return new Promise(async (resolve) => {
+        async function findContent() {
+          const container = document.querySelector(
+            'div[data-container-id="main-col"]',
+          );
+          if (!container) return null;
+          return await getProcessedHTML(container, "google");
+        }
+        resolve(await pollForContent(findContent));
+      });
+    },
+    [],
+    requestId,
+  );
 }
 
-async function getBingAiAnswer(q) {
+async function getBingAiAnswer(q, requestId) {
   const url = `https://www.bing.com/copilotsearch?q=${encodeURIComponent(q)}&FORM=CSSCOP`;
 
-  return fetchAiAnswer(url, () => {
-    return new Promise(async (resolve) => {
-      async function findContent() {
-        const container = document
-          .querySelector(".frame_cont iframe")
-          ?.contentDocument?.querySelector(
-            "#ca_main .gs_multianshead_main",
-          );
-        if (!container) return "";
-        return await getProcessedHTML(container);
-      }
-      resolve(await pollForContent(findContent, "bing"));
-    });
-  });
+  return fetchAiAnswer(
+    url,
+    () => {
+      return new Promise(async (resolve) => {
+        async function findContent() {
+          const container = document
+            .querySelector(".frame_cont iframe")
+            ?.contentDocument?.querySelector("#ca_main .gs_multianshead_main");
+          if (!container) return "";
+          return await getProcessedHTML(container);
+        }
+        resolve(await pollForContent(findContent, "bing"));
+      });
+    },
+    [],
+    requestId,
+  );
 }
 
-async function getGrokAnswer(q) {
+async function getGrokAnswer(q, requestId) {
   const url = `https://grok.com/?q=${encodeURIComponent(q)}`;
 
-  return fetchAiAnswer(url, () => {
-    return new Promise(async (resolve) => {
-      async function findContent() {
-        const container1 = document.querySelector(
-          "main #last-reply-container > div:nth-child(2) > div > [dir='auto']",
-        );
-        const container2 = document.querySelector(
-          "main #last-reply-container .thinking-container ~ div",
-        );
+  return fetchAiAnswer(
+    url,
+    () => {
+      return new Promise(async (resolve) => {
+        async function findContent() {
+          const container1 = document.querySelector(
+            "main #last-reply-container > div:nth-child(2) > div > [dir='auto']",
+          );
+          const container2 = document.querySelector(
+            "main #last-reply-container .thinking-container ~ div",
+          );
 
-        const isLimitOver = [...document.querySelectorAll("div")].find((el) =>
-          el
-            .querySelector("h2")
-            ?.textContent.includes("Sign up to continue with Grok"),
-        );
+          const isLimitOver = [...document.querySelectorAll("div")].find((el) =>
+            el
+              .querySelector("h2")
+              ?.textContent.includes("Sign up to continue with Grok"),
+          );
 
-        if (isLimitOver) return false;
-        if (!container1 && !container2) return "";
+          if (isLimitOver) return false;
+          if (!container1 && !container2) return "";
 
-        return await getProcessedHTML(container1 || container2, "grok");
-      }
-      resolve(await pollForContent(findContent));
-    });
-  });
+          return await getProcessedHTML(container1 || container2, "grok");
+        }
+        resolve(await pollForContent(findContent));
+      });
+    },
+    [],
+    requestId,
+  );
 }
 
-async function getPerplexityAnswer(q) {
+async function getPerplexityAnswer(q, requestId) {
   const url = `https://www.perplexity.ai/search?q=${encodeURIComponent(q)}`;
 
-  return fetchAiAnswer(url, () => {
-    return new Promise(async (resolve) => {
-      async function findContent() {
-        const container = document.querySelector("#markdown-content-0");
-        if (!container) return "";
-        return await getProcessedHTML(container, "perplexity");
-      }
-      resolve(await pollForContent(findContent));
-    });
-  });
+  return fetchAiAnswer(
+    url,
+    () => {
+      return new Promise(async (resolve) => {
+        async function findContent() {
+          const container = document.querySelector("#markdown-content-0");
+          if (!container) return "";
+          return await getProcessedHTML(container, "perplexity");
+        }
+        resolve(await pollForContent(findContent));
+      });
+    },
+    [],
+    requestId,
+  );
 }
 
-async function getGeminiAnswer(q) {
+async function getGeminiAnswer(q, requestId) {
   const url = "https://gemini.google.com/app?hl=en";
 
   return fetchAiAnswer(
@@ -150,5 +199,6 @@ async function getGeminiAnswer(q) {
       });
     },
     [q],
+    requestId,
   );
 }

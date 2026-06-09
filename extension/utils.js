@@ -5,6 +5,40 @@ const KEYS = {
    CONTROLS: "Ai-Display-Controls",
 };
 
+/* ----------- Developer Mode (Error Suppression) ----------- */
+
+let __isDevMode = false;
+
+if (typeof chrome !== "undefined" && chrome.storage?.local) {
+   // Initialize devMode state
+   chrome.storage.local.get([KEYS.CONTROLS]).then((res) => {
+      const parsed =
+         typeof res[KEYS.CONTROLS] === "string"
+            ? JSON.parse(res[KEYS.CONTROLS])
+            : res[KEYS.CONTROLS];
+      __isDevMode = parsed?.devMode || false;
+   });
+
+   // Listen for settings changes
+   chrome.storage.onChanged.addListener((changes) => {
+      if (changes[KEYS.CONTROLS]) {
+         const parsed =
+            typeof changes[KEYS.CONTROLS].newValue === "string"
+               ? JSON.parse(changes[KEYS.CONTROLS].newValue)
+               : changes[KEYS.CONTROLS].newValue;
+         __isDevMode = parsed?.devMode || false;
+      }
+   });
+}
+
+// Override console.error globally
+const originalConsoleError = console.error;
+console.error = function (...args) {
+   if (__isDevMode) {
+      originalConsoleError.apply(console, args);
+   }
+};
+
 /* ----------- Tab Utilities ----------- */
 
 /** Returns the currently active tab in the focused window */
@@ -23,10 +57,16 @@ function getActiveTab() {
 function runtimeSendMessage(type, message, callback) {
    if (typeof message === "function") {
       chrome.runtime.sendMessage({ type }, (response) => {
+         if (chrome.runtime.lastError && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         }
          message(response);
       });
    } else {
       chrome.runtime.sendMessage({ ...message, type }, (response) => {
+         if (chrome.runtime.lastError && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         }
          callback && callback(response);
       });
    }
@@ -46,10 +86,16 @@ function runtimeOnMessage(type, callback) {
 function tabSendMessage(tabId, type, message, callback) {
    if (typeof message === "function") {
       chrome.tabs.sendMessage(tabId, { type }, (response) => {
+         if (chrome.runtime.lastError && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         }
          message(response);
       });
    } else {
       chrome.tabs.sendMessage(tabId, { ...message, type }, (response) => {
+         if (chrome.runtime.lastError && __isDevMode) {
+            originalConsoleError.call(console, "Message Error:", chrome.runtime.lastError);
+         }
          callback && callback(response);
       });
    }
