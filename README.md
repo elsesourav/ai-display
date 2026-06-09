@@ -14,7 +14,7 @@ A powerful Chrome extension that brings multiple AI assistants together in one c
 
 ### Download & Install
 
-**[⬇️ Download Here](https://github.com/elsesourav/ai-display/raw/main/ai-display-extension.zip)** *(Size: 21.49 MB, Updated: 2026-06-08)*
+**[⬇️ Download Here](https://github.com/elsesourav/ai-display/raw/main/ai-display-extension.zip)** *(Size: 21.49 MB, Updated: 2026-06-09)*
 
 **Installation Steps:**
 

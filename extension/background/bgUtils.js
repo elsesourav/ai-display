@@ -1,30 +1,25 @@
 /* ---------------- offscreen utils ---------------- */
-function ensureOffscreen() {
-   return new Promise(async (resolve) => {
-      if (!(await chrome.offscreen.hasDocument())) {
-         await chrome.offscreen.createDocument({
-            url: "./../offscreen/offscreen.html",
-            reasons: ["BLOBS"],
-            justification: "Need hidden DOM/canvas",
-         });
-      }
-      resolve();
-   });
+async function ensureOffscreen() {
+   if (!(await chrome.offscreen.hasDocument())) {
+      await chrome.offscreen.createDocument({
+         url: "./../offscreen/offscreen.html",
+         reasons: ["BLOBS"],
+         justification: "Need hidden DOM/canvas",
+      });
+   }
 }
 
 /* ---------------- offscreen ---------------- */
-function __OCR__(imageData, rectInfo) {
-   return new Promise(async (resolve) => {
-      await ensureOffscreen();
-      await wait(100);
+async function __OCR__(imageData, rectInfo) {
+   await ensureOffscreen();
+   await wait(100);
 
+   return new Promise((resolve) => {
       runtimeSendMessage("C_OF_START_QRC", { imageData, rectInfo }, (res) => {
-         console.log(res);
-
          if (res.success) {
             resolve(res);
          } else {
-            console.log("Failed to get rubrics PDF:", res.message);
+            console.error("OCR failed:", res.message);
             resolve(res.message);
          }
       });

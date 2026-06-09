@@ -1,75 +1,25 @@
 /* eslint-disable no-undef */
-/* eslint-disable no-unused-vars */
 "use strict";
 
-// Chrome Extension Utilities for Options Page Components
-// This file provides a clean interface to Chrome extension APIs for React components
+// Chrome Extension Utilities for React Components
+// Provides a clean interface to Chrome extension APIs
 
-// Detect Chrome extension environment once
 const hasChrome =
    typeof chrome !== "undefined" && typeof chrome.runtime !== "undefined";
-
-/**
- * Local Storage utilities (standard browser localStorage)
- */
-function setDataFromLocalStorage(key, object) {
-   let data = JSON.stringify(object);
-   localStorage.setItem(key, data);
-}
 
 const KEYS = {
    SETTINGS: "Ai-Display-Settings",
    CONTROLS: "Ai-Display-Controls",
 };
 
-function getDataFromLocalStorage(key) {
-   return JSON.parse(localStorage.getItem(key));
-}
+/* ----------- General Utilities ----------- */
 
-function setDataToLocalStorage(key, object) {
-   let data = JSON.stringify(object);
-   localStorage.setItem(key, data);
-}
-
-function getDataToLocalStorage(key) {
-   return JSON.parse(localStorage.getItem(key));
-}
-
-/**
- * JSON utilities
- */
-function OBJECTtoJSON(data) {
-   return JSON.stringify(data);
-}
-
-function JSONtoOBJECT(data) {
-   return JSON.parse(data);
-}
-
-/**
- * Utility functions
- */
-function reloadLocation() {
-   window.location.reload();
-}
-
-function map(os, oe, ns, ne, t, isRound = true) {
-   const r = (ne - ns) / (oe - os);
-   let v = r * (t - os) + ns;
-   v = Math.min(ne, Math.max(ns, v));
-   return isRound ? Math.round(v) : v;
-}
-
-function getFormatTime(t) {
-   const date = new Date(0);
-   date.setSeconds(t);
-   return date.toISOString().substr(11, 8);
-}
-
+/** Returns a promise that resolves after `ms` milliseconds */
 function wait(ms) {
    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Creates a debounced version of `func` with dynamic delay from `delayFn` */
 const debounce = (func, delayFn) => {
    let debounceTimer;
    return function (...args) {
@@ -80,42 +30,32 @@ const debounce = (func, delayFn) => {
    };
 };
 
-/**
- * Chrome Extension API utilities
- */
+/* ----------- Tab Utilities ----------- */
 
-// Get active tab
+/** Returns the currently active tab in the focused window */
 function getActiveTab() {
    return new Promise((resolve) => {
       if (!hasChrome || !chrome.tabs?.query) {
-         console.warn("Chrome tabs API not available: getActiveTab() noop");
          resolve(null);
          return;
       }
       chrome.tabs.query(
-         {
-            currentWindow: true,
-            active: true,
-         },
-         (tabs) => {
-            resolve(tabs?.[0] ?? null);
-         }
+         { currentWindow: true, active: true },
+         (tabs) => resolve(tabs?.[0] ?? null)
       );
    });
 }
 
-// Chrome Storage Sync utilities
+/* ----------- Chrome Storage Sync ----------- */
+
 function chromeStorageSet(key, value, callback) {
    return new Promise((resolve) => {
       if (!hasChrome || !chrome.storage?.sync?.set) {
-         console.warn("Chrome storage.sync API not available: set() noop");
          callback && callback();
          resolve();
          return;
       }
-      let items = {};
-      items[key] = value;
-      chrome.storage.sync.set(items, function () {
+      chrome.storage.sync.set({ [key]: value }, () => {
          if (chrome.runtime.lastError) {
             console.error("Error setting item:", chrome.runtime.lastError);
          } else if (callback) {
@@ -129,12 +69,11 @@ function chromeStorageSet(key, value, callback) {
 function chromeStorageGet(key, callback = () => {}) {
    return new Promise((resolve) => {
       if (!hasChrome || !chrome.storage?.sync?.get) {
-         console.warn("Chrome storage.sync API not available: get() noop");
          callback(undefined);
          resolve(null);
          return;
       }
-      chrome.storage.sync.get([key], function (result) {
+      chrome.storage.sync.get([key], (result) => {
          if (chrome?.runtime?.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
             resolve(null);
@@ -146,19 +85,21 @@ function chromeStorageGet(key, callback = () => {}) {
    });
 }
 
-// Chrome Storage Local utilities
+/* ----------- Chrome Storage Local ----------- */
+
+/**
+ * Set a value in chrome.storage.local.
+ * NOTE: Values are JSON.stringify'd before storage.
+ */
 function chromeStorageSetLocal(key, value, callback) {
    return new Promise((resolve) => {
       if (!hasChrome || !chrome.storage?.local?.set) {
-         console.warn(
-            "Chrome storage.local API not available: setLocal() noop"
-         );
          callback && callback(false);
          resolve();
          return;
       }
-      const obj = JSON.stringify(value);
-      chrome.storage.local.set({ [key]: obj }, () => {
+      const serialized = JSON.stringify(value);
+      chrome.storage.local.set({ [key]: serialized }, () => {
          if (chrome.runtime.lastError) {
             console.error("Error setting item:", chrome.runtime.lastError);
          } else if (callback) {
@@ -169,12 +110,13 @@ function chromeStorageSetLocal(key, value, callback) {
    });
 }
 
+/**
+ * Get a value from chrome.storage.local.
+ * NOTE: Values are automatically JSON.parse'd on retrieval.
+ */
 function chromeStorageGetLocal(key, callback) {
    return new Promise((resolve) => {
       if (!hasChrome || !chrome.storage?.local?.get) {
-         console.warn(
-            "Chrome storage.local API not available: getLocal() noop"
-         );
          callback && callback(null);
          resolve(null);
          return;
@@ -184,10 +126,10 @@ function chromeStorageGetLocal(key, callback) {
             console.error("Error getting item:", chrome.runtime.lastError);
             resolve(null);
          } else {
-            const OBJ =
+            const parsed =
                typeof result[key] === "string" ? JSON.parse(result[key]) : null;
-            callback && callback(OBJ);
-            resolve(OBJ);
+            callback && callback(parsed);
+            resolve(parsed);
          }
       });
    });
@@ -196,32 +138,30 @@ function chromeStorageGetLocal(key, callback) {
 function chromeStorageRemoveLocal(key) {
    return new Promise((resolve) => {
       if (!hasChrome || !chrome.storage?.local?.remove) {
-         console.warn(
-            "Chrome storage.local API not available: removeLocal() noop"
-         );
          resolve();
          return;
       }
       chrome.storage.local.remove(key, () => {
          if (chrome.runtime.lastError) {
-            console.log("Error removing item:", chrome.runtime.lastError);
+            console.error("Error removing item:", chrome.runtime.lastError);
          }
          resolve();
       });
    });
 }
 
-// Runtime messaging utilities
+/* ----------- Messaging Utilities ----------- */
+
+/** Send a message via chrome.runtime to the background/service worker */
 function runtimeSendMessage(type, message, callback) {
    if (!hasChrome || !chrome.runtime?.sendMessage) {
-      console.warn("Chrome runtime API not available: sendMessage() noop");
       if (typeof message === "function") message(undefined);
       else callback && callback(undefined);
       return;
    }
    if (typeof message === "function") {
       chrome.runtime.sendMessage({ type }, (response) => {
-         message && message(response);
+         message(response);
       });
    } else {
       chrome.runtime.sendMessage({ ...message, type }, (response) => {
@@ -230,11 +170,9 @@ function runtimeSendMessage(type, message, callback) {
    }
 }
 
+/** Listen for a specific message type via chrome.runtime */
 function runtimeOnMessage(type, callback) {
-   if (!hasChrome || !chrome.runtime?.onMessage?.addListener) {
-      console.warn("Chrome runtime API not available: onMessage() noop");
-      return;
-   }
+   if (!hasChrome || !chrome.runtime?.onMessage?.addListener) return;
    chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (type === message.type) {
          callback(message, sender, response);
@@ -243,17 +181,16 @@ function runtimeOnMessage(type, callback) {
    });
 }
 
-// Tab messaging utilities
+/** Send a message to a specific tab */
 function tabSendMessage(tabId, type, message, callback) {
    if (!hasChrome || !chrome.tabs?.sendMessage) {
-      console.warn("Chrome tabs API not available: sendMessage() noop");
       if (typeof message === "function") message(undefined);
       else callback && callback(undefined);
       return;
    }
    if (typeof message === "function") {
       chrome.tabs.sendMessage(tabId, { type }, (response) => {
-         message && message(response);
+         message(response);
       });
    } else {
       chrome.tabs.sendMessage(tabId, { ...message, type }, (response) => {
@@ -262,11 +199,12 @@ function tabSendMessage(tabId, type, message, callback) {
    }
 }
 
-// Page messaging utilities (for injected scripts)
+/** Post a message to a window (for iframe <-> content script communication) */
 function pagePostMessage(type, data, contentWindow = window) {
    contentWindow?.postMessage({ type, data }, "*");
 }
 
+/** Listen for postMessage events of a specific type */
 function pageOnMessage(type, callback) {
    window.addEventListener("message", (event) => {
       if (event.data.type === type) {
@@ -275,86 +213,10 @@ function pageOnMessage(type, callback) {
    });
 }
 
-// Script and CSS injection utilities
-function injectScript(src, type, doc = document || document.documentElement) {
-   const script = document.createElement("script");
-   script.src =
-      hasChrome && chrome.runtime?.getURL ? chrome.runtime.getURL(src) : src;
-   if (type) script.type = type;
-   script.onload = () => script.remove();
-   doc.appendChild(script);
-}
+/* ----------- Export ----------- */
 
-function injectJSCode(code) {
-   const scriptElement = document.createElement("script");
-   scriptElement.setAttribute("type", "text/javascript");
-   scriptElement.textContent = code;
-   document.documentElement.appendChild(scriptElement);
-}
-
-function injectJSLink(src) {
-   const scriptElement = document.createElement("script");
-   scriptElement.setAttribute("type", "text/javascript");
-   scriptElement.setAttribute("src", src);
-   document.documentElement.appendChild(scriptElement);
-}
-
-function injectCSSFile(
-   src,
-   ref = "stylesheet",
-   type = "text/css",
-   crossorigin,
-   doc = document || document.documentElement
-) {
-   const link = document.createElement("link");
-   if (ref) link.rel = ref;
-   if (type) link.type = "text/css";
-   if (crossorigin) link.setAttribute("crossorigin", "anonymous");
-   link.href =
-      hasChrome && chrome.runtime?.getURL ? chrome.runtime.getURL(src) : src;
-   doc.appendChild(link);
-}
-
-function injectCSSCode(cssCode) {
-   const style = document.createElement("style");
-   style.type = "text/css";
-   style.textContent = cssCode;
-   (document.head || document.documentElement).appendChild(style);
-}
-
-function injectCSSLink(href) {
-   const link = document.createElement("link");
-   link.rel = "stylesheet";
-   link.type = "text/css";
-   link.href = href;
-   (document.head || document.documentElement).appendChild(link);
-}
-
-// DOM utilities
-function setInputLikeHuman(element) {
-   const event = new Event("change", { bubbles: true });
-   element.dispatchEvent(event);
-}
-
-// Scripting API utilities
-function executeScript(tabId, func, ...args) {
-   if (!hasChrome || !chrome.scripting?.executeScript) {
-      console.warn("Chrome scripting API not available: executeScript() noop");
-      return;
-   }
-   chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] });
-}
-
-/**
- * Convenient React-friendly wrapper object
- * This provides a cleaner interface for React components
- */
 const extensionUtils = {
-   // Browser localStorage
-   setDataToLocalStorage,
-   getDataToLocalStorage,
-
-   // Messaging utilities
+   // Messaging
    runtimeSendMessage,
    runtimeOnMessage,
    tabSendMessage,
@@ -363,39 +225,24 @@ const extensionUtils = {
 
    // Tab utilities
    getActiveTab,
-   executeScript,
 
-   // Injection utilities
-   injectScript,
-   injectJSCode,
-   injectJSLink,
-   injectCSSFile,
-   injectCSSCode,
-   injectCSSLink,
-
-   // Utility functions
-   wait,
-   debounce,
-   map,
-   getFormatTime,
-   reloadLocation,
-   setInputLikeHuman,
-   OBJECTtoJSON,
-   JSONtoOBJECT,
-
-   // Direct function access for backward compatibility
+   // Storage
    chromeStorageSet,
    chromeStorageGet,
    chromeStorageSetLocal,
    chromeStorageGetLocal,
    chromeStorageRemoveLocal,
+
+   // General utilities
+   wait,
+   debounce,
+
+   // Constants
    KEYS,
 };
 
-// Make available globally for script tags
 if (typeof window !== "undefined") {
    window.extensionUtils = extensionUtils;
 }
 
-// Export the main object
 export default extensionUtils;

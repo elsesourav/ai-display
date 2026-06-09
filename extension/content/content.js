@@ -1,21 +1,20 @@
-console.log("content script loaded");
+/* --- DOM Cleanup Helpers --- */
 
 function removeElementBySelector(container, selector) {
   container.querySelector(selector)?.remove();
 }
+
 function removeElementsBySelector(container, selector) {
   container.querySelectorAll(selector)?.forEach((el) => el.remove());
 }
 
+/** Strip all attributes from an element and all its descendants */
 function removeAllAttributes(container) {
-  // Remove all attributes from the container itself
   if (container.attributes) {
     Array.from(container.attributes).forEach((attr) => {
       container.removeAttribute(attr.name);
     });
   }
-
-  // Remove all attributes from all child elements recursively
   container.querySelectorAll("*").forEach((element) => {
     if (element.attributes) {
       Array.from(element.attributes).forEach((attr) => {
@@ -25,44 +24,51 @@ function removeAllAttributes(container) {
   });
 }
 
-const CONTENT_STABLE_WAIT_TIME = 1500; // ms - wait time for content to be stable
+/* --- Content Scraping Constants --- */
 
-function ___getHTMLCodeWithCss(container, provider) {
+const CONTENT_STABLE_WAIT_TIME = 1500; // ms - wait for content to stabilize
+
+/* --- Main HTML Extraction --- */
+
+/**
+ * Extracts the visible HTML from a container, applying inline styles
+ * and cleaning provider-specific UI elements (buttons, icons, etc.).
+ * Returns a Promise that resolves with the cleaned outerHTML string
+ * once the content has stabilized (no more text changes).
+ */
+function getProcessedHTML(container, provider) {
   return new Promise((resolve) => {
-    // Validation
-    const isMinTextComplete = container?.textContent?.trim()?.length < 10;
-    if (isMinTextComplete) {
+    if (container?.textContent?.trim()?.length < 10) {
       resolve(null);
       return;
     }
 
-    // Content monitoring variables
     let lastContent = container.innerHTML;
     let intervalId;
 
-    // Helper function to get user-applied styles
+    /** Compare computed styles against a fresh default element */
     function getUserAppliedStyles(el) {
       const computed = getComputedStyle(el);
       const fresh = document.createElement(el.tagName);
       document.body.appendChild(fresh);
       const defaultStyles = getComputedStyle(fresh);
 
-      let applied = {};
-      for (let prop of computed) {
+      const applied = {};
+      for (const prop of computed) {
         if (computed[prop] !== defaultStyles[prop]) {
           applied[prop] = computed[prop];
         }
       }
-
       fresh.remove();
       return applied;
     }
 
-    // Apply filtered styles to cloned elements
+    /** Recursively copy relevant inline styles from src to dst */
     function applyStyles(src, dst) {
       if (!src || !dst) return;
       const maxWidth = "400px";
 
+      // Remove HTML comment nodes from the clone
       if (src.nodeType === Node.COMMENT_NODE) {
         dst.remove();
         return;
@@ -76,37 +82,22 @@ function ___getHTMLCodeWithCss(container, provider) {
         let styleStr = "";
 
         const allowedStyles = [
-          "margin",
-          "margin-top",
-          "margin-right",
-          "margin-bottom",
-          "margin-left",
-          "padding",
-          "padding-top",
-          "padding-right",
-          "padding-bottom",
-          "padding-left",
-          "border-radius",
-          "font-weight",
-          "font-size",
+          "margin", "margin-top", "margin-right", "margin-bottom", "margin-left",
+          "padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+          "border-radius", "font-weight", "font-size",
         ];
 
         Object.entries(appliedStyles).forEach(([prop, val]) => {
           if (prop === "width" || prop === "max-width") {
             styleStr += `${prop}:min(${val}, ${maxWidth});`;
           } else if (
-            prop === "height" ||
-            prop === "max-height" ||
-            prop === "min-height"
+            prop === "height" || prop === "max-height" || prop === "min-height"
           ) {
             styleStr += `${prop}:auto;`;
           } else if (
             allowedStyles.includes(prop) &&
-            val &&
-            val !== "auto" &&
-            val !== "normal" &&
-            val !== "none" &&
-            val !== "rgba(0, 0, 0, 0)"
+            val && val !== "auto" && val !== "normal" &&
+            val !== "none" && val !== "rgba(0, 0, 0, 0)"
           ) {
             styleStr += `${prop}:${val};`;
           }
@@ -117,7 +108,7 @@ function ___getHTMLCodeWithCss(container, provider) {
         }
       }
 
-      // Recursively apply styles to children
+      // Use static arrays to avoid live NodeList shifting when removing comments
       const srcChildren = Array.from(src.childNodes);
       const dstChildren = Array.from(dst.childNodes);
       for (let i = 0; i < srcChildren.length; i++) {
@@ -125,8 +116,8 @@ function ___getHTMLCodeWithCss(container, provider) {
       }
     }
 
-    // Clean provider-specific elements
-    function cleanProviderSpecificElements(container, provider) {
+    /** Remove provider-specific interactive UI elements */
+    function cleanProviderElements(container, provider) {
       removeElementsBySelector(container, "button");
       removeElementsBySelector(container, "* > a:has(svg)");
 
@@ -170,17 +161,16 @@ function ___getHTMLCodeWithCss(container, provider) {
       }
     }
 
-    // Generate final HTML with all processing
+    /** Clone, style, strip attributes, and return final clean HTML */
     function generateHTMLCode() {
-      cleanProviderSpecificElements(container, provider);
+      cleanProviderElements(container, provider);
       const clone = container.cloneNode(true);
       applyStyles(container, clone);
       removeAllAttributes(clone);
-      const finalHTML = clone.outerHTML;
-      return finalHTML;
+      return clone.outerHTML;
     }
 
-    // Monitor content changes
+    /** Poll until content stops changing, then resolve with final HTML */
     function checkForUpdates() {
       const currentContent = container.textContent.length;
 
@@ -188,79 +178,55 @@ function ___getHTMLCodeWithCss(container, provider) {
         lastContent = currentContent;
       } else {
         clearInterval(intervalId);
-        const htmlCode = generateHTMLCode();
-        resolve(htmlCode);
+        resolve(generateHTMLCode());
       }
     }
 
-    // Start monitoring
     checkForUpdates();
     intervalId = setInterval(checkForUpdates, CONTENT_STABLE_WAIT_TIME);
   });
 }
 
-function ___pollForContent(cleanFunction) {
-  const maxLimit = 40;
-  const checkDelay = 500; // ms
+/* --- Content Polling --- */
+
+const POLL_MAX_ATTEMPTS = 40;
+const POLL_CHECK_DELAY = 500; // ms
+
+/**
+ * Repeatedly calls `fetchFn` until it returns truthy content.
+ * Returns an error message if `fetchFn` returns `false` (limit exceeded)
+ * or after max attempts.
+ */
+function pollForContent(fetchFn) {
+  const errorMsg =
+    "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>";
+
   return new Promise(async (resolve) => {
-    for (let i = 0; i < maxLimit; i++) {
-      let html = await cleanFunction();
+    for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
+      const html = await fetchFn();
 
       if (html === false) {
-        resolve(
-          "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>",
-        );
+        resolve(errorMsg);
+        return;
       } else if (html) {
         resolve(html);
         return;
-      } else await new Promise((r) => setTimeout(r, checkDelay));
+      }
+      await new Promise((r) => setTimeout(r, POLL_CHECK_DELAY));
     }
-    resolve(
-      "<mark>Limit Exceeded or Slow Network, Try Again after some time.</mark>",
-    );
+    resolve(errorMsg);
   });
 }
 
-async function ___askGPT(prompt) {
-  const editor = document.querySelector("div.ProseMirror");
+/* --- AI Provider Input Helpers --- */
 
-  if (editor) {
-    editor.textContent = prompt;
-    editor.dispatchEvent(
-      new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        inputType: "insertText",
-        data: prompt,
-      }),
-    );
-
-    await new Promise((r) => setTimeout(r, 100));
-
-    editor.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        bubbles: true,
-        cancelable: true,
-        key: "Enter",
-        code: "Enter",
-        which: 13,
-        keyCode: 13,
-      }),
-    );
-  } else {
-    console.error("ChatGPT input box not found.");
-  }
-}
-
-async function ___askGemini(prompt) {
-  // Find Gemini’s rich-text editor
+/** Type a prompt into Gemini's editor and submit it */
+async function submitToGemini(prompt) {
   const editor = document.querySelector(
     "div.ql-editor.textarea, rich-textarea > div, div[contenteditable='true']",
   );
-  console.log(editor);
 
   if (editor) {
-    // Clear any existing text
     editor.textContent = "";
     editor.textContent = prompt;
 
@@ -281,12 +247,14 @@ async function ___askGemini(prompt) {
     if (sendBtn) {
       sendBtn.click();
     } else {
-      console.error("Send button not found.");
+      console.error("Gemini send button not found.");
     }
   } else {
     console.error("Gemini input box not found.");
   }
 }
+
+/* --- Global Styles --- */
 
 onload = () => {
   const style = document.createElement("style");

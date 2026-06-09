@@ -5,70 +5,25 @@ const KEYS = {
    CONTROLS: "Ai-Display-Controls",
 };
 
-function setDataFromLocalStorage(key, object) {
-   let data = JSON.stringify(object);
-   localStorage.setItem(key, data);
-}
+/* ----------- Tab Utilities ----------- */
 
-function getDataFromLocalStorage(key) {
-   console.log(localStorage);
-
-   return JSON.parse(localStorage.getItem(key));
-}
-
-function reloadLocation() {
-   window.location.reload();
-}
-
-function map(os, oe, ns, ne, t, isRound = true) {
-   const r = (ne - ns) / (oe - os);
-   let v = r * (t - os) + ns;
-   v = Math.min(ne, Math.max(ns, v));
-   return isRound ? Math.round(v) : v;
-}
-
-function setDataToLocalStorage(key, object) {
-   let data = JSON.stringify(object);
-   localStorage.setItem(key, data);
-}
-
-function getDataToLocalStorage(key) {
-   return JSON.parse(localStorage.getItem(key));
-}
-
-function OBJECTtoJSON(data) {
-   return JSON.stringify(data);
-}
-
-function JSONtoOBJECT(data) {
-   return JSON.parse(data);
-}
-
-/* ----------- extension utils ----------- */
+/** Returns the currently active tab in the focused window */
 function getActiveTab() {
    return new Promise((resolve) => {
       chrome.tabs.query(
-         {
-            currentWindow: true,
-            active: true,
-         },
-         (tabs) => {
-            resolve(tabs[0]);
-         }
+         { currentWindow: true, active: true },
+         (tabs) => resolve(tabs[0])
       );
    });
 }
 
-function getFormatTime(t) {
-   const date = new Date(0);
-   date.setSeconds(t);
-   return date.toISOString().substr(11, 8);
-}
+/* ----------- Messaging Utilities ----------- */
 
+/** Send a message via chrome.runtime to the background/service worker */
 function runtimeSendMessage(type, message, callback) {
    if (typeof message === "function") {
       chrome.runtime.sendMessage({ type }, (response) => {
-         message && message(response);
+         message(response);
       });
    } else {
       chrome.runtime.sendMessage({ ...message, type }, (response) => {
@@ -77,19 +32,7 @@ function runtimeSendMessage(type, message, callback) {
    }
 }
 
-function tabSendMessage(tabId, type, message, callback) {
-   // if third parameter is not pass. in message parameter pass callback function
-   if (typeof message === "function") {
-      chrome.tabs.sendMessage(tabId, { type }, (response) => {
-         message && message(response);
-      });
-   } else {
-      chrome.tabs.sendMessage(tabId, { ...message, type }, (response) => {
-         callback && callback(response);
-      });
-   }
-}
-
+/** Listen for a specific message type via chrome.runtime */
 function runtimeOnMessage(type, callback) {
    chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (type === message.type) {
@@ -99,14 +42,25 @@ function runtimeOnMessage(type, callback) {
    });
 }
 
+/** Send a message to a specific tab */
+function tabSendMessage(tabId, type, message, callback) {
+   if (typeof message === "function") {
+      chrome.tabs.sendMessage(tabId, { type }, (response) => {
+         message(response);
+      });
+   } else {
+      chrome.tabs.sendMessage(tabId, { ...message, type }, (response) => {
+         callback && callback(response);
+      });
+   }
+}
+
+/** Post a message to a window (for iframe <-> content script communication) */
 function pagePostMessage(type, data, contentWindow = window) {
    contentWindow?.postMessage({ type, data }, "*");
 }
 
-/* ######## send inject script to => content script ########
-   pagePostMessage("i_c", { some: "data" });
-*/
-
+/** Listen for postMessage events of a specific type */
 function pageOnMessage(type, callback) {
    window.addEventListener("message", (event) => {
       if (event.data.type === type) {
@@ -115,35 +69,12 @@ function pageOnMessage(type, callback) {
    });
 }
 
-/* ######## accept inject script to => content script ########
-pageOnMessage("i_c", (data, event) => {
-   console.log(data);
-   console.log(event);
-});
-*/
+/* ----------- Chrome Storage Utilities ----------- */
 
-const debounce = (func, delayFn) => {
-   let debounceTimer;
-   return function (...args) {
-      const context = this;
-      const delay = delayFn();
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => func.apply(context, args), delay);
-   };
-};
-
-/**
- * @param {number} ms
- **/
-function wait(ms) {
-   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
+/** Set a value in chrome.storage.sync */
 function chromeStorageSet(key, value, callback) {
    return new Promise((resolve) => {
-      let items = {};
-      items[key] = value;
-      chrome.storage.sync.set(items, function () {
+      chrome.storage.sync.set({ [key]: value }, () => {
          if (chrome.runtime.lastError) {
             console.error("Error setting item:", chrome.runtime.lastError);
          } else if (callback) {
@@ -153,17 +84,14 @@ function chromeStorageSet(key, value, callback) {
       });
    });
 }
-// Example usage:
-// chromeStorageSet("myKey", "myValue", function () {
-//    console.log("Item set");
-// });
 
+/** Get a value from chrome.storage.sync */
 function chromeStorageGet(key, callback = () => {}) {
    return new Promise((resolve) => {
-      chrome.storage.sync.get([key], function (result) {
+      chrome.storage.sync.get([key], (result) => {
          if (chrome.runtime.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
-         } else if (callback) {
+         } else {
             callback(result[key]);
             resolve(result[key]);
          }
@@ -171,94 +99,52 @@ function chromeStorageGet(key, callback = () => {}) {
    });
 }
 
-function setInputLikeHuman(element) {
-   const event = new Event("change", { bubbles: true });
-   element.dispatchEvent(event);
-}
-
+/**
+ * Set a value in chrome.storage.local.
+ * NOTE: Values are JSON.stringify'd before storage.
+ */
 function chromeStorageSetLocal(key, value, callback) {
-   const obj = JSON.stringify(value);
-
-   chrome.storage.local.set({ [key]: obj }).then(() => {
+   const serialized = JSON.stringify(value);
+   chrome.storage.local.set({ [key]: serialized }).then(() => {
       if (chrome.runtime.lastError) {
          console.error("Error setting item:", chrome.runtime.lastError);
       } else if (callback) {
          callback(true);
-      } else {
-         return true;
       }
    });
 }
 
+/**
+ * Get a value from chrome.storage.local.
+ * NOTE: Values are automatically JSON.parse'd on retrieval.
+ */
 function chromeStorageGetLocal(key, callback) {
    return new Promise((resolve) => {
       chrome.storage.local.get([key]).then((result) => {
          if (chrome.runtime.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
          } else {
-            const OBJ =
+            const parsed =
                typeof result[key] === "string" ? JSON.parse(result[key]) : null;
-            callback && callback(OBJ);
-            resolve(OBJ);
+            callback && callback(parsed);
+            resolve(parsed);
          }
       });
    });
 }
 
+/** Remove a value from chrome.storage.local */
 function chromeStorageRemoveLocal(key) {
    chrome.storage.local.remove(key).then(() => {
       if (chrome.runtime.lastError) {
-         console.log("Error removing item:", chrome.runtime.lastError);
+         console.error("Error removing item:", chrome.runtime.lastError);
       }
    });
 }
 
-function copyTextToClipboard(text) {
-   const textarea = document.createElement("textarea");
-   textarea.value = text;
-   textarea.style.position = "fixed"; // Prevent scrolling to bottom
-   document.body.appendChild(textarea);
-   textarea.select();
+/* ----------- Script Injection Utilities ----------- */
 
-   try {
-      const successful = document.execCommand("copy");
-      const msg = successful ? "successful" : "unsuccessful";
-      console.log("Copying text " + msg);
-
-      // Show toast notification if document.body exists
-      if (document.body) {
-         showToast(
-            successful ? "Copied to clipboard!" : "Copy failed",
-            successful ? "success" : "error"
-         );
-      }
-   } catch (err) {
-      console.error("Unable to copy", err);
-      // Show error toast if document.body exists
-      if (document.body) {
-         showToast("Unable to copy: " + err.message, "error");
-      }
-   }
-
-   document.body.removeChild(textarea);
-}
-
-async function getSecretKey() {
-   const secret = "af3f-34bj5-245hh-g341g";
-   const encoder = new TextEncoder();
-   const keyMaterial = await crypto.subtle.digest(
-      "SHA-256",
-      encoder.encode(secret)
-   );
-   return crypto.subtle.importKey(
-      "raw",
-      keyMaterial,
-      { name: "AES-GCM" },
-      false,
-      ["encrypt", "decrypt"]
-   );
-}
-
+/** Inject a JavaScript file into a document */
 function injectScript(src, type, doc = document || document.documentElement) {
    const script = document.createElement("script");
    script.src = chrome.runtime.getURL(src);
@@ -267,21 +153,7 @@ function injectScript(src, type, doc = document || document.documentElement) {
    doc.appendChild(script);
 }
 
-function injectJSCode(code) {
-   const scriptElement = document.createElement("script");
-   scriptElement.setAttribute("type", "text/javascript");
-   scriptElement.textContent = code;
-   document.documentElement.appendChild(scriptElement);
-}
-
-// Function to inject external JavaScript file
-function injectJSLink(src) {
-   const scriptElement = document.createElement("script");
-   scriptElement.setAttribute("type", "text/javascript");
-   scriptElement.setAttribute("src", src);
-   document.documentElement.appendChild(scriptElement);
-}
-
+/** Inject a CSS file into a document */
 function injectCSSFile(
    src,
    ref = "stylesheet",
@@ -297,111 +169,40 @@ function injectCSSFile(
    doc.appendChild(link);
 }
 
-function injectCSSCode(cssCode) {
-   const style = document.createElement("style");
-   style.type = "text/css";
-   style.textContent = cssCode;
-   (document.head || document.documentElement).appendChild(style);
-}
+/* ----------- Scripting API Utilities ----------- */
 
-function injectCSSLink(href) {
-   const link = document.createElement("link");
-   link.rel = "stylesheet";
-   link.type = "text/css";
-   link.href = href;
-   (document.head || document.documentElement).appendChild(link);
-}
-
+/** Execute a function in a tab's context */
 function executeScript(tabId, func, ...args) {
    chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] });
 }
 
+/** Execute a function in a tab's context and return the result */
 function executeScriptReturn(tabId, func, _return = (r) => r, args = []) {
    chrome.scripting.executeScript(
-      {
-         target: { tabId },
-         func,
-         args,
-      },
+      { target: { tabId }, func, args },
       _return
    );
 }
 
-/* ################# EXAMPLE ##################
-   executeScript(tabId, (text, obj, etc) => {
-      console.log("Hello from the injected script!");
-   }, text, obj, etc);
-*/
+/* ----------- General Utilities ----------- */
 
-async function encryptData(data) {
-   const key = await getSecretKey();
-   const encoder = new TextEncoder();
-   const iv = crypto.getRandomValues(new Uint8Array(12));
-   const encryptedData = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: iv },
-      key,
-      encoder.encode(data)
-   );
+/** Returns a promise that resolves after `ms` milliseconds */
+function wait(ms) {
+   return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-   return {
-      iv: btoa(String.fromCharCode(...iv)),
-      data: btoa(String.fromCharCode(...new Uint8Array(encryptedData))),
+/** Creates a debounced version of `func` with dynamic delay */
+const debounce = (func, delayFn) => {
+   let debounceTimer;
+   return function (...args) {
+      const context = this;
+      const delay = delayFn();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => func.apply(context, args), delay);
    };
-}
+};
 
-async function decryptData(encrypted) {
-   const key = await getSecretKey();
-   const iv = new Uint8Array(
-      atob(encrypted.iv)
-         .split("")
-         .map((c) => c.charCodeAt(0))
-   );
-   const data = new Uint8Array(
-      atob(encrypted.data)
-         .split("")
-         .map((c) => c.charCodeAt(0))
-   );
-
-   const decryptedData = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: iv },
-      key,
-      data
-   );
-
-   const decoder = new TextDecoder();
-   return decoder.decode(decryptedData);
-}
-
-function removeIFrame(selector) {
-   const existingFrame = document.querySelector(selector);
-   if (existingFrame) existingFrame.remove();
-}
-
-async function uploadImageToCloudinary(file) {
-   const cloudName = "diysvbtwq";
-   const uploadPreset = "AiDisplay";
-
-   const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
-
-   const formData = new FormData();
-   formData.append("file", file);
-   formData.append("upload_preset", uploadPreset);
-
-   const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-   });
-
-   const data = await response.json();
-
-   if (response.ok) {
-      return data.secure_url;
-   } else {
-      console.error("Upload error:", data);
-      throw new Error(data.error.message);
-   }
-}
-
+/** Check if a tab is an internal browser page (chrome://, edge://, about://) */
 function isInternalPage(tab) {
    return /^(chrome|edge|about):\/\//.test(tab.url);
 }

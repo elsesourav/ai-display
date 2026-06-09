@@ -1,12 +1,11 @@
 /*
   This script runs in the ISOLATED world.
-  It reads the alwaysActiveEnabled flag from chrome.storage.local
-  and sets all feature flags on the hidden DOM port element so that
-  alwaysActiveMain.js (running in MAIN world) can read them.
+  It reads the alwaysActiveHosts array from chrome.storage.local
+  and checks if the current page's hostname is in the list.
+  If yes, it enables all spoofing features via the hidden DOM port element
+  so that alwaysActiveMain.js (running in MAIN world) can read them.
 
-  The reference extension stores individual feature flags (blur, focus, etc.)
-  but since we always want ALL options active, we hardcode them all to true
-  whenever the feature is enabled.
+  All feature flags are hardcoded to true (no per-feature toggles).
 */
 
 let port;
@@ -25,35 +24,45 @@ port.addEventListener("state", () => {
   port.dataset.hidden = document.hidden;
 });
 
-const update = () =>
-  chrome.storage.local.get(
-    {
-      alwaysActiveEnabled: "false",
-    },
-    (prefs) => {
-      // chromeStorageSetLocal in utils.js stores values as JSON.stringify'd strings
-      // so true becomes "true" (a JSON string), which chrome.storage stores as the string '"true"'
-      // We need to handle both raw boolean and stringified JSON
-      let enabled = prefs.alwaysActiveEnabled;
-      if (typeof enabled === "string") {
-        try {
-          enabled = JSON.parse(enabled);
-        } catch (e) {}
+const update = () => {
+  chrome.storage.local.get(["alwaysActiveHosts"], (result) => {
+    // chromeStorageSetLocal wraps values with JSON.stringify,
+    // so the stored value is a JSON string like '["example.com"]'
+    let hosts = result.alwaysActiveHosts;
+
+    // Parse the stringified JSON if needed
+    if (typeof hosts === "string") {
+      try {
+        hosts = JSON.parse(hosts);
+      } catch (e) {
+        hosts = [];
       }
-      const isOn = enabled === true || enabled === "true";
+    }
+    if (!Array.isArray(hosts)) {
+      hosts = [];
+    }
 
-      port.dataset.enabled = isOn ? "true" : "false";
+    // Get the current hostname (use parent for iframes)
+    let hostname = location.hostname;
+    try {
+      hostname = parent.location.hostname;
+    } catch (e) {}
 
-      // All features are always ON when enabled (user requested no per-feature toggles)
-      port.dataset.blur = "true";
-      port.dataset.focus = "true";
-      port.dataset.redirect = "true";
-      port.dataset.mouseleave = "true";
-      port.dataset.mouseout = "true";
-      port.dataset.visibility = "true";
-      port.dataset.pointercapture = "true";
-    },
-  );
+    // Check if this hostname is in the active list
+    const isActive = hosts.includes(hostname) || hosts.includes("*");
+
+    port.dataset.enabled = isActive ? "true" : "false";
+
+    // All features are always ON when enabled (no per-feature toggles)
+    port.dataset.blur = "true";
+    port.dataset.focus = "true";
+    port.dataset.redirect = "true";
+    port.dataset.mouseleave = "true";
+    port.dataset.mouseout = "true";
+    port.dataset.visibility = "true";
+    port.dataset.pointercapture = "true";
+  });
+};
 update();
 chrome.storage.onChanged.addListener(update);
 
