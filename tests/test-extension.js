@@ -132,6 +132,15 @@ const controlsPath = path.join(rootDir, "src", "components", "Controls.jsx");
 const controlsCode = fs.readFileSync(controlsPath, "utf-8");
 assert(!controlsCode.includes("settings.enable"), "Controls.jsx uses safe optional chaining for settings");
 
+const requestAiPath = path.join(rootDir, "scripts", "background", "requestAi.js");
+const requestAiCode = fs.readFileSync(requestAiPath, "utf-8");
+assert(requestAiCode.includes("cancelAllAiRequests"), "requestAi.js defines cancelAllAiRequests");
+
+const bgPath = path.join(rootDir, "scripts", "background", "background.js");
+const bgCode = fs.readFileSync(bgPath, "utf-8");
+assert(bgCode.includes("IF_B_STOP_FETCH"), "background.js handles IF_B_STOP_FETCH cancellation");
+assert(!bgCode.includes("settings.enable"), "background.js uses safe optional chaining for settings");
+
 // --- SUMMARY ---
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);

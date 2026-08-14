@@ -2,7 +2,7 @@
 
 ## Product
 - **Name:** AI Display
-- **Version:** 2.2.8
+- **Version:** 2.3.3
 - **Purpose:** Instant on-page multi-engine AI search aggregation, text extraction, and on-device Optical Character Recognition (OCR) directly within web browsing workflows.
 
 ## Developer

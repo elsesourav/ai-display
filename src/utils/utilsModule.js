@@ -162,10 +162,19 @@ function chromeStorageGetLocal(key, callback) {
       chrome.storage.local.get([key], (result) => {
          if (chrome?.runtime?.lastError) {
             console.error("Error getting item:", chrome.runtime.lastError);
+            callback && callback(null);
             resolve(null);
          } else {
-            const parsed =
-               typeof result[key] === "string" ? JSON.parse(result[key]) : null;
+            let parsed = null;
+            if (typeof result[key] === "string") {
+               try {
+                  parsed = JSON.parse(result[key]);
+               } catch {
+                  parsed = result[key];
+               }
+            } else if (result[key] !== undefined) {
+               parsed = result[key];
+            }
             callback && callback(parsed);
             resolve(parsed);
          }

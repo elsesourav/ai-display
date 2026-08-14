@@ -20,6 +20,8 @@ export default function Menu() {
    const [size, setSize] = useState(SIZES.min);
    const [menuOpacity, setMenuOpacity] = useState("1");
    const [isDragging, setIsDragging] = useState(false);
+   const [uiContrast, setUiContrast] = useState("medium");
+   const [autoHideDelay, setAutoHideDelay] = useState(0);
    const menuRef = useRef(null);
    const dragRef = useRef(null);
 
@@ -46,7 +48,47 @@ export default function Menu() {
       ES.pageOnMessage("C_IF_MENU_WINDOW_DRAG_END", () => {
          setIsDragging(false);
       });
+
+      ES.pageOnMessage("IF_C_GET_CURRENT_CONTROLS", (data) => {
+         const { uiContrast: contrast, autoHideDelay: delay } = data?.controls || {};
+         if (contrast) setUiContrast(contrast);
+         if (delay !== undefined) setAutoHideDelay(Number(delay) || 0);
+      });
+
+      ES.chromeStorageGetLocal(ES.KEYS.CONTROLS, (data) => {
+         if (data?.uiContrast) setUiContrast(data.uiContrast);
+         if (data?.autoHideDelay !== undefined) setAutoHideDelay(Number(data.autoHideDelay) || 0);
+      });
    }, []);
+
+   // Auto-hide inactivity timer when minimized
+   useEffect(() => {
+      if (isChatOpen || autoHideDelay <= 0) {
+         setMenuOpacity("1");
+         return;
+      }
+
+      let timer = setTimeout(() => {
+         setMenuOpacity("0.2");
+      }, autoHideDelay * 1000);
+
+      const handleUserActivity = () => {
+         setMenuOpacity("1");
+         clearTimeout(timer);
+         timer = setTimeout(() => {
+            setMenuOpacity("0.2");
+         }, autoHideDelay * 1000);
+      };
+
+      window.addEventListener("mousemove", handleUserActivity);
+      window.addEventListener("pointerdown", handleUserActivity);
+
+      return () => {
+         clearTimeout(timer);
+         window.removeEventListener("mousemove", handleUserActivity);
+         window.removeEventListener("pointerdown", handleUserActivity);
+      };
+   }, [isChatOpen, autoHideDelay]);
 
    useEffect(() => {
       setSize(isChatOpen ? SIZES.max : SIZES.min);
@@ -113,7 +155,14 @@ export default function Menu() {
          style={{ zIndex: 1, opacity: menuOpacity }}
       >
          <main
-            className="relative left-[1px] top-[1px] backdrop-blur-xl bg-blue-500/15 dark:bg-blue-600/10 border border-white/80 dark:border-white/40 rounded-xl shadow-lg overflow-hidden transition-all duration-300 ease-in-out"
+            data-contrast={uiContrast}
+            className={`relative left-[1px] top-[1px] rounded-xl shadow-xl overflow-hidden transition-all duration-300 ease-in-out ${
+               uiContrast === "low"
+                  ? "backdrop-blur-md bg-blue-500/10 dark:bg-slate-950/35 border border-white/40 dark:border-white/15"
+                  : uiContrast === "high"
+                  ? "backdrop-blur-2xl bg-white/95 dark:bg-[#18181b]/95 border border-gray-300 dark:border-zinc-700 shadow-2xl text-gray-900 dark:text-white"
+                  : "backdrop-blur-xl bg-blue-500/15 dark:bg-blue-600/10 border border-white/80 dark:border-white/40"
+            }`}
             style={{
                width: `calc(${size.w} - 2px)`,
                height: `calc(${size.h} - 2px)`,
@@ -121,7 +170,11 @@ export default function Menu() {
          >
             {/* Fixed header */}
             <section
-               className="relative h-[inherit] flex w-full items-center justify-between pl-[4px] pr-[4px] bg-white/10 dark:bg-black/10 border-b border-white/30 dark:border-white/20"
+               className={`relative h-[inherit] flex w-full items-center justify-between pl-[4px] pr-[4px] border-b transition-colors duration-300 ${
+                  uiContrast === "high"
+                     ? "bg-gray-100/90 dark:bg-zinc-800/90 border-gray-200 dark:border-zinc-700"
+                     : "bg-white/10 dark:bg-black/10 border-white/30 dark:border-white/20"
+               }`}
                style={{ height: `${parseInt(SIZES.min.h) - 2}px` }}
             >
                {/* Left side buttons */}
@@ -214,7 +267,7 @@ export default function Menu() {
                      transform: "translateZ(0)",
                   }}
                >
-                  <ChatBot isOpen={isChatOpen} />
+                  <ChatBot isOpen={isChatOpen} uiContrast={uiContrast} />
                </div>
             </div>
          </main>

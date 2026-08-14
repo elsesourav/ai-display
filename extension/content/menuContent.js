@@ -259,3 +259,21 @@ window.addEventListener("message", async (event) => {
       }
    }
 });
+
+// Live synchronization for controls & contrast changes from popup
+if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+   chrome.storage.onChanged.addListener((changes) => {
+      if (changes[KEYS.CONTROLS]) {
+         const val = changes[KEYS.CONTROLS].newValue;
+         const controls = typeof val === "string" ? JSON.parse(val) : val;
+         const iframe = document.getElementById("__menuWindowIframe");
+         if (iframe?.contentWindow) {
+            pagePostMessage(
+               "IF_C_GET_CURRENT_CONTROLS",
+               { success: true, controls },
+               iframe.contentWindow
+            );
+         }
+      }
+   });
+}

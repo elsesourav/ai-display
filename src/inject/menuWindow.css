@@ -2,12 +2,6 @@
 
 @tailwind utilities;
 @layer utilities {
-   .path {
-      clip-path: path(
-         " M 0,8       A 8,8 0 0 1 8,0       L 436,0       A 8,8 0 0 1 444,8       L 444,32       A 8,8 0 0 1 436,40       L 404,40       A 8,8 0 0 0 396,48       L 396,89       A 8,8 0 0 1 388,97       L 8,97       A 8,8 0 0 1 0,89       Z"
-      );
-   }
-
    .mainBtn {
       @apply relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none hover:bg-blue-600/70 hover:dark:bg-blue-600/70 hover:text-white hover:dark:text-white;
    }

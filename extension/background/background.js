@@ -193,8 +193,8 @@ runtimeOnMessage("P_B_SET_ALWAYS_ACTIVE_ICON", (_, { tab }, sendResponse) => {
 runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
     const tab = await getActiveTab();
-    if (isInternalPage(tab)) return;
-    if (settings.enable) {
+    if (!tab || isInternalPage(tab) || !tab.id) return;
+    if (settings?.enable) {
       __PUSH_MENU__(tab.id);
     } else {
       tabSendMessage(tab.id, "B_C_CLOSE_MENU");
@@ -203,12 +203,13 @@ runtimeOnMessage("P_B_TOGGLE", async (_, __, sendResponse) => {
   return sendResponse("ok");
 });
 
-runtimeOnMessage("C_B_ON_LOAD", (_, { tab }, sendResponse) => {
+runtimeOnMessage("C_B_ON_LOAD", (_, sender, sendResponse) => {
   sendResponse("ok");
-  if (isInternalPage(tab)) return;
+  const tab = sender?.tab;
+  if (!tab || isInternalPage(tab) || !tab.id) return;
 
   chromeStorageGetLocal(KEYS.SETTINGS, async (settings) => {
-    if (settings.enable) {
+    if (settings?.enable) {
       __PUSH_MENU__(tab.id);
     }
   });
@@ -246,6 +247,11 @@ runtimeOnMessage(
     sendResponse("ok");
   },
 );
+
+runtimeOnMessage("IF_B_STOP_FETCH", (_, __, sendResponse) => {
+  cancelAllAiRequests();
+  sendResponse({ status: "cancelled" });
+});
 
 runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
   // console.log("Received request for answer:", data);

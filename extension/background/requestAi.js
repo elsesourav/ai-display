@@ -2,6 +2,17 @@
 let currentRequestId = null;
 let activeAiTabs = [];
 
+/** Immediately cancel all ongoing AI scraper requests and close all active scraper tabs */
+function cancelAllAiRequests() {
+  currentRequestId = "cancelled_" + Date.now();
+  const tabsToClose = [...activeAiTabs];
+  activeAiTabs = [];
+  tabsToClose.forEach((id) => {
+    chromeTabMediaAccess(id, false);
+    chrome.tabs.remove(id).catch(() => {});
+  });
+}
+
 /* --- Shared Helper --- */
 
 /**

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
+  IoAdd,
   IoClose,
   IoSend,
+  IoSquare,
   IoTimeOutline,
   IoTrashOutline,
 } from "react-icons/io5";
 import UTILS from "./../utils/utilsModule.js";
 
-export default function ChatBot({ isOpen }) {
+export default function ChatBot({ isOpen, uiContrast = "medium" }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastQuestion, setLastQuestion] = useState("");
@@ -51,6 +53,28 @@ export default function ChatBot({ isOpen }) {
   const clearInput = useCallback(() => {
     setInput("");
   }, []);
+
+  // Stop active AI fetching and tell background worker to close background scraper tabs
+  const handleStopFetch = useCallback(() => {
+    currentRequestIdRef.current = "stopped_" + Date.now();
+    setIsLoading(false);
+    UTILS.pagePostMessage("IF_B_STOP_FETCH", {}, window.parent);
+  }, []);
+
+  // Start fresh chat session
+  const handleNewChat = useCallback(() => {
+    if (isLoading) {
+      handleStopFetch();
+    }
+    setInput("");
+    setAnswers({});
+    setLastQuestion("");
+    setIsLoading(false);
+    currentRequestIdRef.current = null;
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
+  }, [isLoading, handleStopFetch]);
 
   useEffect(() => {
     UTILS.pageOnMessage("IF_C_GET_CURRENT_CONTROLS", (data) => {
@@ -244,15 +268,16 @@ export default function ChatBot({ isOpen }) {
               answers: newAnswers,
             };
           } else {
-            const newEntry = {
+            const newHistoryItem = {
               id: reqId,
               question: lastQuestionRef.current || "",
               answers: newAnswers,
               timestamp: Date.now(),
             };
-            updatedHistory = [newEntry, ...prevHistory].slice(0, 20);
+            updatedHistory = [newHistoryItem, ...prevHistory].slice(0, 20);
           }
-          UTILS.chromeStorageSetLocal(UTILS.KEYS.HISTORY, updatedHistory);
+
+          saveHistory(updatedHistory);
           return updatedHistory;
         });
 
@@ -266,10 +291,6 @@ export default function ChatBot({ isOpen }) {
       }, 100);
     });
   }, [setInput]);
-
-  // useEffect(() => {
-  //    console.log(answers);
-  // }, [answers]);
 
   // When closing, if focus is inside the chat, blur it to avoid aria/inert conflicts.
   useEffect(() => {
@@ -320,11 +341,17 @@ export default function ChatBot({ isOpen }) {
         <div className="relative w-full grid gap-2">
           {/* Text input and buttons with smooth height transition */}
           <div
-            className={`relative grid w-full transition-[height] duration-300 ease-in-out ${
+            className={`relative flex flex-col w-full rounded-2xl p-2.5 transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-indigo-500 ${
               hasChatted ? "h-[97px]" : "h-[190px]"
+            } ${
+              uiContrast === "low"
+                ? "bg-white/40 dark:bg-black/25 border border-white/40 dark:border-white/15 text-gray-800 dark:text-white"
+                : uiContrast === "high"
+                ? "bg-white/95 dark:bg-slate-900/95 border border-slate-300 dark:border-slate-700 shadow-xs text-gray-900 dark:text-white"
+                : "bg-white/70 dark:bg-black/35 border border-white/60 dark:border-white/20 text-gray-800 dark:text-white"
             }`}
           >
-            <div className="flex-1 relative path border-white/60 dark:border-black p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70 dark:bg-black/20 text-gray-800 dark:text-white transition-all duration-300">
+            <div className="flex-1 relative w-full overflow-hidden">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -335,48 +362,72 @@ export default function ChatBot({ isOpen }) {
                     ? "Ask a follow-up question..."
                     : "Ask a question, paste text, or use Area OCR..."
                 }
-                className="w-[calc(100%-50px)] h-full resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
+                className="w-[calc(100%-32px)] h-full resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                 rows={hasChatted ? "3" : "7"}
                 autoFocus
               />
+
+              {input && (
+                <button
+                  onClick={clearInput}
+                  className="absolute h-7 w-7 right-0 top-0 grid place-items-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-500 transition-colors duration-150 cursor-pointer focus:outline-none"
+                  title="Clear input"
+                >
+                  <IoClose size={20} />
+                </button>
+              )}
             </div>
 
-            <button
-              onClick={clearInput}
-              className="absolute h-[30px] w-[30px] right-[5px] top-[5px] grid place-items-center rounded-lg text-gray-700 dark:text-gray-200 hover:text-red-500 dark:hover:text-red-600 transition-all duration-200 cursor-pointer z-0 focus:outline-none"
-              title="Clear input"
-            >
-              <IoClose size={24} />
-            </button>
-
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={input.trim() === "" || isLoading}
-              className={`absolute h-[45px] z-10 w-[40px] right-0 bottom-[5px] grid place-items-center rounded-lg border transition-all duration-200 focus:outline-none ${
-                input.trim() === "" || isLoading
-                  ? "bg-gray-300/40 dark:bg-gray-600/20 border-gray-400/40 dark:border-gray-500/30 text-gray-400 dark:text-gray-500"
-                  : "bg-blue-500/60 border-blue-400/50 text-white hover:bg-blue-600/70 hover:border-blue-500/60"
-              } cursor-pointer`}
-              title={"Send message"}
-            >
-              <IoSend size={26} />
-            </button>
+            <div className="flex items-center justify-end pt-1">
+              {isLoading ? (
+                <button
+                  onClick={handleStopFetch}
+                  className="h-8 px-3.5 flex items-center justify-center gap-1.5 rounded-xl border border-red-500/60 bg-red-500/90 text-white hover:bg-red-600 hover:border-red-600 shadow-xs cursor-pointer active:scale-95 transition-all duration-200"
+                  title="Stop Fetching & Close Background Scraper Tabs"
+                >
+                  <IoSquare size={12} className="text-white fill-current animate-pulse" />
+                  <span className="text-xs font-semibold">Stop</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={input.trim() === ""}
+                  className={`h-8 px-3.5 flex items-center justify-center gap-1.5 rounded-xl border transition-all duration-200 focus:outline-none ${
+                    input.trim() === ""
+                      ? "bg-gray-300/40 dark:bg-gray-600/20 border-gray-400/40 dark:border-gray-500/30 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                      : "bg-blue-500/80 border-blue-400/60 text-white hover:bg-blue-600 hover:border-blue-500 shadow-xs cursor-pointer active:scale-95"
+                  }`}
+                  title="Send message"
+                >
+                  <IoSend size={16} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* AI Provider Selection Buttons */}
-      <div className="relative w-full px-4 py-2 flex items-center gap-2 overflow-hidden">
-        {/* Fixed History Button */}
+      {/* AI Provider & Action Toolbar */}
+      <div className="relative w-full px-4 py-1.5 flex items-center gap-1.5 overflow-hidden">
+        {/* Compact New Chat Button */}
         <button
-          onClick={() => setIsHistoryOpen(true)}
-          className="flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border bg-white/60 dark:bg-black/40 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-white/20 hover:bg-white/90 dark:hover:bg-black/60 shadow-sm cursor-pointer flex items-center gap-1.5"
-          title="View Chat History"
+          onClick={handleNewChat}
+          className="size-8 flex-shrink-0 rounded-lg flex items-center justify-center border bg-blue-50/90 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-200/80 dark:border-blue-800/80 hover:bg-blue-100 dark:hover:bg-blue-900/60 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
+          title="New Chat (+)"
         >
-          <IoTimeOutline size={16} /> Chats
+          <IoAdd size={19} />
         </button>
 
-        <div className="w-[1px] h-5 bg-gray-300 dark:bg-white/20 flex-shrink-0"></div>
+        {/* Compact History Button */}
+        <button
+          onClick={() => setIsHistoryOpen(true)}
+          className="size-8 flex-shrink-0 rounded-lg flex items-center justify-center border bg-white/70 dark:bg-black/40 text-gray-700 dark:text-gray-200 border-gray-200/80 dark:border-white/20 hover:bg-white/90 dark:hover:bg-black/60 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
+          title="Chat History"
+        >
+          <IoTimeOutline size={17} />
+        </button>
+
+        <div className="w-[1px] h-4 bg-gray-300 dark:bg-white/20 flex-shrink-0 mx-0.5"></div>
 
         {/* Scrollable Provider List */}
         <div 
@@ -419,7 +470,15 @@ export default function ChatBot({ isOpen }) {
         >
           {/* Question display */}
           {lastQuestion && (
-            <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
+            <div
+              className={`p-3 rounded-xl transition-all duration-300 ${
+                uiContrast === "low"
+                  ? "bg-white/15 dark:bg-black/20 border border-white/30 dark:border-white/15 backdrop-blur-xs"
+                  : uiContrast === "high"
+                  ? "bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 shadow-xs text-gray-900 dark:text-white"
+                  : "bg-white/25 dark:bg-black/30 border border-white/40 dark:border-white/25 backdrop-blur-md"
+              }`}
+            >
               <div className="text-gray-800 dark:text-gray-200 font-medium">
                 {lastQuestion}
               </div>
@@ -435,7 +494,15 @@ export default function ChatBot({ isOpen }) {
             {/* Display selected answer */}
             <div className="space-y-4">
               {answers[selectedProvider] && (
-                <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
+                <div
+                  className={`p-3 rounded-xl transition-all duration-300 ${
+                    uiContrast === "low"
+                      ? "bg-white/15 dark:bg-black/20 border border-white/30 dark:border-white/15 backdrop-blur-xs"
+                      : uiContrast === "high"
+                      ? "bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 shadow-xs"
+                      : "bg-white/25 dark:bg-black/30 border border-white/40 dark:border-white/25 backdrop-blur-md"
+                  }`}
+                >
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                     {displayedProviders.find((p) => p.id === selectedProvider)?.name ||
                       selectedProvider}
@@ -452,7 +519,15 @@ export default function ChatBot({ isOpen }) {
 
               {/* Show loading for selected provider if no answer yet */}
               {isLoading && !answers[selectedProvider] && (
-                <div className="bg-white/20 dark:bg-black/20 border border-white/40 dark:border-white/25 p-3 rounded-xl">
+                <div
+                  className={`p-3 rounded-xl transition-all duration-300 ${
+                    uiContrast === "low"
+                      ? "bg-white/15 dark:bg-black/20 border border-white/30 dark:border-white/15 backdrop-blur-xs"
+                      : uiContrast === "high"
+                      ? "bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 shadow-xs"
+                      : "bg-white/25 dark:bg-black/30 border border-white/40 dark:border-white/25 backdrop-blur-md"
+                  }`}
+                >
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                     {displayedProviders.find((p) => p.id === selectedProvider)?.name ||
                       selectedProvider}
