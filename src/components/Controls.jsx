@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RxDragHandleDots2 } from "react-icons/rx";
 import extensionUtils from "./../utils/utilsModule.js";
@@ -142,13 +143,25 @@ export default function Controls() {
          const settings = await extensionUtils.chromeStorageGetLocal(
             extensionUtils.KEYS.SETTINGS
          );
-         setMainToggleEnabled(settings.enable);
+         setMainToggleEnabled(Boolean(settings?.enable));
       };
 
       checkMainToggle();
 
-      const interval = setInterval(checkMainToggle, 100);
-      return () => clearInterval(interval);
+      const handleStorageChange = (changes) => {
+         if (changes[extensionUtils.KEYS.SETTINGS]) {
+            const val = changes[extensionUtils.KEYS.SETTINGS].newValue;
+            const parsed = typeof val === "string" ? JSON.parse(val) : val;
+            setMainToggleEnabled(Boolean(parsed?.enable));
+         }
+      };
+
+      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+         chrome.storage.onChanged.addListener(handleStorageChange);
+         return () => {
+            chrome.storage.onChanged.removeListener(handleStorageChange);
+         };
+      }
    }, []);
 
    useEffect(() => {

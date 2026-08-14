@@ -128,6 +128,10 @@ const utilsPath = path.join(rootDir, "src", "utils", "utilsModule.js");
 const utilsCode = fs.readFileSync(utilsPath, "utf-8");
 assert(!utilsCode.includes("tabOnMessage,"), "utilsModule.js has no undefined tabOnMessage reference");
 
+const controlsPath = path.join(rootDir, "src", "components", "Controls.jsx");
+const controlsCode = fs.readFileSync(controlsPath, "utf-8");
+assert(!controlsCode.includes("settings.enable"), "Controls.jsx uses safe optional chaining for settings");
+
 // --- SUMMARY ---
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
