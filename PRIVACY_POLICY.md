@@ -49,5 +49,6 @@ AI Display adheres strictly to the **Chrome Web Store User Data Policy**, includ
 ### 7. Contact
 For any privacy questions or feedback, please contact:
 - **Developer:** elsesourav
-- **Email:** elsesourav@gmail.com
+- **Website:** https://elsesourav.web.app
+- **Email:** elsesourav.auth@gmail.com
 - **GitHub:** https://github.com/elsesourav/ai-display
