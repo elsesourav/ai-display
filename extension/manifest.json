@@ -1,7 +1,7 @@
 {
   "name": "Ai Display",
   "version": "2.2.3",
-  "description": "AI Display helps you quickly find accurate answers and display relevant questions, making information discovery faster and smarter. (© elsesourav 2025)",
+  "description": "Fast multi-engine AI search aggregation, in-page text selection, and on-device Optical Character Recognition (OCR).",
   "manifest_version": 3,
   "permissions": [
     "scripting",

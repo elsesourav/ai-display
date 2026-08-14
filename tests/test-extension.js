@@ -120,6 +120,7 @@ assert(fs.existsSync(path.join(rootDir, "CHROMEWEBSTORE.md")), "CHROMEWEBSTORE.m
 assert(fs.existsSync(path.join(rootDir, "PRIVACY_POLICY.md")), "PRIVACY_POLICY.md exists");
 assert(fs.existsSync(path.join(rootDir, "privacy-policy.html")), "privacy-policy.html exists");
 assert(fs.existsSync(path.join(rootDir, "RELEASE_CHECKLIST.md")), "RELEASE_CHECKLIST.md exists");
+assert(fs.existsSync(path.join(rootDir, "CHROME_WEB_STORE_SUBMISSION.md")), "CHROME_WEB_STORE_SUBMISSION.md exists");
 
 // --- SUMMARY ---
 console.log(`\n========================================`);
