@@ -25,28 +25,52 @@ function fetchAiAnswer(url, extractFn, extractArgs = [], requestId = null) {
       currentRequestId = requestId;
     }
 
+    let isResolved = false;
+    let timeoutId = null;
+
     chrome.tabs.create({ url, active: false }, (tab) => {
+      if (!tab || !tab.id) {
+        resolve("<mark>Unable to open query tab. Please try again.</mark>");
+        return;
+      }
+
       const tabId = tab.id;
       activeAiTabs.push(tabId);
       chromeTabMediaAccess(tabId, true);
 
       function cleanup() {
+        if (timeoutId) clearTimeout(timeoutId);
         chromeTabMediaAccess(tabId, false);
         chrome.tabs.remove(tabId).catch(() => {});
         activeAiTabs = activeAiTabs.filter((id) => id !== tabId);
       }
 
+      function safeResolve(val) {
+        if (!isResolved) {
+          isResolved = true;
+          cleanup();
+          resolve(val);
+        }
+      }
+
+      // 25s timeout protection
+      timeoutId = setTimeout(() => {
+        chrome.tabs.onUpdated.removeListener(listener);
+        chrome.tabs.onRemoved.removeListener(onRemoved);
+        safeResolve("<mark>Request timed out. Please check your network connection.</mark>");
+      }, 25000);
+
       function listener(updatedTabId, info) {
         if (updatedTabId === tabId && info.status === "complete") {
           chrome.tabs.onUpdated.removeListener(listener);
+          chrome.tabs.onRemoved.removeListener(onRemoved);
 
           executeScriptReturn(
             tabId,
             extractFn,
             (injectResult) => {
               const cleanedHtml = injectResult?.[0]?.result || "";
-              resolve(cleanedHtml);
-              cleanup();
+              safeResolve(cleanedHtml);
             },
             extractArgs,
           );
@@ -60,8 +84,7 @@ function fetchAiAnswer(url, extractFn, extractArgs = [], requestId = null) {
         if (removedTabId === tabId) {
           chrome.tabs.onRemoved.removeListener(onRemoved);
           chrome.tabs.onUpdated.removeListener(listener);
-          activeAiTabs = activeAiTabs.filter((id) => id !== tabId);
-          resolve(""); // Resolve empty to let the UI discard it
+          safeResolve(""); // Resolve empty to let the UI discard it
         }
       }
       chrome.tabs.onRemoved.addListener(onRemoved);

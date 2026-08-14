@@ -432,7 +432,7 @@ export default function ChatBot({ isOpen }) {
                   <div
                     className="botChat whitespace-pre-wrap overflow-x-auto overflow-y-hidden"
                     dangerouslySetInnerHTML={{
-                      __html: answers[selectedProvider].content,
+                      __html: UTILS.sanitizeHtml(answers[selectedProvider].content),
                     }}
                   />
                 </div>
