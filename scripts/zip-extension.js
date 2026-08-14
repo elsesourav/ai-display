@@ -81,8 +81,11 @@ async function zipExtension() {
       unlinkSync(zipScriptPath);
    }
 
-   // Add the entire extension directory
-   archive.directory(extensionDir, false);
+   // Add extension files while ignoring .DS_Store and development artifacts
+   archive.glob("**/*", {
+      cwd: extensionDir,
+      ignore: ["**/.DS_Store", "**/zip-extension.js", "**/test-extension.js"],
+   });
 
    // Create a simple text readme for the zip
    const simpleReadme = `AI Display Chrome Extension
