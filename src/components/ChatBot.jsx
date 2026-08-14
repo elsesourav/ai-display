@@ -351,7 +351,7 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
                 : "bg-white/80 dark:bg-black/35 border border-slate-200/90 dark:border-white/20 text-gray-800 dark:text-white shadow-xs"
             }`}
           >
-            <div className="flex-1 relative w-full overflow-hidden">
+            <div className="flex-1 relative w-full min-h-0">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -362,7 +362,8 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
                     ? "Ask a follow-up question..."
                     : "Ask a question, paste text, or use Area OCR..."
                 }
-                className="w-[calc(100%-32px)] h-full resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full h-full pr-8 resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 overflow-y-auto"
+                style={{ scrollbarWidth: "thin" }}
                 rows={hasChatted ? "3" : "7"}
                 autoFocus
               />
@@ -370,7 +371,7 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
               {input && (
                 <button
                   onClick={clearInput}
-                  className="absolute h-7 w-7 right-0 top-0 grid place-items-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-500 transition-colors duration-150 cursor-pointer focus:outline-none"
+                  className="absolute h-7 w-7 right-0 top-0 grid place-items-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-500 transition-colors duration-150 cursor-pointer focus:outline-none z-10"
                   title="Clear input"
                 >
                   <IoClose size={20} />
