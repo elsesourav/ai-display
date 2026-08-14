@@ -88,31 +88,57 @@ function __pointerup__(e) {
    __main_menu__.style.top = `${constrainedPosition.y}px`;
 }
 
-function __firstSetup() {
-   const menu = document.getElementById("__menuWindowIframe");
-   let timeIdSmall, timeIdBig;
-   const timeSmallDuration = 1000 * 15;
-   const timeBigDuration = 1000 * 30;
+function detectPageTheme() {
+   try {
+      const docCls = document.documentElement.className || "";
+      const bodyCls = document.body?.className || "";
+      const docTheme =
+         document.documentElement.getAttribute("data-theme") ||
+         document.documentElement.getAttribute("data-mode") ||
+         document.documentElement.getAttribute("data-color-mode") ||
+         document.body?.getAttribute("data-theme") ||
+         "";
 
-   menu.onmouseenter = () => {
-      document.body.style.overflow = "hidden";
-      if (timeIdSmall) clearTimeout(timeIdSmall);
-      if (timeIdBig) clearTimeout(timeIdBig);
-      menu.style.opacity = "1";
-   };
+      if (
+         docCls.includes("dark") ||
+         bodyCls.includes("dark") ||
+         docTheme.toLowerCase().includes("dark")
+      ) {
+         return "dark";
+      }
 
-   menu.onmouseleave = () => {
-      document.body.style.overflow = "";
+      if (
+         docCls.includes("light") ||
+         bodyCls.includes("light") ||
+         docTheme.toLowerCase().includes("light")
+      ) {
+         return "light";
+      }
 
-      timeIdSmall = setTimeout(() => {
-         menu.style.opacity = "0.6";
-      }, timeSmallDuration);
+      // Check computed background color of body or root
+      const bodyBg = window.getComputedStyle(
+         document.body || document.documentElement
+      ).backgroundColor;
+      const rgb = bodyBg.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+         const [r, g, b] = rgb.map(Number);
+         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+         if (brightness < 128 && (rgb.length < 4 || Number(rgb[3]) > 0.3)) {
+            return "dark";
+         }
+      }
 
-      timeIdBig = setTimeout(() => {
-         menu.style.opacity = "0.2";
-         pagePostMessage("C_IF_CLOSE_CHAT", {}, menu.contentWindow);
-      }, timeBigDuration);
-   };
+      // Fallback to system preferences
+      if (
+         window.matchMedia &&
+         window.matchMedia("(prefers-color-scheme: dark)").matches
+      ) {
+         return "dark";
+      }
+   } catch {
+      // fallback
+   }
+   return "light";
 }
 
 /* -------- Message Passing Section --------- */
@@ -160,7 +186,6 @@ pageOnMessage("IF_C_MENU_WINDOW_RESIZE", async (data) => {
          "left 300ms ease, top 300ms ease, width 300ms ease, height 300ms ease";
    } else {
       __isFirstSetup = false;
-      __firstSetup();
    }
 
    __main_menu__.style.width = __iframeSize.width;
@@ -247,13 +272,21 @@ window.addEventListener("message", async (event) => {
          const getControlsSettings = await chromeStorageGetLocal(KEYS.CONTROLS);
          pagePostMessage(
             event.data.type,
-            { success: true, controls: getControlsSettings },
+            {
+               success: true,
+               controls: getControlsSettings,
+               pageTheme: detectPageTheme(),
+            },
             iframe?.contentWindow
          );
       } catch (error) {
          pagePostMessage(
             event.data.type,
-            { success: false, message: error.message },
+            {
+               success: false,
+               message: error.message,
+               pageTheme: detectPageTheme(),
+            },
             iframe?.contentWindow
          );
       }
@@ -270,7 +303,11 @@ if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
          if (iframe?.contentWindow) {
             pagePostMessage(
                "IF_C_GET_CURRENT_CONTROLS",
-               { success: true, controls },
+               {
+                  success: true,
+                  controls,
+                  pageTheme: detectPageTheme(),
+               },
                iframe.contentWindow
             );
          }

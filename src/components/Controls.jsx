@@ -11,12 +11,6 @@ const AI_OPTIONS = [
       gradient: "from-red-500 to-yellow-500",
    },
    {
-      id: "perplexity",
-      name: "Perplexity",
-      enabled: true,
-      gradient: "from-emerald-500 to-cyan-500",
-   },
-   {
       id: "bing",
       name: "Bing AI",
       enabled: true,
@@ -29,9 +23,15 @@ const AI_OPTIONS = [
       gradient: "from-violet-600 to-blue-500",
    },
    {
+      id: "perplexity",
+      name: "Perplexity",
+      enabled: false,
+      gradient: "from-emerald-500 to-cyan-500",
+   },
+   {
       id: "grok",
       name: "Grok AI",
-      enabled: true,
+      enabled: false,
       gradient: "from-pink-500 to-purple-600",
    },
 ];
@@ -72,9 +72,10 @@ export default function Controls() {
    const [draggedItem, setDraggedItem] = useState(null);
    const [dragOverIndex, setDragOverIndex] = useState(null);
    const [mainToggleEnabled, setMainToggleEnabled] = useState(false);
-   const [concurrentRequests, setConcurrentRequests] = useState(2);
+   const [concurrentRequests, setConcurrentRequests] = useState(3);
    const [uiContrast, setUiContrast] = useState("medium");
    const [autoHideDelay, setAutoHideDelay] = useState(0);
+   const [chatbotTheme, setChatbotTheme] = useState("auto");
    const [dropdownOpen, setDropdownOpen] = useState(false);
    const [isInitialized, setIsInitialized] = useState(false);
    const dropdownRef = useRef(null);
@@ -98,13 +99,14 @@ export default function Controls() {
          concurrentRequests: concurrentRequests,
          uiContrast: uiContrast,
          autoHideDelay: autoHideDelay,
+         chatbotTheme: chatbotTheme,
       };
 
       extensionUtils.chromeStorageSetLocal(
          extensionUtils.KEYS.CONTROLS,
          controlsData
       );
-   }, [aiList, concurrentRequests, uiContrast, autoHideDelay, isInitialized]);
+   }, [aiList, concurrentRequests, uiContrast, autoHideDelay, chatbotTheme, isInitialized]);
 
    useEffect(() => {
       saveSettings();
@@ -140,6 +142,10 @@ export default function Controls() {
 
                if (controlsData.autoHideDelay !== undefined) {
                   setAutoHideDelay(Number(controlsData.autoHideDelay) || 0);
+               }
+
+               if (controlsData.chatbotTheme) {
+                  setChatbotTheme(controlsData.chatbotTheme);
                }
 
                setIsInitialized(true);
@@ -533,6 +539,46 @@ export default function Controls() {
                      onClick={() => mainToggleEnabled && setAutoHideDelay(item.id)}
                      className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all duration-200 cursor-pointer focus:outline-none ${
                         autoHideDelay === item.id && mainToggleEnabled
+                           ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-semibold border border-blue-200/60 dark:border-blue-500 scale-[1.02]"
+                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/40"
+                     } ${!mainToggleEnabled ? "cursor-not-allowed opacity-60" : ""}`}
+                  >
+                     <span className="text-sm font-semibold">{item.label}</span>
+                     <span className="text-[10px] opacity-75">{item.sub}</span>
+                  </button>
+               ))}
+            </div>
+         </div>
+
+         <br />
+
+         {/* Chatbot Theme Setting */}
+         <div
+            className={`relative z-40 w-full flex flex-col gap-1.5 transition-all duration-300 ${
+               mainToggleEnabled ? "opacity-100" : "opacity-50"
+            }`}
+         >
+            <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex gap-2 items-center">
+               <i className="sbi-adjust text-lg text-[#3b82f6]" />
+               <p>Chatbot Theme</p>
+            </div>
+            <p className="text-xs mb-1.5 text-gray-600 dark:text-gray-400">
+               {mainToggleEnabled
+                  ? "Auto adapts to current website's light/dark mode"
+                  : "Enable AI Display to configure theme"}
+            </p>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700/80">
+               {[
+                  { id: "auto", label: "Auto", sub: "Website" },
+                  { id: "light", label: "Light", sub: "Crisp" },
+                  { id: "dark", label: "Dark", sub: "Sleek" },
+               ].map((item) => (
+                  <button
+                     key={item.id}
+                     disabled={!mainToggleEnabled}
+                     onClick={() => mainToggleEnabled && setChatbotTheme(item.id)}
+                     className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all duration-200 cursor-pointer focus:outline-none ${
+                        chatbotTheme === item.id && mainToggleEnabled
                            ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-semibold border border-blue-200/60 dark:border-blue-500 scale-[1.02]"
                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/40"
                      } ${!mainToggleEnabled ? "cursor-not-allowed opacity-60" : ""}`}

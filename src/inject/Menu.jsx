@@ -22,6 +22,8 @@ export default function Menu() {
    const [isDragging, setIsDragging] = useState(false);
    const [uiContrast, setUiContrast] = useState("medium");
    const [autoHideDelay, setAutoHideDelay] = useState(0);
+   const [chatbotTheme, setChatbotTheme] = useState("auto");
+   const [pageTheme, setPageTheme] = useState("light");
    const menuRef = useRef(null);
    const dragRef = useRef(null);
 
@@ -50,16 +52,35 @@ export default function Menu() {
       });
 
       ES.pageOnMessage("IF_C_GET_CURRENT_CONTROLS", (data) => {
-         const { uiContrast: contrast, autoHideDelay: delay } = data?.controls || {};
+         const { uiContrast: contrast, autoHideDelay: delay, chatbotTheme: theme } = data?.controls || {};
          if (contrast) setUiContrast(contrast);
          if (delay !== undefined) setAutoHideDelay(Number(delay) || 0);
+         if (theme) setChatbotTheme(theme);
+         if (data?.pageTheme) setPageTheme(data.pageTheme);
       });
 
       ES.chromeStorageGetLocal(ES.KEYS.CONTROLS, (data) => {
          if (data?.uiContrast) setUiContrast(data.uiContrast);
          if (data?.autoHideDelay !== undefined) setAutoHideDelay(Number(data.autoHideDelay) || 0);
+         if (data?.chatbotTheme) setChatbotTheme(data.chatbotTheme);
       });
    }, []);
+
+   const effectiveTheme = useMemo(() => {
+      if (chatbotTheme === "dark") return "dark";
+      if (chatbotTheme === "light") return "light";
+      return pageTheme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+   }, [chatbotTheme, pageTheme]);
+
+   useEffect(() => {
+      if (effectiveTheme === "dark") {
+         document.documentElement.classList.add("dark");
+         document.documentElement.classList.remove("light");
+      } else {
+         document.documentElement.classList.remove("dark");
+         document.documentElement.classList.add("light");
+      }
+   }, [effectiveTheme]);
 
    // Auto-hide inactivity timer when minimized
    useEffect(() => {
