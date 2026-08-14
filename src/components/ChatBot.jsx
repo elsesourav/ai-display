@@ -302,6 +302,10 @@ export default function ChatBot({ isOpen }) {
     }
   };
 
+  const hasChatted = Boolean(
+    lastQuestion || isLoading || (answers && Object.keys(answers).length > 0)
+  );
+
   return (
     <div
       ref={rootRef}
@@ -314,17 +318,25 @@ export default function ChatBot({ isOpen }) {
         style={{ animationDelay: "100ms" }}
       >
         <div className="relative w-full grid gap-2">
-          {/* Text input and buttons */}
-          <div className="relative grid w-full h-[97px]">
-            <div className="flex-1 relative path border-white/60 dark:border-black p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70 dark:bg-black/20 text-gray-800 dark:text-white">
+          {/* Text input and buttons with smooth height transition */}
+          <div
+            className={`relative grid w-full transition-[height] duration-300 ease-in-out ${
+              hasChatted ? "h-[97px]" : "h-[190px]"
+            }`}
+          >
+            <div className="flex-1 relative path border-white/60 dark:border-black p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70 dark:bg-black/20 text-gray-800 dark:text-white transition-all duration-300">
               <textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a question..."
-                className="w-[calc(100%-50px)] h-full resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
-                rows="3"
+                placeholder={
+                  hasChatted
+                    ? "Ask a follow-up question..."
+                    : "Ask a question, paste text, or use Area OCR..."
+                }
+                className="w-[calc(100%-50px)] h-full resize-none text-sm bg-transparent border-0 outline-0 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
+                rows={hasChatted ? "3" : "7"}
                 autoFocus
               />
             </div>
