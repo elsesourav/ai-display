@@ -74,29 +74,34 @@ export default function EnableCopyToggle() {
             hosts,
             () => {
               // 1. Send tab message
-              if (chrome.tabs?.sendMessage) {
-                chrome.tabs.sendMessage(
-                  tab.id,
-                  { action: "enable_function" },
-                  () => {
-                    void chrome.runtime.lastError;
-                  }
-                );
+              try {
+                if (chrome.tabs?.sendMessage && tab.id) {
+                  chrome.tabs.sendMessage(
+                    tab.id,
+                    { action: "enable_function" },
+                    () => {
+                      void chrome.runtime.lastError;
+                    }
+                  );
+                }
+              } catch {
+                // Ignore if tab is not reachable
               }
               // 2. Dispatch custom event across all frames
-              if (chrome.scripting?.executeScript) {
-                chrome.scripting.executeScript(
-                  {
-                    target: { tabId: tab.id, allFrames: true },
-                    func: () =>
-                      window.dispatchEvent(
-                        new CustomEvent("__enableCopy__enable")
-                      ),
-                  },
-                  () => {
-                    void chrome.runtime.lastError;
-                  }
-                );
+              try {
+                if (chrome.scripting?.executeScript && tab.id) {
+                  chrome.scripting
+                    .executeScript({
+                      target: { tabId: tab.id, allFrames: true },
+                      func: () =>
+                        window.dispatchEvent(
+                          new CustomEvent("__enableCopy__enable")
+                        ),
+                    })
+                    .catch(() => {});
+                }
+              } catch {
+                // Ignore if tab is not reachable
               }
             }
           );
@@ -107,29 +112,34 @@ export default function EnableCopyToggle() {
             hosts,
             () => {
               // 1. Send tab message
-              if (chrome.tabs?.sendMessage) {
-                chrome.tabs.sendMessage(
-                  tab.id,
-                  { action: "disable_function" },
-                  () => {
-                    void chrome.runtime.lastError;
-                  }
-                );
+              try {
+                if (chrome.tabs?.sendMessage && tab.id) {
+                  chrome.tabs.sendMessage(
+                    tab.id,
+                    { action: "disable_function" },
+                    () => {
+                      void chrome.runtime.lastError;
+                    }
+                  );
+                }
+              } catch {
+                // Ignore if tab is not reachable
               }
               // 2. Dispatch custom event across all frames
-              if (chrome.scripting?.executeScript) {
-                chrome.scripting.executeScript(
-                  {
-                    target: { tabId: tab.id, allFrames: true },
-                    func: () =>
-                      window.dispatchEvent(
-                        new CustomEvent("__enableCopy__disable")
-                      ),
-                  },
-                  () => {
-                    void chrome.runtime.lastError;
-                  }
-                );
+              try {
+                if (chrome.scripting?.executeScript && tab.id) {
+                  chrome.scripting
+                    .executeScript({
+                      target: { tabId: tab.id, allFrames: true },
+                      func: () =>
+                        window.dispatchEvent(
+                          new CustomEvent("__enableCopy__disable")
+                        ),
+                    })
+                    .catch(() => {});
+                }
+              } catch {
+                // Ignore if tab is not reachable
               }
             }
           );

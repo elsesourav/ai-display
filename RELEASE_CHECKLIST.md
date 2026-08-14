@@ -1,6 +1,6 @@
 # AI Display — Production Release Checklist & QA Report
 
-**Version:** 2.2.5  
+**Version:** 2.2.6  
 **Date:** August 14, 2026  
 **Build Target:** Manifest V3 / Chrome Web Store  
 **Package:** `ai-display-extension.zip`
@@ -33,7 +33,7 @@
 
 | Field | Production Value |
 | :--- | :--- |
-| **VERSION** | `2.2.5` |
+| **VERSION** | `2.2.6` |
 | **BUILD PIPELINE** | Vite 6 + React 19 + TailwindCSS (Production Minified) |
 | **ZIP ARCHIVE** | `ai-display-extension.zip` |
 | **ZIP SIZE** | ~21.48 MB (Includes local offline Tesseract.js WASM + traineddata) |

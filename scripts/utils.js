@@ -248,33 +248,44 @@ function injectCSSFile(
 
 /** Execute a function in a tab's context */
 function executeScript(tabId, func, ...args) {
-   if (!chrome.runtime?.id) {
+   if (!chrome.runtime?.id || !tabId) {
       if (__isDevMode) {
          originalConsoleError.call(console, "Script Error: Extension context invalidated.");
       }
       return;
    }
-   chrome.scripting.executeScript({ target: { tabId }, func, args: [...args] }, () => {
-      void chrome.runtime.lastError;
-   });
+   try {
+      chrome.scripting
+         .executeScript({ target: { tabId }, func, args: [...args] }, () => {
+            void chrome.runtime.lastError;
+         })
+         ?.catch?.(() => {});
+   } catch {
+      // Ignore if tab is closed or invalid
+   }
 }
 
 /** Execute a function in a tab's context and return the result */
 function executeScriptReturn(tabId, func, _return = (r) => r, args = []) {
-   if (!chrome.runtime?.id) {
+   if (!chrome.runtime?.id || !tabId) {
       if (__isDevMode) {
          originalConsoleError.call(console, "Script Error: Extension context invalidated.");
       }
       if (_return) _return(undefined);
       return;
    }
-   chrome.scripting.executeScript(
-      { target: { tabId }, func, args },
-      (results) => {
-         void chrome.runtime.lastError;
-         if (_return) _return(results);
-      }
-   );
+   try {
+      chrome.scripting
+         .executeScript({ target: { tabId }, func, args }, (results) => {
+            void chrome.runtime.lastError;
+            if (_return) _return(results);
+         })
+         ?.catch?.(() => {
+            if (_return) _return(undefined);
+         });
+   } catch {
+      if (_return) _return(undefined);
+   }
 }
 
 /* ----------- General Utilities ----------- */

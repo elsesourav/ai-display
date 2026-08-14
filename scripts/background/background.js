@@ -232,8 +232,14 @@ runtimeOnMessage(
     };
 
     chrome.tabs.captureVisibleTab(windowId, { format: "png" }, async (img) => {
+      const err = chrome.runtime.lastError;
+      if (err) {
+        console.error("CaptureVisibleTab Error:", err.message);
+        return;
+      }
+      if (!img) return;
       const data = await __OCR__(img, rect);
-      if (data.success && data?.result) {
+      if (data?.success && data?.result) {
         tabSendMessage(id, "B_C_OCR_RESULT", data.result);
       }
     });
