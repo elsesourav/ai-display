@@ -268,10 +268,3 @@ runtimeOnMessage("IF_B_GET_ANSWER", async ({ data }, { tab }, sendResponse) => {
   }
   sendResponse({ status: "success", answer, provider, requestId });
 });
-
-// google https://www.google.com/search?q=what+is+java&sa=X&udm=50
-// bing: https://www.bing.com/copilotsearch?q=what+is+java&FORM=CSSCOP
-// chatgpt: https://chat.openai.com/  ?????!!!!!
-// grok: https://grok.com/?q=what+is+java?
-// gemini: https://gemini.google.com/app ?????!!!!!
-// Perplexity: https://www.perplexity.ai/search?q=what+is+java
