@@ -7,17 +7,16 @@ import EnableCopyToggle from "../components/EnableCopyToggle";
 
 function PopOuter() {
    return (
-      <>
+      <div className="flex flex-col min-h-full">
          <Header />
-         <div className="p-2 mt-4">
+         <div className="p-2.5 mt-2 space-y-2 flex-1">
             <ToggleButton />
             <AlwaysActiveToggle />
             <EnableCopyToggle />
-            <br />
             <Controls />
          </div>
          <Footer />
-      </>
+      </div>
    );
 }
 

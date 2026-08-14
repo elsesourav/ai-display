@@ -290,7 +290,132 @@ export default function Controls() {
             mainToggleEnabled ? "opacity-100" : "opacity-50"
          }`}
       >
-         {/* Concurrent Requests Section */}
+         {/* ======================================================== */}
+         {/* SECTION 1: AI Engine & Provider Settings                 */}
+         {/* ======================================================== */}
+         
+         {/* AI Providers Section */}
+         <div
+            className={`relative w-full flex flex-col gap-1 transition-opacity duration-150 ease-out ${
+               mainToggleEnabled ? "opacity-100" : "opacity-50"
+            }`}
+         >
+            <div className="m-0">
+               <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex gap-2 items-center">
+                  <i className="sbi-probot pb-1 text-[#3b82f6]" />
+                  <p>AI Providers</p>
+                  {!mainToggleEnabled && (
+                     <span className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">
+                        Disabled
+                     </span>
+                  )}
+               </div>
+            </div>
+
+            <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">
+               {mainToggleEnabled
+                  ? "Drag enabled AIs to reorder priority • At least one enabled"
+                  : "Enable AI Display to configure providers"}
+            </p>
+            <div className="space-y-2">
+               {aiList.map((ai, index) => {
+                  const isEnabled = ai.enabled;
+                  const canDrag = isEnabled;
+                  const isLastRequired = isEnabled && enabledCount <= 1;
+                  const enabledIndex = aiList.filter(
+                     (item, i) => item.enabled && i < index
+                  ).length;
+
+                  return (
+                     <div
+                        key={ai.id}
+                        draggable={canDrag}
+                        onDragStart={
+                           canDrag
+                              ? (e) => handleDragStart(e, index)
+                              : undefined
+                        }
+                        onDragOver={
+                           canDrag ? (e) => handleDragOver(e, index) : undefined
+                        }
+                        onDragLeave={canDrag ? handleDragLeave : undefined}
+                        onDrop={
+                           canDrag ? (e) => handleDrop(e, index) : undefined
+                        }
+                        className={`relative flex items-center justify-between p-3 rounded-lg border transition-all duration-300 transform ${
+                           isEnabled
+                              ? `bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 scale-100 ${
+                                   dragOverIndex === index
+                                      ? "border-blue-400 dark:border-blue-500 bg-blue-100 dark:bg-blue-900/50"
+                                      : "hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                                } ${canDrag ? "cursor-move" : "cursor-default"}`
+                              : "bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 scale-95 opacity-75"
+                        }`}
+                     >
+                        <div className="flex items-center space-x-3 flex-1">
+                           <label
+                              htmlFor={ai.id}
+                              className="flex items-center space-x-3 cursor-pointer flex-1"
+                           >
+                              <input
+                                 type="checkbox"
+                                 id={ai.id}
+                                 checked={isEnabled}
+                                 onChange={() => handleToggle(ai.id)}
+                                 disabled={isLastRequired}
+                                 className={`${
+                                    isLastRequired
+                                       ? "opacity-50 cursor-not-allowed"
+                                       : ""
+                                 }`}
+                                 style={{
+                                    "--switch-color-off": "#64748b",
+                                    "--switch-color-on": "#3b82f6",
+                                 }}
+                              />
+                              <span
+                                 className={`text-sm font-bold bg-gradient-to-r ${ai.gradient} inline-block text-transparent bg-clip-text`}
+                              >
+                                 {ai.name}
+                              </span>
+                           </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                           {isEnabled && (
+                              <div className="flex items-center space-x-2">
+                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                    {enabledIndex === 0
+                                       ? "Primary"
+                                       : enabledIndex === 1
+                                       ? "Secondary"
+                                       : `#${enabledIndex + 1}`}
+                                 </span>
+                                 {isLastRequired && enabledIndex === 0 && (
+                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
+                                       Required
+                                    </span>
+                                 )}
+                              </div>
+                           )}
+                           <RxDragHandleDots2
+                              className={`text-gray-500 dark:text-gray-400 text-lg transition-all duration-300 transform ${
+                                 isEnabled
+                                    ? "opacity-100 scale-100"
+                                    : "opacity-0 scale-75"
+                              }`}
+                              size={30}
+                           />
+                        </div>
+                     </div>
+                  );
+               })}
+            </div>
+         </div>
+
+         <br />
+
+         {/* Simultaneous Query Request Settings */}
          <div
             className={`relative z-50 w-full flex flex-col gap-1 transition-all duration-700 ease-in-out ${
                mainToggleEnabled
@@ -310,7 +435,7 @@ export default function Controls() {
             <p className="text-xs mb-3 text-gray-600 dark:text-gray-400">
                {mainToggleEnabled
                   ? "Choose how many AI providers to query simultaneously"
-                  : "Enable Smart Assistant to configure request settings"}
+                  : "Enable AI Display to configure request settings"}
             </p>
 
             <div className="relative" ref={dropdownRef}>
@@ -459,6 +584,50 @@ export default function Controls() {
 
          <br />
 
+         {/* ======================================================== */}
+         {/* SECTION 2: Floating Menu & Appearance Customization       */}
+         {/* ======================================================== */}
+
+         {/* Chatbot Theme Mode Setting */}
+         <div
+            className={`relative z-40 w-full flex flex-col gap-1.5 transition-all duration-300 ${
+               mainToggleEnabled ? "opacity-100" : "opacity-50"
+            }`}
+         >
+            <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex gap-2 items-center">
+               <i className="sbi-adjust text-lg text-[#3b82f6]" />
+               <p>Chatbot Theme</p>
+            </div>
+            <p className="text-xs mb-1.5 text-gray-600 dark:text-gray-400">
+               {mainToggleEnabled
+                  ? "Auto adapts to current website's light/dark mode"
+                  : "Enable AI Display to configure theme"}
+            </p>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700/80">
+               {[
+                  { id: "auto", label: "Auto", sub: "Website" },
+                  { id: "light", label: "Light", sub: "Crisp" },
+                  { id: "dark", label: "Dark", sub: "Sleek" },
+               ].map((item) => (
+                  <button
+                     key={item.id}
+                     disabled={!mainToggleEnabled}
+                     onClick={() => mainToggleEnabled && setChatbotTheme(item.id)}
+                     className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all duration-200 cursor-pointer focus:outline-none ${
+                        chatbotTheme === item.id && mainToggleEnabled
+                           ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-semibold border border-blue-200/60 dark:border-blue-500 scale-[1.02]"
+                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/40"
+                     } ${!mainToggleEnabled ? "cursor-not-allowed opacity-60" : ""}`}
+                  >
+                     <span className="text-sm font-semibold">{item.label}</span>
+                     <span className="text-[10px] opacity-75">{item.sub}</span>
+                  </button>
+               ))}
+            </div>
+         </div>
+
+         <br />
+
          {/* UI Contrast & Transparency Setting */}
          <div
             className={`relative z-40 w-full flex flex-col gap-1.5 transition-all duration-300 ${
@@ -547,167 +716,6 @@ export default function Controls() {
                      <span className="text-[10px] opacity-75">{item.sub}</span>
                   </button>
                ))}
-            </div>
-         </div>
-
-         <br />
-
-         {/* Chatbot Theme Setting */}
-         <div
-            className={`relative z-40 w-full flex flex-col gap-1.5 transition-all duration-300 ${
-               mainToggleEnabled ? "opacity-100" : "opacity-50"
-            }`}
-         >
-            <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex gap-2 items-center">
-               <i className="sbi-adjust text-lg text-[#3b82f6]" />
-               <p>Chatbot Theme</p>
-            </div>
-            <p className="text-xs mb-1.5 text-gray-600 dark:text-gray-400">
-               {mainToggleEnabled
-                  ? "Auto adapts to current website's light/dark mode"
-                  : "Enable AI Display to configure theme"}
-            </p>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700/80">
-               {[
-                  { id: "auto", label: "Auto", sub: "Website" },
-                  { id: "light", label: "Light", sub: "Crisp" },
-                  { id: "dark", label: "Dark", sub: "Sleek" },
-               ].map((item) => (
-                  <button
-                     key={item.id}
-                     disabled={!mainToggleEnabled}
-                     onClick={() => mainToggleEnabled && setChatbotTheme(item.id)}
-                     className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all duration-200 cursor-pointer focus:outline-none ${
-                        chatbotTheme === item.id && mainToggleEnabled
-                           ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-semibold border border-blue-200/60 dark:border-blue-500 scale-[1.02]"
-                           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/40"
-                     } ${!mainToggleEnabled ? "cursor-not-allowed opacity-60" : ""}`}
-                  >
-                     <span className="text-sm font-semibold">{item.label}</span>
-                     <span className="text-[10px] opacity-75">{item.sub}</span>
-                  </button>
-               ))}
-            </div>
-         </div>
-
-         <br />
-
-         {/* AI Providers Section */}
-         <div
-            className={`relative w-full flex flex-col gap-1 transition-opacity duration-150 ease-out ${
-               mainToggleEnabled ? "opacity-100" : "opacity-50"
-            }`}
-         >
-            <div className="m-0">
-               <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex gap-2 items-center">
-                  <i className="sbi-probot pb-1" />
-                  <p>AI Providers</p>
-                  {!mainToggleEnabled && (
-                     <span className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">
-                        Disabled
-                     </span>
-                  )}
-               </div>
-            </div>
-
-            <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">
-               {mainToggleEnabled
-                  ? "Drag enabled AIs to reorder priority • At least one enabled"
-                  : "Enable AI Display to configure providers"}
-            </p>
-            <div className="space-y-2">
-               {aiList.map((ai, index) => {
-                  const isEnabled = ai.enabled;
-                  const canDrag = isEnabled;
-                  const isLastRequired = isEnabled && enabledCount <= 1;
-                  const enabledIndex = aiList.filter(
-                     (item, i) => item.enabled && i < index
-                  ).length;
-
-                  return (
-                     <div
-                        key={ai.id}
-                        draggable={canDrag}
-                        onDragStart={
-                           canDrag
-                              ? (e) => handleDragStart(e, index)
-                              : undefined
-                        }
-                        onDragOver={
-                           canDrag ? (e) => handleDragOver(e, index) : undefined
-                        }
-                        onDragLeave={canDrag ? handleDragLeave : undefined}
-                        onDrop={
-                           canDrag ? (e) => handleDrop(e, index) : undefined
-                        }
-                        className={`relative flex items-center justify-between p-3 rounded-lg border transition-all duration-300 transform ${
-                           isEnabled
-                              ? `bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 scale-100 ${
-                                   dragOverIndex === index
-                                      ? "border-blue-400 dark:border-blue-500 bg-blue-100 dark:bg-blue-900/50"
-                                      : "hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50"
-                                } ${canDrag ? "cursor-move" : "cursor-default"}`
-                              : "bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 scale-95 opacity-75"
-                        }`}
-                     >
-                        <div className="flex items-center space-x-3 flex-1">
-                           <label
-                              htmlFor={ai.id}
-                              className="flex items-center space-x-3 cursor-pointer flex-1"
-                           >
-                              <input
-                                 type="checkbox"
-                                 id={ai.id}
-                                 checked={isEnabled}
-                                 onChange={() => handleToggle(ai.id)}
-                                 disabled={isLastRequired}
-                                 className={`${
-                                    isLastRequired
-                                       ? "opacity-50 cursor-not-allowed"
-                                       : ""
-                                 }`}
-                                 style={{
-                                    "--switch-color-off": "#64748b",
-                                    "--switch-color-on": "#3b82f6",
-                                 }}
-                              />
-                              <span
-                                 className={`text-sm font-bold bg-gradient-to-r ${ai.gradient} inline-block text-transparent bg-clip-text`}
-                              >
-                                 {ai.name}
-                              </span>
-                           </label>
-                        </div>
-
-                        <div className="flex items-center space-x-3">
-                           {isEnabled && (
-                              <div className="flex items-center space-x-2">
-                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                    {enabledIndex === 0
-                                       ? "Primary"
-                                       : enabledIndex === 1
-                                       ? "Secondary"
-                                       : `#${enabledIndex + 1}`}
-                                 </span>
-                                 {isLastRequired && enabledIndex === 0 && (
-                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
-                                       Required
-                                    </span>
-                                 )}
-                              </div>
-                           )}
-                           <RxDragHandleDots2
-                              className={`text-gray-500 dark:text-gray-400 text-lg transition-all duration-300 transform ${
-                                 isEnabled
-                                    ? "opacity-100 scale-100"
-                                    : "opacity-0 scale-75"
-                              }`}
-                              size={30}
-                           />
-                        </div>
-                     </div>
-                  );
-               })}
             </div>
          </div>
       </div>

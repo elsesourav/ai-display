@@ -1,16 +1,24 @@
 @import "tailwindcss";
 
 @tailwind utilities;
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer utilities {
    .mainBtn {
-      @apply relative grid place-items-center rounded-lg text-xl cursor-pointer border border-white/50 dark:border-white/30 transition-all duration-200 focus:outline-none hover:bg-blue-600/70 hover:dark:bg-blue-600/70 hover:text-white hover:dark:text-white;
+      @apply relative grid place-items-center rounded-lg text-xl cursor-pointer border border-black/10 dark:border-white/20 transition-all duration-200 focus:outline-none hover:bg-blue-600 hover:text-white;
    }
 
    .botChat * {
-      color: #222 !important;
+      color: #1f2937 !important;
       font-size: 14px !important;
       opacity: 1 !important;
       font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+   }
+
+   .dark .botChat *,
+   html.dark .botChat * {
+      color: #f3f4f6 !important;
    }
 
    .botChat * ul,
@@ -26,12 +34,14 @@
       padding: 1px 2px !important;
       border-radius: 3px !important;
    }
+}
 
-   @media (prefers-color-scheme: dark) {
-      .botChat * {
-         color: #ddd !important;
-      }
-   }
+html.dark {
+   color-scheme: dark;
+}
+
+html:not(.dark) {
+   color-scheme: light;
 }
 
 :root {

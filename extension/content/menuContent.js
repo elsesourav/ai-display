@@ -314,3 +314,58 @@ if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
       }
    });
 }
+
+// Watch for live webpage theme toggles (e.g. YouTube, GitHub dark mode toggle)
+try {
+   const __themeObserver = new MutationObserver(() => {
+      const iframe = document.getElementById("__menuWindowIframe");
+      if (iframe?.contentWindow) {
+         chromeStorageGetLocal(KEYS.CONTROLS, (controls) => {
+            pagePostMessage(
+               "IF_C_GET_CURRENT_CONTROLS",
+               {
+                  success: true,
+                  controls,
+                  pageTheme: detectPageTheme(),
+               },
+               iframe.contentWindow
+            );
+         });
+      }
+   });
+
+   __themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: [
+         "class",
+         "data-theme",
+         "data-mode",
+         "data-color-mode",
+         "data-bs-theme",
+         "theme",
+      ],
+   });
+
+   if (window.matchMedia) {
+      window
+         .matchMedia("(prefers-color-scheme: dark)")
+         .addEventListener("change", () => {
+            const iframe = document.getElementById("__menuWindowIframe");
+            if (iframe?.contentWindow) {
+               chromeStorageGetLocal(KEYS.CONTROLS, (controls) => {
+                  pagePostMessage(
+                     "IF_C_GET_CURRENT_CONTROLS",
+                     {
+                        success: true,
+                        controls,
+                        pageTheme: detectPageTheme(),
+                     },
+                     iframe.contentWindow
+                  );
+               });
+            }
+         });
+   }
+} catch {
+   // ignore
+}

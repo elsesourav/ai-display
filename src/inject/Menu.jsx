@@ -23,11 +23,21 @@ export default function Menu() {
    const [uiContrast, setUiContrast] = useState("medium");
    const [autoHideDelay, setAutoHideDelay] = useState(0);
    const [chatbotTheme, setChatbotTheme] = useState("auto");
-   const [pageTheme, setPageTheme] = useState("light");
+   const [pageTheme, setPageTheme] = useState(() => {
+      if (typeof window !== "undefined" && window.matchMedia) {
+         return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+      }
+      return "dark";
+   });
    const menuRef = useRef(null);
    const dragRef = useRef(null);
 
    useEffect(() => {
+      // Request controls & page theme from parent frame immediately
+      ES.pagePostMessage("IF_C_GET_CURRENT_CONTROLS", {}, window.parent);
+
       ES.pageOnMessage("C_IF_OPEN_CHAT", () => {
          setIsChatOpen(true);
          setMenuOpacity("1");
@@ -171,18 +181,19 @@ export default function Menu() {
    // Render UI
    return (
       <div
-         className="absolute transition-all duration-300 ease-in-out"
+         className={`absolute transition-all duration-300 ease-in-out ${effectiveTheme}`}
          ref={menuRef}
          style={{ zIndex: 1, opacity: menuOpacity }}
       >
          <main
             data-contrast={uiContrast}
+            data-theme={effectiveTheme}
             className={`relative left-[1px] top-[1px] rounded-xl shadow-xl overflow-hidden transition-all duration-300 ease-in-out ${
                uiContrast === "low"
-                  ? "backdrop-blur-md bg-blue-500/10 dark:bg-slate-950/35 border border-white/40 dark:border-white/15"
+                  ? "backdrop-blur-md bg-white/70 dark:bg-slate-950/45 border border-slate-300/70 dark:border-white/15 text-gray-900 dark:text-white"
                   : uiContrast === "high"
-                  ? "backdrop-blur-2xl bg-white/95 dark:bg-[#18181b]/95 border border-gray-300 dark:border-zinc-700 shadow-2xl text-gray-900 dark:text-white"
-                  : "backdrop-blur-xl bg-blue-500/15 dark:bg-blue-600/10 border border-white/80 dark:border-white/40"
+                  ? "backdrop-blur-2xl bg-white dark:bg-[#18181b] border border-slate-300 dark:border-zinc-700 shadow-2xl text-gray-950 dark:text-white"
+                  : "backdrop-blur-xl bg-slate-50/90 dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/25 shadow-xl text-gray-900 dark:text-white"
             }`}
             style={{
                width: `calc(${size.w} - 2px)`,
@@ -193,8 +204,10 @@ export default function Menu() {
             <section
                className={`relative h-[inherit] flex w-full items-center justify-between pl-[4px] pr-[4px] border-b transition-colors duration-300 ${
                   uiContrast === "high"
-                     ? "bg-gray-100/90 dark:bg-zinc-800/90 border-gray-200 dark:border-zinc-700"
-                     : "bg-white/10 dark:bg-black/10 border-white/30 dark:border-white/20"
+                     ? "bg-slate-100 dark:bg-zinc-800/90 border-slate-200 dark:border-zinc-700"
+                     : uiContrast === "low"
+                     ? "bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10"
+                     : "bg-black/[0.03] dark:bg-white/10 border-black/10 dark:border-white/20"
                }`}
                style={{ height: `${parseInt(SIZES.min.h) - 2}px` }}
             >
@@ -204,8 +217,8 @@ export default function Menu() {
                      onClick={toggleChat}
                      className={`mainBtn ${
                         isChatOpen
-                           ? "bg-blue-500/60 dark:bg-blue-500/60 text-white dark:text-white"
-                           : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                           ? "bg-blue-500 text-white"
+                           : "bg-black/5 dark:bg-white/10 text-gray-800 dark:text-gray-200"
                      }`}
                      style={{
                         width: `calc(${SIZES.min.h} - 8px)`,
@@ -216,7 +229,7 @@ export default function Menu() {
                   </div>
 
                   <div
-                     className="mainBtn bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                     className="mainBtn bg-black/5 dark:bg-white/10 text-gray-800 dark:text-gray-200"
                      onClick={handleSelectText}
                      style={{
                         width: `calc(${SIZES.min.h} - 8px)`,
@@ -237,8 +250,8 @@ export default function Menu() {
                      ref={dragRef}
                      className={`mainBtn ${
                         isDragging
-                           ? "bg-blue-500/60 dark:bg-blue-500/60 text-white dark:text-white"
-                           : "bg-white/15 dark:bg-black/15 text-gray-700 dark:text-gray-200"
+                           ? "bg-blue-500 text-white"
+                           : "bg-black/5 dark:bg-white/10 text-gray-800 dark:text-gray-200"
                      }`}
                      style={{
                         width: isChatOpen

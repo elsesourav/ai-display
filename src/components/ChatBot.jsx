@@ -345,10 +345,10 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
               hasChatted ? "h-[97px]" : "h-[190px]"
             } ${
               uiContrast === "low"
-                ? "bg-white/40 dark:bg-black/25 border border-white/40 dark:border-white/15 text-gray-800 dark:text-white"
+                ? "bg-slate-900/[0.04] dark:bg-black/25 border border-slate-900/10 dark:border-white/15 text-gray-800 dark:text-white"
                 : uiContrast === "high"
-                ? "bg-white/95 dark:bg-slate-900/95 border border-slate-300 dark:border-slate-700 shadow-xs text-gray-900 dark:text-white"
-                : "bg-white/70 dark:bg-black/35 border border-white/60 dark:border-white/20 text-gray-800 dark:text-white"
+                ? "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xs text-gray-900 dark:text-white"
+                : "bg-white/80 dark:bg-black/35 border border-slate-200/90 dark:border-white/20 text-gray-800 dark:text-white shadow-xs"
             }`}
           >
             <div className="flex-1 relative w-full overflow-hidden">
@@ -473,10 +473,10 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
             <div
               className={`p-3 rounded-xl transition-all duration-300 ${
                 uiContrast === "low"
-                  ? "bg-white/15 dark:bg-black/20 border border-white/30 dark:border-white/15 backdrop-blur-xs"
+                  ? "bg-slate-900/[0.04] dark:bg-black/20 border border-slate-900/10 dark:border-white/15"
                   : uiContrast === "high"
-                  ? "bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 shadow-xs text-gray-900 dark:text-white"
-                  : "bg-white/25 dark:bg-black/30 border border-white/40 dark:border-white/25 backdrop-blur-md"
+                  ? "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm text-gray-900 dark:text-white"
+                  : "bg-white/80 dark:bg-black/30 border border-slate-200/90 dark:border-white/25 shadow-xs"
               }`}
             >
               <div className="text-gray-800 dark:text-gray-200 font-medium">
@@ -497,10 +497,10 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
                 <div
                   className={`p-3 rounded-xl transition-all duration-300 ${
                     uiContrast === "low"
-                      ? "bg-white/15 dark:bg-black/20 border border-white/30 dark:border-white/15 backdrop-blur-xs"
+                      ? "bg-slate-900/[0.04] dark:bg-black/20 border border-slate-900/10 dark:border-white/15"
                       : uiContrast === "high"
-                      ? "bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 shadow-xs"
-                      : "bg-white/25 dark:bg-black/30 border border-white/40 dark:border-white/25 backdrop-blur-md"
+                      ? "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm"
+                      : "bg-white/80 dark:bg-black/30 border border-slate-200/90 dark:border-white/25 shadow-xs"
                   }`}
                 >
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
@@ -522,10 +522,10 @@ export default function ChatBot({ isOpen, uiContrast = "medium" }) {
                 <div
                   className={`p-3 rounded-xl transition-all duration-300 ${
                     uiContrast === "low"
-                      ? "bg-white/15 dark:bg-black/20 border border-white/30 dark:border-white/15 backdrop-blur-xs"
+                      ? "bg-slate-900/[0.04] dark:bg-black/20 border border-slate-900/10 dark:border-white/15"
                       : uiContrast === "high"
-                      ? "bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 shadow-xs"
-                      : "bg-white/25 dark:bg-black/30 border border-white/40 dark:border-white/25 backdrop-blur-md"
+                      ? "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm"
+                      : "bg-white/80 dark:bg-black/30 border border-slate-200/90 dark:border-white/25 shadow-xs"
                   }`}
                 >
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">

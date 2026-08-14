@@ -30,9 +30,9 @@ export default function Header() {
                      title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                   >
                      {isDarkMode ? (
-                        <IoMoon className="size-6 text-blue-400 hover:rotate-12 transition-transform duration-300" />
-                     ) : (
                         <IoSunny className="size-6 text-amber-400 hover:rotate-45 transition-transform duration-300" />
+                     ) : (
+                        <IoMoon className="size-6 text-blue-400 hover:rotate-12 transition-transform duration-300" />
                      )}
                   </button>
                </div>
