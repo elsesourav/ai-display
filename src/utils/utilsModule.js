@@ -331,7 +331,6 @@ const extensionUtils = {
    runtimeSendMessage,
    runtimeOnMessage,
    tabSendMessage,
-   tabOnMessage,
    pagePostMessage,
    pageOnMessage,
 

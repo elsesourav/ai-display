@@ -122,6 +122,12 @@ assert(fs.existsSync(path.join(rootDir, "privacy-policy.html")), "privacy-policy
 assert(fs.existsSync(path.join(rootDir, "RELEASE_CHECKLIST.md")), "RELEASE_CHECKLIST.md exists");
 assert(fs.existsSync(path.join(rootDir, "CHROME_WEB_STORE_SUBMISSION.md")), "CHROME_WEB_STORE_SUBMISSION.md exists");
 
+// --- TEST SUITE 5: Runtime Module Integrity ---
+console.log("\n5. Runtime Module Integrity:");
+const utilsPath = path.join(rootDir, "src", "utils", "utilsModule.js");
+const utilsCode = fs.readFileSync(utilsPath, "utf-8");
+assert(!utilsCode.includes("tabOnMessage,"), "utilsModule.js has no undefined tabOnMessage reference");
+
 // --- SUMMARY ---
 console.log(`\n========================================`);
 console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
