@@ -1,24 +1,21 @@
+/* eslint-disable no-undef */
 import { useEffect, useState } from "react";
 import extensionUtils from "./../utils/utilsModule.js";
 
 export default function EnableCopyToggle() {
   const [checked, setChecked] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-
     const checkStatus = async () => {
       // Get the active tab's hostname
-      const tabs = await new Promise((resolve) => {
-        chrome.tabs.query({ active: true, currentWindow: true }, resolve);
-      });
-      const tab = tabs[0];
+      const tab = await extensionUtils.getActiveTab();
       let hostname = "";
       if (tab && tab.url?.startsWith("http")) {
         try {
           hostname = new URL(tab.url).hostname;
-        } catch (e) {}
+        } catch {
+          // ignore invalid url
+        }
       }
 
       // Check if hostname is in the list of active hosts
@@ -34,7 +31,6 @@ export default function EnableCopyToggle() {
           } else {
             setChecked(false);
           }
-          setIsLoading(false);
         }
       );
     };
@@ -42,30 +38,110 @@ export default function EnableCopyToggle() {
     checkStatus();
   }, []);
 
-  const handleClick = () => {
-    // Optimistically toggle UI
-    setChecked(!checked);
-    extensionUtils.runtimeSendMessage("P_B_TOGGLE_ENABLE_COPY");
-  };
+  const handleClick = async () => {
+    const nextState = !checked;
+    setChecked(nextState);
 
-  if (isLoading) {
-    return (
-      <div className="w-full mt-2">
-        <div className="relative w-full h-16 rounded-xl bg-gray-100 dark:bg-gray-800 grid place-items-center border border-gray-200 dark:border-gray-700">
-          <div className="text-center">
-            <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-1">
-              🔄 Loading Settings...
-            </div>
-          </div>
-        </div>
-      </div>
+    const tab = await extensionUtils.getActiveTab();
+    let hostname = "";
+    if (tab && tab.url?.startsWith("http")) {
+      try {
+        hostname = new URL(tab.url).hostname;
+      } catch {
+        // ignore invalid url
+      }
+    }
+
+    if (!tab || !hostname) return;
+
+    extensionUtils.chromeStorageGetLocal(
+      extensionUtils.KEYS.ENABLE_COPY_HOSTS,
+      (storedHosts) => {
+        let hosts = storedHosts || [];
+        if (typeof hosts === "string") {
+          try {
+            hosts = JSON.parse(hosts);
+          } catch {
+            hosts = [];
+          }
+        }
+        if (!Array.isArray(hosts)) hosts = [];
+
+        if (nextState) {
+          if (!hosts.includes(hostname)) hosts.push(hostname);
+          extensionUtils.chromeStorageSetLocal(
+            extensionUtils.KEYS.ENABLE_COPY_HOSTS,
+            hosts,
+            () => {
+              // 1. Send tab message
+              if (chrome.tabs?.sendMessage) {
+                chrome.tabs.sendMessage(
+                  tab.id,
+                  { action: "enable_function" },
+                  () => {
+                    void chrome.runtime.lastError;
+                  }
+                );
+              }
+              // 2. Dispatch custom event across all frames
+              if (chrome.scripting?.executeScript) {
+                chrome.scripting.executeScript(
+                  {
+                    target: { tabId: tab.id, allFrames: true },
+                    func: () =>
+                      window.dispatchEvent(
+                        new CustomEvent("__enableCopy__enable")
+                      ),
+                  },
+                  () => {
+                    void chrome.runtime.lastError;
+                  }
+                );
+              }
+            }
+          );
+        } else {
+          hosts = hosts.filter((h) => h !== hostname && h !== "*");
+          extensionUtils.chromeStorageSetLocal(
+            extensionUtils.KEYS.ENABLE_COPY_HOSTS,
+            hosts,
+            () => {
+              // 1. Send tab message
+              if (chrome.tabs?.sendMessage) {
+                chrome.tabs.sendMessage(
+                  tab.id,
+                  { action: "disable_function" },
+                  () => {
+                    void chrome.runtime.lastError;
+                  }
+                );
+              }
+              // 2. Dispatch custom event across all frames
+              if (chrome.scripting?.executeScript) {
+                chrome.scripting.executeScript(
+                  {
+                    target: { tabId: tab.id, allFrames: true },
+                    func: () =>
+                      window.dispatchEvent(
+                        new CustomEvent("__enableCopy__disable")
+                      ),
+                  },
+                  () => {
+                    void chrome.runtime.lastError;
+                  }
+                );
+              }
+            }
+          );
+        }
+      }
     );
-  }
+  };
 
   return (
     <div className="w-full mt-2">
       <div
-        className={`animated-button relative w-full h-16 rounded-xl grid place-items-center shadow-lg transition-all duration-300 overflow-hidden cursor-pointer ${
+        className={`animated-button relative w-full h-16 rounded-xl grid place-items-center shadow-lg transition-[filter,opacity] duration-150 overflow-hidden cursor-pointer ${
           !checked ? "grayscale opacity-80" : ""
         }`}
         style={{

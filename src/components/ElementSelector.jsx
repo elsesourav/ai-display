@@ -51,11 +51,12 @@ const ElementSelector = forwardRef(
 
       // Update container dimensions when it changes
       useEffect(() => {
-         if (containerRef.current) {
+         const currentContainer = containerRef.current;
+         if (currentContainer) {
             const updateDimensions = () => {
                setContainerDimensions({
-                  width: containerRef.current.offsetWidth,
-                  height: containerRef.current.offsetHeight,
+                  width: currentContainer.offsetWidth,
+                  height: currentContainer.offsetHeight,
                });
             };
 
@@ -63,12 +64,11 @@ const ElementSelector = forwardRef(
 
             // Set up resize observer to update dimensions when container size changes
             const resizeObserver = new ResizeObserver(updateDimensions);
-            resizeObserver.observe(containerRef.current);
+            resizeObserver.observe(currentContainer);
 
             return () => {
-               if (containerRef.current) {
-                  resizeObserver.unobserve(containerRef.current);
-               }
+               resizeObserver.unobserve(currentContainer);
+               resizeObserver.disconnect();
             };
          }
       }, []);

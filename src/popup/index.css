@@ -44,7 +44,7 @@ input[type="checkbox"]:not(.btn) {
    background-color: var(--switch-color-off);
    box-sizing: content-box;
    overflow: hidden;
-   transition: 300ms 100ms;
+   transition: background-color 150ms ease;
    -webkit-appearance: none;
    -moz-appearance: none;
    appearance: none;
@@ -62,15 +62,7 @@ input[type="checkbox"]:not(.btn):before {
       var(--_g) var(--_p, 0) / var(--S) 100% no-repeat content-box, #fff;
    mix-blend-mode: darken;
    filter: blur(calc(var(--S) / 12)) contrast(11);
-   transition: 400ms, background-position 400ms 100ms,
-      padding
-         cubic-bezier(
-            0,
-            calc(var(--_i, -1) * 200),
-            1,
-            calc(var(--_i, -1) * 200)
-         )
-         250ms 100s;
+   transition: background-position 150ms ease, padding 150ms ease;
 }
 
 input[type="checkbox"]:not(.btn):checked {

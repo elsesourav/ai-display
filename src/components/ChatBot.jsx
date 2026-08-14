@@ -13,8 +13,8 @@ export default function ChatBot({ isOpen }) {
   const [lastQuestion, setLastQuestion] = useState("");
   const [answers, setAnswers] = useState({});
   const [selectedProvider, setSelectedProvider] = useState("google");
-  const [allProvidersCompleted, setAllProvidersCompleted] = useState(true);
   const currentRequestIdRef = useRef(null);
+  const lastQuestionRef = useRef("");
 
   const [aiProviders, setAiProviders] = useState([]);
 
@@ -98,9 +98,6 @@ export default function ChatBot({ isOpen }) {
         `Starting concurrent loading with max ${maxConcurrentRequest} simultaneous requests`,
       );
 
-      // Mark that providers are not all completed
-      setAllProvidersCompleted(false);
-
       const startProviderRequest = (provider) => {
         // console.log(`Starting request for ${provider.id}`);
 
@@ -139,13 +136,11 @@ export default function ChatBot({ isOpen }) {
       while (activeRequests.size > 0) {
         if (currentRequestIdRef.current !== requestId) {
           console.log("Request cancelled, stopping concurrent loading");
-          setAllProvidersCompleted(true);
           return;
         }
         const completedRequest = await Promise.race(activeRequests.values());
 
         if (completedRequest.cancelled) {
-          setAllProvidersCompleted(true);
           return;
         }
 
@@ -155,10 +150,6 @@ export default function ChatBot({ isOpen }) {
 
           activeRequests.delete(providerId);
 
-          // console.log(
-          //    `${providerId} finished. Completed: ${completedCount}/${aiProviders.length}`
-          // );
-
           if (providersToProcess.length > 0) {
             const nextProvider = providersToProcess.shift();
             startProviderRequest(nextProvider);
@@ -167,8 +158,6 @@ export default function ChatBot({ isOpen }) {
       }
 
       console.log(`All ${completedCount} providers completed`);
-      // Mark that all providers have completed
-      setAllProvidersCompleted(true);
     },
     [aiProviders, maxConcurrentRequest],
   );
@@ -192,44 +181,6 @@ export default function ChatBot({ isOpen }) {
     return combined;
   }, [aiProviders, answers]);
 
-  // Effect to update history when all providers complete for the current question
-  useEffect(() => {
-    if (
-      allProvidersCompleted &&
-      lastQuestion &&
-      Object.keys(answers).length > 0
-    ) {
-      setHistory((prevHistory) => {
-        // Find if this question is already in history anywhere
-        const existingIndex = prevHistory.findIndex(
-          (item) => item.id === currentRequestIdRef.current
-        );
-
-        if (existingIndex >= 0) {
-          // Update existing entry with new answers, keep its position
-          const updatedHistory = [...prevHistory];
-          updatedHistory[existingIndex] = {
-            ...updatedHistory[existingIndex],
-            answers: { ...answers },
-          };
-          UTILS.chromeStorageSetLocal(UTILS.KEYS.HISTORY, updatedHistory);
-          return updatedHistory;
-        } else {
-          // Add new entry to the top
-          const newEntry = {
-            id: currentRequestIdRef.current,
-            question: lastQuestion,
-            answers: { ...answers },
-            timestamp: Date.now(),
-          };
-          const newHistory = [newEntry, ...prevHistory].slice(0, 20); // Keep last 20
-          UTILS.chromeStorageSetLocal(UTILS.KEYS.HISTORY, newHistory);
-          return newHistory;
-        }
-      });
-    }
-  }, [allProvidersCompleted, lastQuestion, answers]);
-
   const handleSendMessage = useCallback(
     async (messageInput = null) => {
       const actualInput = messageInput !== null ? messageInput : input;
@@ -241,6 +192,7 @@ export default function ChatBot({ isOpen }) {
       currentRequestIdRef.current = requestId;
 
       setLastQuestion(actualInput);
+      lastQuestionRef.current = actualInput;
       setInput("");
 
       setIsLoading(true);
@@ -249,7 +201,7 @@ export default function ChatBot({ isOpen }) {
       // Start concurrent loading
       loadProvidersWithConcurrency(actualInput, requestId);
     },
-    [input, allProvidersCompleted, loadProvidersWithConcurrency],
+    [input, loadProvidersWithConcurrency],
   );
 
   useEffect(() => {
@@ -269,13 +221,42 @@ export default function ChatBot({ isOpen }) {
           setIsLoading(false);
         }
 
-        return {
+        const newAnswers = {
           ...prev,
           [provider]: {
             content: data.answer,
             provider: provider,
           },
         };
+
+        // Incrementally save/update history entry in real time
+        setHistory((prevHistory) => {
+          const reqId = data.requestId || currentRequestIdRef.current;
+          const existingIndex = prevHistory.findIndex(
+            (item) => item.id === reqId
+          );
+
+          let updatedHistory;
+          if (existingIndex >= 0) {
+            updatedHistory = [...prevHistory];
+            updatedHistory[existingIndex] = {
+              ...updatedHistory[existingIndex],
+              answers: newAnswers,
+            };
+          } else {
+            const newEntry = {
+              id: reqId,
+              question: lastQuestionRef.current || "",
+              answers: newAnswers,
+              timestamp: Date.now(),
+            };
+            updatedHistory = [newEntry, ...prevHistory].slice(0, 20);
+          }
+          UTILS.chromeStorageSetLocal(UTILS.KEYS.HISTORY, updatedHistory);
+          return updatedHistory;
+        });
+
+        return newAnswers;
       });
     });
 
@@ -520,8 +501,10 @@ export default function ChatBot({ isOpen }) {
                   key={item.id}
                   onClick={() => {
                     setLastQuestion(item.question);
+                    lastQuestionRef.current = item.question;
                     setAnswers(item.answers);
                     currentRequestIdRef.current = item.id;
+                    setIsLoading(false);
                     // Select first available provider in the loaded history
                     const providersWithAnswers = Object.keys(item.answers);
                     if (providersWithAnswers.length > 0) {

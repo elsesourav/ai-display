@@ -80,101 +80,11 @@ const activateAlwaysActive = () => {
   });
 };
 
-/* ----------------- Enable Copy (Copy Unlocker) ----------------- */
-
-const validateEnableCopy = async (hosts) => {
-  if (hosts.length === 0) return "";
-  let message = "";
-  try {
-    await chrome.scripting.registerContentScripts([
-      {
-        matches: hosts.map((h) => (h === "*" ? "*://*/*" : "*://" + h + "/*")),
-        allFrames: true,
-        matchOriginAsFallback: true,
-        runAt: "document_start",
-        id: "enableCopyTest",
-        js: ["utils.js"],
-      },
-    ]);
-  } catch (e) {
-    message = e.message;
-  }
-  try {
-    await chrome.scripting.unregisterContentScripts({
-      ids: ["enableCopyTest"],
-    });
-  } catch (e) {}
-  return message;
-};
-
-const activateEnableCopy = () => {
-  return new Promise((resolve) => {
-    if (activateEnableCopy.busy) return resolve();
-    activateEnableCopy.busy = true;
-
-    chromeStorageGetLocal("enableCopyHosts", async (hosts) => {
-      hosts = hosts || [];
-      try {
-        try {
-          await chrome.scripting.unregisterContentScripts({
-            ids: ["enableCopyMain", "enableCopyIsolated"],
-          });
-        } catch (e) {}
-
-        if (hosts.length > 0) {
-          const props = {
-            allFrames: true,
-            matchOriginAsFallback: true,
-            runAt: "document_start",
-          };
-          if (hosts.includes("*")) {
-            props.matches = ["*://*/*"];
-          } else {
-            props.matches = hosts.map((h) => "*://" + h + "/*");
-          }
-
-          await chrome.scripting.registerContentScripts([
-            {
-              ...props,
-              id: "enableCopyMain",
-              js: ["inject/enableCopyMain.js"],
-              world: "MAIN",
-            },
-            {
-              ...props,
-              id: "enableCopyIsolated",
-              js: ["inject/enableCopyIsolated.js"],
-              world: "ISOLATED",
-            },
-          ]);
-          console.log("Enable Copy scripts registered for:", hosts);
-        } else {
-          console.log("Enable Copy scripts unregistered (no hosts).");
-        }
-      } catch (e) {
-        console.error("Enable Copy Registration Failed:", e);
-      }
-
-      activateEnableCopy.busy = false;
-      resolve();
-    });
-  });
-};
-
-chrome.runtime.onStartup.addListener(() => {
-  activateAlwaysActive();
-  activateEnableCopy();
-});
-chrome.runtime.onInstalled.addListener(() => {
-  activateAlwaysActive();
-  activateEnableCopy();
-});
+chrome.runtime.onStartup.addListener(activateAlwaysActive);
+chrome.runtime.onInstalled.addListener(activateAlwaysActive);
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.alwaysActiveHosts) {
     activateAlwaysActive();
-  }
-  if (changes.enableCopyHosts) {
-    activateEnableCopy();
   }
 });
 
@@ -203,39 +113,12 @@ const cleanupAlwaysActiveHosts = () => {
   });
 };
 
-const cleanupEnableCopyHosts = () => {
-  chromeStorageGetLocal("enableCopyHosts", (storedHosts) => {
-    let hosts = storedHosts || [];
-    if (hosts.length === 0 || hosts.includes("*")) return;
-
-    chrome.tabs.query({}, (tabs) => {
-      const activeTabHostnames = new Set();
-      for (const tab of tabs) {
-        if (tab.url && tab.url.startsWith("http")) {
-          try {
-            activeTabHostnames.add(new URL(tab.url).hostname);
-          } catch (e) {}
-        }
-      }
-
-      const newHosts = hosts.filter((h) => activeTabHostnames.has(h));
-      if (newHosts.length !== hosts.length) {
-        chromeStorageSetLocal("enableCopyHosts", newHosts, () => {
-          console.log("Enable Copy: Cleaned up unused hosts");
-        });
-      }
-    });
-  });
-};
-
 chrome.tabs.onRemoved.addListener(() => {
   cleanupAlwaysActiveHosts();
-  cleanupEnableCopyHosts();
 });
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.url) {
     cleanupAlwaysActiveHosts();
-    cleanupEnableCopyHosts();
   }
 });
 
@@ -283,58 +166,6 @@ runtimeOnMessage("P_B_TOGGLE_ALWAYS_ACTIVE", async (_, __, sendResponse) => {
       } else {
         chromeStorageSetLocal("alwaysActiveHosts", hosts, async () => {
           await activateAlwaysActive();
-          chrome.tabs.reload(tab.id);
-        });
-      }
-    }
-  });
-  sendResponse("ok");
-});
-
-runtimeOnMessage("P_B_TOGGLE_ENABLE_COPY", async (_, __, sendResponse) => {
-  const tab = await getActiveTab();
-  if (!tab || !tab.url?.startsWith("http")) {
-    sendResponse("error: not a valid tab");
-    return;
-  }
-
-  chromeStorageGetLocal("enableCopyHosts", async (storedHosts) => {
-    let hosts = storedHosts || [];
-
-    const a = await chrome.scripting
-      .executeScript({
-        target: { tabId: tab.id, allFrames: true },
-        func: () => location.hostname,
-        injectImmediately: true,
-      })
-      .catch(() => [{ result: new URL(tab.url).hostname, frameId: 0 }]);
-
-    const hostnames = (a || [])
-      .map((o) => o.result)
-      .filter((s, i, l) => s && l.indexOf(s) === i);
-    const top = a.find((o) => o.frameId === 0)?.result;
-
-    if (top) {
-      const n = hosts.indexOf(top);
-      if (n >= 0) {
-        // Remove
-        for (const hostname of hostnames) {
-          const idx = hosts.indexOf(hostname);
-          if (idx >= 0) hosts.splice(idx, 1);
-        }
-      } else {
-        // Add
-        for (const hostname of hostnames) {
-          if (hosts.indexOf(hostname) < 0) hosts.push(hostname);
-        }
-      }
-
-      const error = await validateEnableCopy(hosts);
-      if (error) {
-        console.error(error);
-      } else {
-        chromeStorageSetLocal("enableCopyHosts", hosts, async () => {
-          await activateEnableCopy();
           chrome.tabs.reload(tab.id);
         });
       }

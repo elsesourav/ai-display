@@ -34,7 +34,14 @@
     {
       "matches": ["http://*/*", "https://*/*"],
       "exclude_globs": ["chrome://*"],
-      "js": ["./utils.js", "./content/content.js", "./content/menuContent.js"]
+      "run_at": "document_start",
+      "all_frames": true,
+      "js": [
+        "./utils.js",
+        "./content/enableCopy.js",
+        "./content/content.js",
+        "./content/menuContent.js"
+      ]
     }
   ],
   "web_accessible_resources": [

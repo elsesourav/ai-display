@@ -73,7 +73,6 @@ export default function Controls() {
    const [mainToggleEnabled, setMainToggleEnabled] = useState(false);
    const [concurrentRequests, setConcurrentRequests] = useState(2);
    const [dropdownOpen, setDropdownOpen] = useState(false);
-   const [isLoading, setIsLoading] = useState(true);
    const [isInitialized, setIsInitialized] = useState(false);
    const dropdownRef = useRef(null);
 
@@ -108,13 +107,10 @@ export default function Controls() {
 
    useEffect(() => {
       const loadControlsData = () => {
-         setIsLoading(true);
-
          extensionUtils.chromeStorageGetLocal(
             extensionUtils.KEYS.CONTROLS,
             (controlsData) => {
                if (!controlsData) {
-                  setIsLoading(false);
                   setIsInitialized(true);
                   return;
                }
@@ -133,7 +129,6 @@ export default function Controls() {
                   setConcurrentRequests(controlsData.concurrentRequests);
                }
 
-               setIsLoading(false);
                setIsInitialized(true);
             }
          );
@@ -258,27 +253,10 @@ export default function Controls() {
       setDragOverIndex(null);
    };
 
-   if (isLoading) {
-      return (
-         <div className="relative w-full h-auto p-2 flex flex-col justify-center items-center">
-            <div className="text-center">
-               <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">
-                  🔄 Loading Settings...
-               </div>
-               <div className="text-xs text-gray-600 dark:text-gray-400">
-                  Please wait while we load your configuration
-               </div>
-            </div>
-         </div>
-      );
-   }
-
    return (
       <div
-         className={`relative w-full h-auto p-2 flex flex-col justify-center items-center transition-all duration-500 ease-in-out ${
-            mainToggleEnabled
-               ? "opacity-100 transform translate-y-0"
-               : "opacity-50 transform translate-y-1"
+         className={`relative w-full h-auto p-2 flex flex-col justify-center items-center transition-opacity duration-150 ease-out ${
+            mainToggleEnabled ? "opacity-100" : "opacity-50"
          }`}
       >
          {/* Concurrent Requests Section */}
@@ -452,10 +430,8 @@ export default function Controls() {
 
          {/* AI Providers Section */}
          <div
-            className={`relative w-full flex flex-col gap-1 transition-all duration-700 ease-in-out delay-100 ${
-               mainToggleEnabled
-                  ? "opacity-100 transform translate-y-0"
-                  : "opacity-50 transform translate-y-2"
+            className={`relative w-full flex flex-col gap-1 transition-opacity duration-150 ease-out ${
+               mainToggleEnabled ? "opacity-100" : "opacity-50"
             }`}
          >
             <div className="m-0">

@@ -6,59 +6,39 @@ export default function ToggleButton() {
   const [settings, setSettings] = useState({
     enable: false,
   });
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-
     extensionUtils.chromeStorageGetLocal(
       extensionUtils.KEYS.SETTINGS,
-      (settings) => {
-        if (settings) {
-          setSettings(settings);
-          setChecked(settings.enable);
+      (storedSettings) => {
+        if (storedSettings) {
+          setSettings(storedSettings);
+          setChecked(Boolean(storedSettings.enable));
         }
-        setIsLoading(false);
       },
     );
   }, []);
 
-  useEffect(() => {
-    settings.enable = checked;
+  const handleClick = () => {
+    const nextState = !checked;
+    setChecked(nextState);
+    const updatedSettings = { ...settings, enable: nextState };
+    setSettings(updatedSettings);
     extensionUtils.chromeStorageSetLocal(
       extensionUtils.KEYS.SETTINGS,
-      settings,
+      updatedSettings,
       () => {
         extensionUtils.runtimeSendMessage("P_B_TOGGLE");
       },
     );
-  }, [settings, checked]);
-
-  const handleClick = () => {
-    setChecked(!checked);
   };
-
-  if (isLoading) {
-    return (
-      <div className="w-full">
-        <div className="relative w-full h-16 rounded-xl bg-gray-100 dark:bg-gray-800 grid place-items-center border border-gray-200 dark:border-gray-700">
-          <div className="text-center">
-            <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-1">
-              🔄 Loading Settings...
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">
-              Please wait
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full">
       <div
-        className="animated-button relative w-full h-16 rounded-xl grid place-items-center shadow-lg transition-all duration-300 overflow-hidden cursor-pointer"
+        className={`animated-button relative w-full h-16 rounded-xl grid place-items-center shadow-lg transition-[filter,opacity] duration-150 overflow-hidden cursor-pointer ${
+          !checked ? "grayscale opacity-80" : ""
+        }`}
         onClick={handleClick}
       >
         <div className="flex items-center justify-between w-full px-6 pointer-events-none">

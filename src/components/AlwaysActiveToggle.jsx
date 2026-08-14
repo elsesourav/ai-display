@@ -3,37 +3,35 @@ import extensionUtils from "./../utils/utilsModule.js";
 
 export default function AlwaysActiveToggle() {
   const [checked, setChecked] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-
     const checkStatus = async () => {
       // Get the active tab's hostname
-      const tabs = await new Promise((resolve) => {
-        chrome.tabs.query({ active: true, currentWindow: true }, resolve);
-      });
-      const tab = tabs[0];
+      const tab = await extensionUtils.getActiveTab();
       let hostname = "";
       if (tab && tab.url?.startsWith("http")) {
         try {
           hostname = new URL(tab.url).hostname;
-        } catch (e) {}
+        } catch {
+          // ignore invalid url
+        }
       }
 
       // Check if hostname is in the list of active hosts
-      extensionUtils.chromeStorageGetLocal("alwaysActiveHosts", (hosts) => {
-        const activeHosts = hosts || [];
-        if (
-          hostname &&
-          (activeHosts.includes(hostname) || activeHosts.includes("*"))
-        ) {
-          setChecked(true);
-        } else {
-          setChecked(false);
+      extensionUtils.chromeStorageGetLocal(
+        extensionUtils.KEYS.ALWAYS_ACTIVE_HOSTS,
+        (hosts) => {
+          const activeHosts = hosts || [];
+          if (
+            hostname &&
+            (activeHosts.includes(hostname) || activeHosts.includes("*"))
+          ) {
+            setChecked(true);
+          } else {
+            setChecked(false);
+          }
         }
-        setIsLoading(false);
-      });
+      );
     };
 
     checkStatus();
@@ -45,24 +43,10 @@ export default function AlwaysActiveToggle() {
     extensionUtils.runtimeSendMessage("P_B_TOGGLE_ALWAYS_ACTIVE");
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full mt-2">
-        <div className="relative w-full h-16 rounded-xl bg-gray-100 dark:bg-gray-800 grid place-items-center border border-gray-200 dark:border-gray-700">
-          <div className="text-center">
-            <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-1">
-              🔄 Loading Settings...
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full mt-2">
       <div
-        className={`animated-button relative w-full h-16 rounded-xl grid place-items-center shadow-lg transition-all duration-300 overflow-hidden cursor-pointer ${
+        className={`animated-button relative w-full h-16 rounded-xl grid place-items-center shadow-lg transition-[filter,opacity] duration-150 overflow-hidden cursor-pointer ${
           !checked ? "grayscale opacity-80" : ""
         }`}
         style={{
