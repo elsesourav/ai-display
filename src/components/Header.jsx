@@ -1,4 +1,4 @@
-import { DarkModeSwitch } from "react-toggle-dark-mode";
+import { IoSunny, IoMoon } from "react-icons/io5";
 import { useTheme } from "../hooks/useThemeHook.jsx";
 
 export default function Header() {
@@ -9,8 +9,8 @@ export default function Header() {
       (theme === "system" &&
          window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-   const toggleTheme = (checked) => {
-      setTheme(checked ? "dark" : "light");
+   const toggleTheme = () => {
+      setTheme(isDarkMode ? "light" : "dark");
    };
 
    return (
@@ -24,16 +24,17 @@ export default function Header() {
                   <h1 className="bg-gradient-to-l from-purple-500 via-orange-400 to-pink-500 inline-block text-transparent bg-clip-text font-black text-2xl text-shadow-lg/10 text-shadow-black">
                      AI Display
                   </h1>
-                  <div className="size-10 rounded-xl grid place-items-center transition-colors duration-300 dark:bg-black/40 dark:hover:bg-black/50 bg-black/20 hover:bg-black/30">
-                     <DarkModeSwitch
-                        className="relative size-8 cursor-pointer transition-all duration-300 scale-100 hover:scale-95"
-                        checked={isDarkMode}
-                        onChange={toggleTheme}
-                        size={28}
-                        sunColor="#f59e0b"
-                        moonColor="#3b82f6"
-                     />
-                  </div>
+                  <button
+                     onClick={toggleTheme}
+                     className="size-10 rounded-xl grid place-items-center transition-all duration-300 dark:bg-black/40 dark:hover:bg-black/50 bg-black/20 hover:bg-black/30 cursor-pointer focus:outline-none"
+                     title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                  >
+                     {isDarkMode ? (
+                        <IoMoon className="size-6 text-blue-400 hover:rotate-12 transition-transform duration-300" />
+                     ) : (
+                        <IoSunny className="size-6 text-amber-400 hover:rotate-45 transition-transform duration-300" />
+                     )}
+                  </button>
                </div>
             </div>
          </header>

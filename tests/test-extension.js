@@ -118,6 +118,7 @@ assert(sanitized.includes("Safe Text"), "Sanitizer preserved valid safe text");
 console.log("\n4. Documentation & Store Readiness:");
 assert(fs.existsSync(path.join(rootDir, "CHROMEWEBSTORE.md")), "CHROMEWEBSTORE.md exists");
 assert(fs.existsSync(path.join(rootDir, "PRIVACY_POLICY.md")), "PRIVACY_POLICY.md exists");
+assert(fs.existsSync(path.join(rootDir, "privacy-policy.html")), "privacy-policy.html exists");
 
 // --- SUMMARY ---
 console.log(`\n========================================`);

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - AI Display</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --border: #334155;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 800px;
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      font-size: 28px;
+      margin-top: 0;
+      background: linear-gradient(to right, #60a5fa, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    h2 {
+      font-size: 20px;
+      margin-top: 30px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      color: #93c5fd;
+    }
+    p, li {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    strong {
+      color: var(--text);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">Chrome Web Store Compliance</div>
+    <h1>Privacy Policy for AI Display</h1>
+    <p><strong>Effective Date:</strong> August 14, 2026<br>
+    <strong>Last Updated:</strong> August 14, 2026</p>
+
+    <h2>1. Single Purpose & Overview</h2>
+    <p><strong>AI Display</strong> is an in-browser productivity companion designed to assist users with research, Optical Character Recognition (OCR), and multi-engine AI answer aggregation (Google AI Overview, Bing/Copilot, Perplexity, Gemini, Grok) directly within web browsing workflows.</p>
+
+    <h2>2. Zero Data Collection & No External Telemetry</h2>
+    <ul>
+      <li><strong>No Data Collection:</strong> AI Display does NOT collect, store, track, sell, or transmit any personally identifiable information, browsing history, keystrokes, or clipboard data to any developer servers or analytics networks.</li>
+      <li><strong>Direct-to-Engine Processing:</strong> Search queries initiated by the user are communicated directly from the user's browser to the designated search provider (Google, Bing, Perplexity, Gemini, Grok) without intermediary proxies.</li>
+      <li><strong>No Accounts Required:</strong> The extension operates anonymously without account registration or sign-in.</li>
+    </ul>
+
+    <h2>3. Local Device Storage</h2>
+    <ul>
+      <li><strong>Local Storage Only:</strong> User preferences (enabled AI engines, theme, concurrency) and recent query history (up to 20 entries) are stored strictly within the user's local browser using Chrome's <code>chrome.storage.local</code> API.</li>
+      <li><strong>Instant History Clearing:</strong> Users can purge all local search history at any time with a single click.</li>
+    </ul>
+
+    <h2>4. Screen Capture & On-Device OCR</h2>
+    <ul>
+      <li><strong>Local Processing:</strong> Screen captures for Area OCR are processed in memory on your local device using an offline, locally-bundled WebAssembly Tesseract.js engine.</li>
+      <li><strong>Zero Image Retention:</strong> Bitmaps are held transiently in local browser memory and immediately discarded upon text extraction. Images are never uploaded or retained.</li>
+    </ul>
+
+    <h2>5. Minimum Necessary Permissions</h2>
+    <ul>
+      <li><strong>storage:</strong> Retains your preferences and chat history locally.</li>
+      <li><strong>activeTab & scripting:</strong> Injects the floating menu and area crop tool on the active page upon user request.</li>
+      <li><strong>offscreen:</strong> Runs sandboxed offline OCR in the background.</li>
+      <li><strong>tabs:</strong> Manages background query tabs to fetch answers from enabled providers.</li>
+      <li><strong>declarativeNetRequest:</strong> Blocks media/fonts on scraping tabs to conserve bandwidth.</li>
+    </ul>
+
+    <h2>6. Chrome Web Store Limited Use Compliance</h2>
+    <p>AI Display strictly complies with the <strong>Chrome Web Store User Data Policy</strong>, including the <strong>Limited Use</strong> requirements. We do not transfer or use user data for personalized advertising, credit assessment, or data brokering.</p>
+
+    <h2>7. Contact Information</h2>
+    <p>For any inquiries regarding this Privacy Policy:</p>
+    <ul>
+      <li><strong>Developer:</strong> elsesourav</li>
+      <li><strong>Website:</strong> <a href="https://elsesourav.web.app" target="_blank" rel="noopener">https://elsesourav.web.app</a></li>
+      <li><strong>Email:</strong> <a href="mailto:elsesourav.auth@gmail.com">elsesourav.auth@gmail.com</a></li>
+      <li><strong>GitHub:</strong> <a href="https://github.com/elsesourav/ai-display" target="_blank" rel="noopener">https://github.com/elsesourav/ai-display</a></li>
+    </ul>
+
+    <footer>
+      © 2026 AI Display. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>
