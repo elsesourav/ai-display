@@ -3,6 +3,9 @@
 const KEYS = {
    SETTINGS: "Ai-Display-Settings",
    CONTROLS: "Ai-Display-Controls",
+   HISTORY: "Ai-Display-History",
+   ALWAYS_ACTIVE_HOSTS: "alwaysActiveHosts",
+   ENABLE_COPY_HOSTS: "enableCopyHosts",
 };
 
 /* ----------- Developer Mode (Error Suppression) ----------- */
